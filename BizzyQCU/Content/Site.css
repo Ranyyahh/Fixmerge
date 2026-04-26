@@ -226,7 +226,7 @@ textarea {
         .floating-header h2 {
             color: white;
             font-weight: bold;
-            font-size: 2.6rem;
+            font-size: 4rem;
             letter-spacing: 2px;
             margin: 0 0 8px 0;
         }
@@ -238,7 +238,7 @@ textarea {
         .floating-header p {
             color: white;
             margin: 0;
-            font-size: 16px;
+            font-size: 20px;
         }
 
     /* SEARCHBAR AND DROPDOWNS */
@@ -404,7 +404,7 @@ textarea {
     }
 
     .product-store {
-        font-size: 13px;
+        font-size: 20px;
         color: #f4b301;
         font-weight: 600;
     }
@@ -416,7 +416,7 @@ textarea {
     }
 
     .product-desc {
-        font-size: 13px;
+        font-size: 15px;
         color: #666;
         flex: 1;
     }
@@ -435,9 +435,9 @@ textarea {
     }
 
     .add-btn {
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        border-radius: 70%;
         border: none;
         background: #f4b301;
         color: white;
