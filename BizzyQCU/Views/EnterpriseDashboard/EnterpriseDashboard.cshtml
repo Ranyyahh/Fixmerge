@@ -1,0 +1,75 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Enterprise Dashboard - BizzyQCU";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/Content/EnterpriseDashboard.css">
+}
+
+<div class="dashboard-container">
+
+    <!-- HEADER -->
+    <div class="enterprise-header">
+        <div class="profile-icon"></div>
+        <h1>Enterprise Name</h1>
+    </div>
+
+    <!-- TOP ROW: STATS (left) + CHART (right) – same height -->
+    <div class="top-row">
+        <!-- Left side: 3 stats cards (taller to match graph) -->
+        <div class="stats-column">
+            <div class="stats-card">
+                <h3>Total Sales</h3>
+                <p class="sub">Today</p>
+                <h2 class="stat-total-sales">₱ 0</h2>
+            </div>
+            <div class="stats-card">
+                <h3>Orders</h3>
+                <p class="sub">Pending</p>
+                <h2 class="stat-orders-pending">0</h2>
+            </div>
+            <div class="stats-card">
+                <h3>Deliveries</h3>
+                <p class="sub">Active</p>
+                <h2 class="stat-deliveries-active">0</h2>
+            </div>
+        </div>
+
+        <!-- Right side: Sales Overview graph (compact, fixed height) -->
+        <div class="chart-column">
+            <div class="sales-box">
+                <div class="sales-header">
+                    <h3>Sales Overview</h3>
+                    <div class="dropdown-wrapper">
+                        <select id="salesPeriodSelect">
+                            <option value="daily">Daily</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+                </div>
+                <canvas id="salesChart" height="250"></canvas>
+                <div class="weekly" id="weeklyTotal">This Week: ₱ 0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM ROW: New Orders (left, compact) + Action Buttons (right, row) -->
+    <div class="bottom-row">
+        <div class="new-orders-wide" id="newOrdersBtn">
+            <span>🛒 <span id="newOrdersCount">0</span> New Orders</span>
+        </div>
+        <div class="actions-column">
+            <div class="actions">
+                <button id="addProductBtn"><img src="~/Images/add-icon.png" alt=""> Add Product</button>
+                <button id="manageOrdersBtn"><img src="~/Images/manage-icon.png" alt=""> Manage Orders</button>
+                <button id="editStoreBtn"><img src="~/Images/edit-icon.png" alt=""> Edit Store</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="~/Scripts/EnterpriseDashboard.js"></script>
+}

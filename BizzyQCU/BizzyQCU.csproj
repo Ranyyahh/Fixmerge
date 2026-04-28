@@ -121,7 +121,7 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\CheckoutController.cs" />
-    <Compile Include="Controllers\EnterpriseController.cs" />
+    <Compile Include="Controllers\EnterpriseDashboardController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -145,6 +145,7 @@
     <Content Include="Content\bootstrap.rtl.css" />
     <Content Include="Content\bootstrap.rtl.min.css" />
     <Content Include="Content\checkout.css" />
+    <Content Include="Content\EnterpriseDashboard.css" />
     <Content Include="Content\layout.css" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
@@ -153,7 +154,7 @@
     <Content Include="Images\2.png" />
     <Content Include="Images\3.png" />
     <Content Include="Images\cart-icon.png" />
-    <Content Include="Images\5.png" />
+    <Content Include="Images\account-icon.png" />
     <Content Include="Images\Logo.png" />
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />
@@ -165,6 +166,7 @@
     <Content Include="Fonts\Proxima Nova Semibold.ttf" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
     <Content Include="Scripts\Checkout.js" />
+    <Content Include="Scripts\EnterpriseDashboard.js" />
     <Content Include="Scripts\jquery-3.7.0.js" />
     <Content Include="Scripts\jquery-3.7.0.min.js" />
     <Content Include="Scripts\jquery-3.7.0.slim.js" />
@@ -191,11 +193,11 @@
     <Content Include="Views\Home\Contact.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Checkout\CheckoutPage.cshtml" />
+    <Content Include="Views\EnterpriseDashboard\EnterpriseDashboard.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="Models\" />
-    <Folder Include="Views\Enterprise\" />
     <Folder Include="Views\NewFolder1\" />
   </ItemGroup>
   <ItemGroup>
