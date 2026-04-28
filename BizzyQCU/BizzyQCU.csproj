@@ -133,11 +133,15 @@
     <Content Include="Content\bootstrap-theme.min.css" />
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
+    <Content Include="Content\home_about_product_ent.css" />
+    <Content Include="Content\Images\account-icon.png" />
     <Content Include="Content\Images\ad-sample.png" />
     <Content Include="Content\Images\back-btn.png" />
     <Content Include="Content\Images\bee_logo.png" />
     <Content Include="Content\Images\BizzyQCU-Home-BG.png" />
     <Content Include="Content\Images\BizzyQCU-navbar-logo.png" />
+    <Content Include="Content\Images\cart-icon.png" />
+    <Content Include="Content\Images\Logo.png" />
     <Content Include="Content\Images\pl_bento.png" />
     <Content Include="Content\Images\pl_cf.jpg" />
     <Content Include="Content\Images\pl_pst.jpg" />
@@ -150,6 +154,9 @@
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
+    <Content Include="Images\account-icon.png" />
+    <Content Include="Images\cart-icon.png" />
+    <Content Include="Images\Logo.png" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <None Include="Scripts\jquery-3.4.1.intellisense.js" />

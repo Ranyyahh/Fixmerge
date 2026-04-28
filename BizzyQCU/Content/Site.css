@@ -1,6 +1,12 @@
-﻿body {
-    padding-top: 90px !important;
+﻿/* Remove padding from body so navbar can touch the top */
+body {
+    padding-top: 0 !important;
     padding-bottom: 20px;
+}
+
+/* Apply the padding to the main content instead */
+main {
+    padding-top: 20px;
 }
 
 /* Set padding to keep content from hitting the edges */
@@ -1554,3 +1560,9 @@ ABOUT PAGE - MEDIA QUERIES (with adjusted text scaling)
         padding: 12px 28px;
     }
 }
+
+
+
+
+
+
