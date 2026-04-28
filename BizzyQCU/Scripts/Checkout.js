@@ -1,9 +1,10 @@
-﻿const LOCAL_IMAGE_BASE = '/images/';
+﻿const LOCAL_IMAGE_BASE = '/Images/';   
+
 const productImageMap = {
     'Pasta Verde': '1.png',
     'Pasta Verde Filipino Style Spag': '2.png'
 };
-function getImageUrl(f) { return LOCAL_IMAGE_BASE + f; }
+function getImageUrl(filename) { return LOCAL_IMAGE_BASE + filename; }
 
 let cartItems = [];
 
@@ -15,32 +16,49 @@ function loadInitialCart() {
     renderCart();
 }
 
-function getCurrentEnterprise() { return cartItems.length ? cartItems[0].EnterpriseName : null; }
-function canAddProduct(enterprise) { return cartItems.length === 0 || getCurrentEnterprise() === enterprise; }
-
-function addProductToCart(name, price, enterprise, imgFile) {
-    if (!canAddProduct(enterprise)) {
-        alert(`⚠️ Orders limited to "${getCurrentEnterprise()}". Complete order first.`);
+function getCurrentEnterprise() {
+    if (cartItems.length === 0) return null;
+    return cartItems[0].EnterpriseName;
+}
+function canAddProduct(enterpriseName) {
+    if (cartItems.length === 0) return true;
+    return getCurrentEnterprise() === enterpriseName;
+}
+function addProductToCart(productName, unitPrice, enterpriseName, imageFilename) {
+    if (!canAddProduct(enterpriseName)) {
+        alert(`⚠️ Orders are limited to "${getCurrentEnterprise()}" only. Please complete or clear current order before ordering from another enterprise.`);
         return false;
     }
-    const newId = Date.now() + Math.random() * 10000;
+    const newId = Date.now() + Math.floor(Math.random() * 10000);
+    const imageUrl = imageFilename ? getImageUrl(imageFilename) : getImageUrl('default.jpg');
     cartItems.push({
-        Id: newId, EnterpriseName: enterprise, ProductName: name, UnitPrice: price, Quantity: 1,
-        ImageUrl: imgFile ? getImageUrl(imgFile) : getImageUrl('default.jpg')
+        Id: newId,
+        EnterpriseName: enterpriseName,
+        ProductName: productName,
+        UnitPrice: unitPrice,
+        Quantity: 1,
+        ImageUrl: imageUrl
     });
     renderCart();
     return true;
 }
-
-function updateQuantity(id, newQty) {
+function updateQuantity(itemId, newQty) {
     if (newQty < 1) newQty = 1;
-    const item = cartItems.find(i => i.Id === id);
+    const item = cartItems.find(i => i.Id === itemId);
     if (item) { item.Quantity = newQty; renderCart(); }
 }
-function removeItem(id) { cartItems = cartItems.filter(i => i.Id !== id); renderCart(); }
-function calculateTotal() { return cartItems.reduce((s, i) => s + i.UnitPrice * i.Quantity, 0); }
+function removeItem(itemId) {
+    cartItems = cartItems.filter(i => i.Id !== itemId);
+    renderCart();
+}
+function calculateTotal() {
+    return cartItems.reduce((sum, item) => sum + (item.UnitPrice * item.Quantity), 0);
+}
 
-function escapeHtml(str) { return str ? str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])) : ''; }
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+}
 
 function renderCart() {
     const tbody = document.getElementById('cartBody');
@@ -49,7 +67,7 @@ function renderCart() {
     const container = document.getElementById('enterpriseHeaderContainer');
 
     if (!cartItems.length) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">🛒 No products ordered.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">🛒 No products ordered. You can add products from the catalog.</td></tr>`;
         document.getElementById('totalPayment').innerText = '₱0';
         if (container) container.style.display = 'none';
         return;
@@ -69,7 +87,7 @@ function renderCart() {
             const row = document.createElement('tr');
             row.classList.add('product-row');
             row.innerHTML = `
-                <td style="text-align:center"><img src="${escapeHtml(item.ImageUrl)}" class="product-image" onerror="this.src='/images/default.jpg'"></td>
+                <td style="text-align:center"><img src="${escapeHtml(item.ImageUrl)}" class="product-image" onerror="this.src='/Images/default.jpg'"></td>
                 <td class="product-name">${escapeHtml(item.ProductName)}</td>
                 <td>₱${item.UnitPrice.toFixed(2)}</td>
                 <td><input type="number" class="quantity-input" data-id="${item.Id}" value="${item.Quantity}" min="1" step="1"></td>
@@ -101,7 +119,7 @@ function handleRemove(e) {
     const id = parseInt(e.target.getAttribute('data-id'));
     if (confirm('Remove item?')) removeItem(id);
 }
-function buyMore() { alert("Will redirect to product catalog in future."); }
+function buyMore() { alert("This will redirect to the product catalog page in the future."); }
 
 function initDeliveryPayment() {
     updateRoomVisibility();
@@ -128,7 +146,7 @@ function updateRoomVisibility() {
     if (!isRoom) document.getElementById('roomSpecifyInput').value = '';
 }
 async function placeOrder() {
-    if (!cartItems.length) { alert("Cart empty."); return; }
+    if (!cartItems.length) { alert("Your cart is empty."); return; }
     const total = calculateTotal();
     const delivery = document.getElementById('deliveryOptionDisplay').innerText;
     let roomInfo = '';
@@ -138,7 +156,7 @@ async function placeOrder() {
     }
     const payment = document.getElementById('paymentMethodDisplay').innerText;
     const note = document.getElementById('orderNote').value;
-    alert(`✅ Order placed!\nTotal: ₱${total.toFixed(2)}\nDelivery: ${delivery}${roomInfo}\nPayment: ${payment}\nNote: ${note || '(none)'}`);
+    alert(`✅ Order placed successfully!\n\nTotal: ₱${total.toFixed(2)}\nDelivery: ${delivery}${roomInfo}\nPayment: ${payment}\nNote: ${note || '(none)'}\n\nYou may now order from another enterprise.`);
     cartItems = [];
     renderCart();
     document.getElementById('orderNote').value = '';
