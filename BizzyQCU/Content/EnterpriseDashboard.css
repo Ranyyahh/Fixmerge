@@ -1,16 +1,18 @@
 ﻿body {
     margin: 0;
     background: linear-gradient(to bottom, #ffde42, #111fa2);
+    color: #232ab9;
+    overflow: hidden;
 }
 
-/* HEADER */
 .enterprise-header {
     display: flex;
     align-items: center;
     background: #f4cf3b;
-    padding: 20px;
+    padding: 10px;
     border-radius: 0 0 20px 20px;
-    margin-bottom: 30px;
+    margin-bottom: 25px;
+    color: white;
 }
 
 h1 {
@@ -22,21 +24,18 @@ h1 {
     height: 60px;
     background: #ccc;
     border-radius: 50%;
-    margin-right: 0px;
     margin-left: 30px;
 }
 
-/* TOP ROW – two columns same height */
 .top-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 20px;
+    gap: 15px;
     padding: 0 20px;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
     align-items: stretch;
 }
 
-/* LEFT STATS COLUMN – taller to match graph */
 .stats-column {
     flex: 1;
     min-width: 200px;
@@ -47,33 +46,58 @@ h1 {
 
 .stats-card {
     background: white;
-    border-radius: 20px; /* changed from 16px to 20px */
+    border-radius: 20px;
     padding: 15px 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     flex: 1;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
 }
 
-    .stats-card h3 {
-        margin: 0 0 5px 0;
-        font-size: 1.2rem;
-    }
+.stats-card-text {
+    flex: 1;
+}
 
-    .stats-card .sub {
-        color: gray;
-        margin-bottom: 8px;
-        font-size: 0.85rem;
-    }
+.stats-card h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
 
-    .stats-card h2 {
-        margin: 0;
-        font-size: 1.8rem;
-        color: #1f2f8a;
-    }
+.stats-card .sub {
+    color: gray;
+    margin-bottom: 8px;
+    font-weight: bold;
+    font-size: 0.85rem;
+}
 
-/* RIGHT CHART COLUMN – graph with fixed max-height */
+.stats-card h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: #1f2f8a;
+    font-weight: bold;
+}
+
+.stats-icon {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+}
+
+.sales-card {
+    border-left: 15px solid #4caf50;
+}
+
+.orders-card {
+    border-left: 15px solid #5478ff;
+}
+
+.deliveries-card {
+    border-left: 15px solid #ffde42;
+}
+
 .chart-column {
     flex: 2;
     min-width: 250px;
@@ -81,7 +105,7 @@ h1 {
 
 .sales-box {
     background: white;
-    border-radius: 20px; /* already 20px, keep */
+    border-radius: 20px;
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     height: 100%;
@@ -99,7 +123,7 @@ h1 {
 
 .dropdown-wrapper select {
     padding: 6px 12px;
-    border-radius: 20px; /* changed from 20px to 20px (keep) */
+    border-radius: 20px;
     border: 1px solid #ddd;
     background: #fff;
     font-size: 0.85rem;
@@ -118,35 +142,67 @@ h1 {
     font-weight: bold;
 }
 
-/* BOTTOM ROW – New Orders (compact) + Action Buttons (horizontal row) */
 .bottom-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 20px;
+    gap: 15px;
     padding: 0 20px;
-    margin-top: 10px;
     align-items: center;
 }
 
+/* ========== NEW ORDERS BOX – image with left space, text close, arrow right ========== */
 .new-orders-wide {
-    flex: 0 1 auto;
-    background: #f4cf3b;
-    padding: 10px 20px;
-    border-radius: 20px; /* changed from 40px to 20px */
-    text-align: center;
+    background: #fff5c8;
+    border-radius: 20px;
     cursor: pointer;
-    font-weight: bold;
-    font-size: 1rem;
     transition: 0.2s;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0;
+    height: 80px;
+    padding: 0 20px 0 20px; /* left padding = 20px (space from edge) */
+    width: 601px;
+    box-sizing: border-box;
+    margin-bottom: 30px;
+    font-size: 2rem;
+    font-weight: bold;
+    flex: 0 1 auto;
+    color: #000000;
 }
 
-    .new-orders-wide:hover {
-        background: #e0b830;
-        transform: scale(1.01);
-    }
+.new-orders-left {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* space between image and text – adjust as desired */
+}
 
+.new-orders-icon {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+}
+
+.new-orders-text {
+    white-space: nowrap;
+    margin: 0;
+    padding: 0;
+}
+
+.arrow-right {
+    font-size: 2.5rem;
+    font-weight: bold;
+    line-height: 1;
+    margin-left: 10px;
+}
+
+.new-orders-wide:hover {
+    background: #f0e3a6;
+    transform: scale(1.01);
+}
+
+/* ========== ACTION BUTTONS ========== */
 .actions-column {
     flex: 1;
 }
@@ -154,30 +210,34 @@ h1 {
 .actions {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     gap: 15px;
-    justify-content: flex-start;
+    align-items: center;
 }
 
     .actions button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
-        padding: 10px 24px;
+        gap: 12px;
         border: none;
         background: #f4cf3b;
-        border-radius: 20px; /* changed from 40px to 20px */
+        border-radius: 20px;
         font-weight: bold;
-        font-size: 1rem;
+        font-size: 1.6rem;
         cursor: pointer;
         transition: 0.2s;
         white-space: nowrap;
+        height: 80px;
+        padding: 0 30px;
+        box-sizing: border-box;
         flex: 0 1 auto;
+        margin-bottom: 30px;
     }
 
         .actions button img {
-            width: 20px;
-            height: 20px;
+            width: 60px;
+            height: 60px;
             object-fit: contain;
         }
 
@@ -186,20 +246,17 @@ h1 {
             transform: scale(1.02);
         }
 
-/* Responsive */
+/* RESPONSIVE */
 @media (max-width: 700px) {
-    .top-row, .bottom-row {
+    .bottom-row {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .stats-column {
-        flex-direction: row;
-        flex-wrap: wrap;
-    }
-
-    .stats-card {
-        flex: 1;
+    .new-orders-wide {
+        width: 100%;
+        justify-content: space-between;
+        padding: 0 20px;
     }
 
     .actions {
@@ -212,7 +269,8 @@ h1 {
         }
 
     .new-orders-wide {
-        text-align: center;
         white-space: normal;
+        justify-content: center;
+        width: 100%;
     }
 }

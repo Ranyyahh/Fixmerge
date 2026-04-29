@@ -9,34 +9,39 @@
 
 <div class="dashboard-container">
 
-    <!-- HEADER -->
     <div class="enterprise-header">
         <div class="profile-icon"></div>
         <h1>Enterprise Name</h1>
     </div>
 
-    <!-- TOP ROW: STATS (left) + CHART (right) – same height -->
     <div class="top-row">
-        <!-- Left side: 3 stats cards (taller to match graph) -->
         <div class="stats-column">
-            <div class="stats-card">
-                <h3>Total Sales</h3>
-                <p class="sub">Today</p>
-                <h2 class="stat-total-sales">₱ 0</h2>
+            <div class="stats-card sales-card">
+                <div class="stats-card-text">
+                    <h3>Total Sales</h3>
+                    <p class="sub">Today</p>
+                    <h2 class="stat-total-sales">₱ 0</h2>
+                </div>
+                <img src="~/Images/sales-icon.png" alt="Sales" class="stats-icon">
             </div>
-            <div class="stats-card">
-                <h3>Orders</h3>
-                <p class="sub">Pending</p>
-                <h2 class="stat-orders-pending">0</h2>
+            <div class="stats-card orders-card">
+                <div class="stats-card-text">
+                    <h3>Orders</h3>
+                    <p class="sub">Pending</p>
+                    <h2 class="stat-orders-pending">0</h2>
+                </div>
+                <img src="~/Images/orders-icon.png" alt="Orders" class="stats-icon">
             </div>
-            <div class="stats-card">
-                <h3>Deliveries</h3>
-                <p class="sub">Active</p>
-                <h2 class="stat-deliveries-active">0</h2>
+            <div class="stats-card deliveries-card">
+                <div class="stats-card-text">
+                    <h3>Deliveries</h3>
+                    <p class="sub">Active</p>
+                    <h2 class="stat-deliveries-active">0</h2>
+                </div>
+                <img src="~/Images/deliveries-icon.png" alt="Deliveries" class="stats-icon">
             </div>
         </div>
 
-        <!-- Right side: Sales Overview graph (compact, fixed height) -->
         <div class="chart-column">
             <div class="sales-box">
                 <div class="sales-header">
@@ -54,10 +59,14 @@
         </div>
     </div>
 
-    <!-- BOTTOM ROW: New Orders (left, compact) + Action Buttons (right, row) -->
+    <!-- BOTTOM ROW: NEW ORDERS (image with left margin, text close, arrow right) + ACTION BUTTONS -->
     <div class="bottom-row">
         <div class="new-orders-wide" id="newOrdersBtn">
-            <span>🛒 <span id="newOrdersCount">0</span> New Orders</span>
+            <div class="new-orders-left">
+                <img src="~/Images/new-orders-icon.png" alt="New Orders" class="new-orders-icon">
+                <span class="new-orders-text"><span id="newOrdersCount">0</span> New Orders</span>
+            </div>
+            <span class="arrow-right">></span>
         </div>
         <div class="actions-column">
             <div class="actions">

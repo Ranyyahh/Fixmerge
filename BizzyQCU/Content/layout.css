@@ -8,7 +8,8 @@
 
 @font-face {
     font-family: 'Proxima';
-    src: url("~/fonts/Proxima Nova Semibold.ttf") format('truetype'); font-weight: bold;
+    src: url("~/fonts/Proxima Nova Semibold.ttf") format('truetype'); 
+    font-weight: bold;
     font-style: normal;
     font-display: swap;
 }
