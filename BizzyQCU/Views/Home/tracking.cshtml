@@ -11,26 +11,38 @@
     <link rel="stylesheet" href="~/Content/trackingstyle.css" />
 </head>
 <body>
+    <div class="navbar-global">
+        <div class="logo">
+            <a href="/"><img src="@Url.Content("~/Content/Images/Logo.png")" alt="logo"></a>
+        </div>
+        <div class="divider"></div>
+        <div class="nav-links">
+            <a href="#">HOME</a>
+            <a href="#">PRODUCTS</a>
+            <a href="#">ENTERPRISES</a>
+            <a href="#">ABOUT US</a>
+        </div>
+        <div class="right-icons">
+            <div class="cart-icon">
+                <a href="#"><img src="@Url.Content("~/Content/Images/cart-icon.png")" alt="Cart"></a>
+            </div>
+            <div class="account-icon">
+                <img src="@Url.Content("~/Content/Images/5.png")" alt="Account">
+            </div>
+        </div>
+    </div>
+
     <header class="glass-header">
         <div class="header-left">
             <button class="back-btn" onclick="window.location.href = '@Url.Action("Index", "Home")'">
-                <svg viewBox="0 0 24 24"
-                     style="
-              width: 18px;
-              height: 18px;
-              fill: none;
-              stroke: currentColor;
-              stroke-width: 3;
-            ">
+                <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 3;">
                     <path d="M15 18l-6-6 6-6" />
                 </svg>
             </button>
         </div>
-
         <div class="header-center">
             <img src="~/Content/images/bizzyqcu logo.png" alt="BizzyQCU Logo" class="main-logo" />
         </div>
-
         <div class="header-right">
             <button class="menu-btn">
                 <div class="hamburger-line"></div>

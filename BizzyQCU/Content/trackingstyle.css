@@ -543,3 +543,111 @@ body {
         border-radius: 10px;
     }
 }
+
+/* --- GLOBAL NAVBAR STYLES (Exact Copy) --- */
+.navbar-global {
+    position: sticky;
+    top: 0;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    padding: 0 40px;
+    background: #ffffff;
+    gap: 20px;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+    .navbar-global .logo img {
+        max-height: 150px;
+        width: 200px;
+        display: block;
+    }
+
+    .navbar-global .divider {
+        width: 3px;
+        height: 40px;
+        background: #f4c430;
+        margin: 0 30px;
+        flex-shrink: 0;
+    }
+
+    .navbar-global .nav-links {
+        display: flex;
+        gap: 40px;
+        align-items: center;
+    }
+
+        .navbar-global .nav-links a {
+            text-decoration: none;
+            color: #111fa2;
+            font-weight: 600;
+            font-size: 16px;
+            white-space: nowrap;
+        }
+
+    .navbar-global .right-icons {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .navbar-global .cart-icon img {
+        height: 35px;
+    }
+
+    .navbar-global .account-icon img {
+        height: 40px;
+        border-radius: 50%;
+    }
+
+/* --- RESPONSIVE LOGIC: WHO SHOWS WHEN? --- */
+
+/* Mobile View (Phone/Tablet) */
+@media (max-width: 1023px) {
+    .navbar-global {
+        display: none !important;
+    }
+    /* Hide the big nav */
+    .glass-header {
+        display: flex !important;
+    }
+    /* Show the back-button header */
+}
+
+/* Desktop View (The Grid Fix) */
+@media (min-width: 1024px) {
+    .glass-header {
+        display: none !important;
+    }
+    /* Hide the mobile header */
+    .navbar-global {
+        display: flex !important;
+        grid-area: nav;
+    }
+
+    body {
+        display: grid !important;
+        grid-template-areas:
+            "nav nav"
+            "left right";
+        grid-template-rows: 90px 1fr; /* 90px matches your navbar height */
+        grid-template-columns: 450px 1fr;
+        height: 100vh;
+        margin: 0;
+        overflow: hidden;
+    }
+
+    .top-status-bar {
+        grid-area: left;
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    main {
+        grid-area: right;
+        height: 100%;
+        overflow-y: auto;
+    }
+}
