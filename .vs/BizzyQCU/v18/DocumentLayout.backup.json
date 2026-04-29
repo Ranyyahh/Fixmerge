@@ -1,7 +1,16 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\Admin\\source\\repos\\AdminP\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{8CA599FB-24D8-4678-B296-BEB63F1C933D}|BizzyQCU\\BizzyQCU.csproj|c:\\users\\admin\\source\\repos\\adminp\\bizzyqcu\\views\\adminpanel\\admineditentrep.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{8CA599FB-24D8-4678-B296-BEB63F1C933D}|BizzyQCU\\BizzyQCU.csproj|solutionrelative:bizzyqcu\\views\\adminpanel\\admineditentrep.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8CA599FB-24D8-4678-B296-BEB63F1C933D}|BizzyQCU\\BizzyQCU.csproj|c:\\users\\admin\\source\\repos\\adminp\\bizzyqcu\\scripts\\admineditentrep.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{8CA599FB-24D8-4678-B296-BEB63F1C933D}|BizzyQCU\\BizzyQCU.csproj|solutionrelative:bizzyqcu\\scripts\\admineditentrep.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,8 +18,34 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 1,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "AdminEditEntrep.js",
+              "DocumentMoniker": "C:\\Users\\Admin\\source\\repos\\AdminP\\BizzyQCU\\Scripts\\AdminEditEntrep.js",
+              "RelativeDocumentMoniker": "BizzyQCU\\Scripts\\AdminEditEntrep.js",
+              "ToolTip": "C:\\Users\\Admin\\source\\repos\\AdminP\\BizzyQCU\\Scripts\\AdminEditEntrep.js",
+              "RelativeToolTip": "BizzyQCU\\Scripts\\AdminEditEntrep.js",
+              "ViewState": "AgIAAOgAAAAAAAAAAAAwwPsAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2026-04-29T12:22:32.704Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "AdminEditEntrep.cshtml",
+              "DocumentMoniker": "C:\\Users\\Admin\\source\\repos\\AdminP\\BizzyQCU\\Views\\AdminPanel\\AdminEditEntrep.cshtml",
+              "RelativeDocumentMoniker": "BizzyQCU\\Views\\AdminPanel\\AdminEditEntrep.cshtml",
+              "ToolTip": "C:\\Users\\Admin\\source\\repos\\AdminP\\BizzyQCU\\Views\\AdminPanel\\AdminEditEntrep.cshtml*",
+              "RelativeToolTip": "BizzyQCU\\Views\\AdminPanel\\AdminEditEntrep.cshtml*",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-29T12:21:10.048Z",
+              "EditorCaption": ""
+            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{25f7e850-ffa1-11d0-b63f-00a0c922e851}"
