@@ -11,6 +11,7 @@
 html,
 body {
     min-height: 100%;
+
 }
 
 body.app-body {
@@ -35,19 +36,19 @@ textarea {
     background: #ffffff;
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     position: relative;
-    z-index: 10;
+    z-index: 5;
 }
-
+/* The main site navigation bar, which contains the brand, links, and header icons. It has a fixed height and horizontal padding, which adjusts on smaller screens. */
 .site-nav {
-    padding: 0;
+    padding: -35px;
 }
-
+/* The inner container of the site navigation, which holds the brand, links, and header icons. It uses flexbox to align items horizontally and center them vertically. */
 .site-nav-inner {
-    min-height: 107px;
+    min-height: 60px;
     padding: 0 28px;
     align-items: center;
 }
-
+/* The site brand is used in the main header, while the toolbar brand is a more compact version used in the transactions toolbar. Both share the same styling for consistency. */
 .site-brand,
 .toolbar-brand {
     display: inline-flex;
@@ -56,17 +57,17 @@ textarea {
     color: var(--app-blue);
     font-weight: 800;
 }
-
+/* The logo image is separate from the text to allow for better scaling on smaller screens */
 .brand-logo-image {
     display: block;
-    width: 230px;
+    width: 135px;
     height: auto;
 }
-
+/* A more compact version of the logo for use in the transactions toolbar */
 .brand-logo-image-compact {
     width: 160px;
 }
-
+/* The menu toggle button for smaller screens */
 .site-menu-toggle {
     border: 0;
     box-shadow: none;
@@ -75,7 +76,7 @@ textarea {
     flex-direction: column;
     gap: 4px;
 }
-
+    /* The three bars of the hamburger menu icon */
 .site-menu-toggle span {
     display: block;
     width: 26px;
@@ -83,20 +84,20 @@ textarea {
     border-radius: 2px;
     background: var(--app-blue);
 }
-
+/* The divider between the main navigation and the header icons, which becomes a horizontal divider on smaller screens */
 .site-nav-divider {
     width: 2px;
     height: 44px;
     background: #f0cc36;
-    margin: 0 34px 0 30px;
+    margin: 0 -565px 0 50px;
     flex: 0 0 auto;
 }
-
+/* The main navigation links, which are hidden on smaller screens */
 .site-nav-links {
-    gap: 20px;
+    gap: 10px;
     align-items: center;
 }
-
+    /* Each navigation link has a base color and font size, with padding for better click targets. The active and hover states change the color and weight for better visibility. */
 .site-nav-links .nav-link {
     color: var(--app-blue);
     font-size: 1.02rem;

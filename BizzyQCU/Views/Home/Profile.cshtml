@@ -1,302 +1,128 @@
 @model User_Profile_Seller_Juvi.Controllers.AccountSettingsPageViewModel
+
 @{
-    ViewBag.Title = "User Profile";
-    var settingsAction = ViewBag.SettingsAction as string ?? "Profile";
-    var hasProfileErrors = !ViewData.ModelState.IsValid && ViewData.ModelState.Keys.Any(functionKey => functionKey.StartsWith("Profile."));
-    var startEditing = hasProfileErrors;
-    var profileErrors = ViewData.ModelState
-        .Where(item => item.Key.StartsWith("Profile.") || string.IsNullOrWhiteSpace(item.Key))
-        .SelectMany(item => item.Value.Errors)
-        .Select(error => error.ErrorMessage)
-        .Where(message => !string.IsNullOrWhiteSpace(message))
-        .Distinct()
-        .ToList();
-    var passwordErrors = ViewData.ModelState
-        .Where(item => item.Key.StartsWith("PasswordChange."))
-        .SelectMany(item => item.Value.Errors)
-        .Select(error => error.ErrorMessage)
-        .Where(message => !string.IsNullOrWhiteSpace(message))
-        .Distinct()
-        .ToList();
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <section class="screen screen-profile">
     <div class="profile-panel">
-        <div class="profile-title-row">
-            <h1 class="section-title section-title-blue">User Profile</h1>
-        </div>
-        <div class="panel-divider"></div>
 
-        @using (Html.BeginForm(settingsAction == "AccountSettings" ? "SaveAccountSettings" : "Profile", "Home", FormMethod.Post, new { @class = "profile-form", id = "profileForm", data_start_editing = startEditing.ToString().ToLowerInvariant() }))
+        @using (Html.BeginForm("Profile", "Home", FormMethod.Post,
+            new { @class = "profile-form", id = "profileForm", data_start_editing = "false" }))
         {
             @Html.AntiForgeryToken()
-            @Html.HiddenFor(model => model.Profile.PhotoDataUrl, new { id = "PhotoDataUrl" })
-            @Html.HiddenFor(model => model.Profile.QrDataUrl, new { id = "QrDataUrl" })
+
+            <!-- ✅ REQUIRED HIDDEN FIELDS -->
+            @Html.HiddenFor(m => m.Profile.PhotoDataUrl, new { id = "PhotoDataUrl" })
+            @Html.HiddenFor(m => m.Profile.QrDataUrl, new { id = "QrDataUrl" })
+
+            <!-- ✅ FILE INPUTS -->
             <input id="photoInput" type="file" accept="image/*" hidden />
             <input id="qrInput" type="file" accept="image/*" hidden />
 
-            if (profileErrors.Any())
-            {
-                <div class="validation-shell">
-                    <div class="validation-summary-box">
-                        <strong>Please fix the highlighted profile fields.</strong>
-                        <ul>
-                            @foreach (var error in profileErrors)
-                            {
-                                <li>@error</li>
-                            }
-                        </ul>
-                    </div>
-                </div>
-            }
-
             <div class="profile-layout">
-                <div class="profile-main">
-                    <div class="profile-photo-tools">
-                        <img id="profilePreview" class="avatar-image large-avatar" src="@Model.Profile.PhotoDataUrl" alt="User profile photo" />
-                        <div class="profile-tool-buttons">
-                            <button id="changePhotoBtn" class="primary-action-button" type="button">Change Photo</button>
-                            <button id="uploadQrBtn" class="primary-action-button secondary" type="button">Upload QR</button>
-                            <button id="editInfoBtn" class="primary-action-button secondary" type="button">Edit Info</button>
-                        </div>
-                    </div>
 
-                    <div class="profile-fields-block">
-                        <div class="profile-field-row">
-                            @Html.LabelFor(model => model.Profile.EnterpriseName)
-                            <div class="profile-input-wrap">
-                                @Html.TextBoxFor(model => model.Profile.EnterpriseName, new { @class = "profile-input editable-field", @readonly = "readonly" })
-                                @Html.ValidationMessageFor(model => model.Profile.EnterpriseName, "", new { @class = "field-validation-text" })
-                            </div>
-                        </div>
-                        <div class="profile-field-row">
-                            @Html.LabelFor(model => model.Profile.EnterpriseType)
-                            <div class="profile-input-wrap">
-                                @Html.TextBoxFor(model => model.Profile.EnterpriseType, new { @class = "profile-input editable-field", @readonly = "readonly" })
-                                @Html.ValidationMessageFor(model => model.Profile.EnterpriseType, "", new { @class = "field-validation-text" })
-                            </div>
-                        </div>
-                        <div class="profile-field-row">
-                            @Html.LabelFor(model => model.Profile.Contact)
-                            <div class="profile-input-wrap">
-                                @Html.TextBoxFor(model => model.Profile.Contact, new { @class = "profile-input editable-field", @readonly = "readonly", inputmode = "numeric", maxlength = "11" })
-                                @Html.ValidationMessageFor(model => model.Profile.Contact, "", new { @class = "field-validation-text" })
-                            </div>
-                        </div>
-                        <div class="profile-field-row">
-                            @Html.LabelFor(model => model.Profile.Email)
-                            <div class="profile-input-wrap">
-                                @Html.TextBoxFor(model => model.Profile.Email, new { @class = "profile-input editable-field", @readonly = "readonly", type = "email" })
-                                @Html.ValidationMessageFor(model => model.Profile.Email, "", new { @class = "field-validation-text" })
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                @Html.Partial("UserProfile", Model)
 
                 <div class="profile-separator" aria-hidden="true"></div>
 
-                <div class="profile-sidebar">
-                    <h2>Enterprise Manager Information</h2>
+                @Html.Partial("EnterpriseProfile", Model)
 
-                    <div class="profile-field-row">
-                        @Html.LabelFor(model => model.Profile.ManagerName)
-                        <div class="profile-input-wrap">
-                            @Html.TextBoxFor(model => model.Profile.ManagerName, new { @class = "profile-input editable-field", @readonly = "readonly" })
-                            @Html.ValidationMessageFor(model => model.Profile.ManagerName, "", new { @class = "field-validation-text" })
-                        </div>
-                    </div>
-                    <div class="profile-field-row">
-                        @Html.LabelFor(model => model.Profile.StudentId)
-                        <div class="profile-input-wrap">
-                            @Html.TextBoxFor(model => model.Profile.StudentId, new { @class = "profile-input editable-field", @readonly = "readonly", maxlength = "7" })
-                            @Html.ValidationMessageFor(model => model.Profile.StudentId, "", new { @class = "field-validation-text" })
-                        </div>
-                    </div>
-                    <div class="profile-field-row">
-                        @Html.LabelFor(model => model.Profile.Section)
-                        <div class="profile-input-wrap">
-                            @Html.TextBoxFor(model => model.Profile.Section, new { @class = "profile-input editable-field", @readonly = "readonly" })
-                            @Html.ValidationMessageFor(model => model.Profile.Section, "", new { @class = "field-validation-text" })
-                        </div>
-                    </div>
-                    <div class="profile-field-row">
-                        @Html.LabelFor(model => model.Profile.ManagerContactNumber)
-                        <div class="profile-input-wrap">
-                            @Html.TextBoxFor(model => model.Profile.ManagerContactNumber, new { @class = "profile-input editable-field", @readonly = "readonly", inputmode = "numeric", maxlength = "11" })
-                            @Html.ValidationMessageFor(model => model.Profile.ManagerContactNumber, "", new { @class = "field-validation-text" })
-                        </div>
-                    </div>
-
-                    <div class="profile-field-row profile-qr-row">
-                        <label>Gcash QR</label>
-                        <div class="profile-input-wrap">
-                            <div class="profile-qr-card profile-qr-card-inline">
-                                <div class="profile-qr-frame">
-                                    <img id="qrPreview" class="profile-qr-image @(string.IsNullOrWhiteSpace(Model.Profile.QrDataUrl) ? "is-hidden" : string.Empty)" src="@Model.Profile.QrDataUrl" alt="Uploaded QR preview" />
-                                    <span id="qrPlaceholder" class="profile-qr-placeholder @(string.IsNullOrWhiteSpace(Model.Profile.QrDataUrl) ? string.Empty : "is-hidden")">No QR uploaded</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="profile-actions-row">
-                        <button class="primary-action-button" type="submit">Save</button>
-                        <button class="primary-action-button wide" type="button" data-bs-toggle="modal" data-bs-target="#passwordModal">Change Password</button>
-                    </div>
-                </div>
             </div>
         }
 
-        <div class="panel-divider bottom-divider"></div>
+        <!-- ✅ PASSWORD MODAL -->
+        @Html.Partial("ChangePasswordModal", Model)
+
     </div>
 </section>
 
-<div class="modal fade password-modal" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            @using (Html.BeginForm(settingsAction == "AccountSettings" ? "ChangePasswordDemo" : "ChangePassword", "Home", FormMethod.Post, new { id = "passwordForm" }))
-            {
-                @Html.AntiForgeryToken()
-                <div class="modal-header">
-                    <h2 class="modal-title" id="passwordModalLabel">Change Password</h2>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="modal-demo-note">Demo mode only. Validation still applies, but no real password will be changed.</p>
-
-                    if (passwordErrors.Any())
-                    {
-                        <div class="validation-shell modal-validation-shell">
-                            <div class="validation-summary-box password-summary">
-                                <strong>Please correct the password fields.</strong>
-                                <ul>
-                                    @foreach (var error in passwordErrors)
-                                    {
-                                        <li>@error</li>
-                                    }
-                                </ul>
-                            </div>
-                        </div>
-                    }
-
-                    <div class="modal-field">
-                        @Html.LabelFor(model => model.PasswordChange.CurrentPassword)
-                        @Html.PasswordFor(model => model.PasswordChange.CurrentPassword, new { autocomplete = "current-password" })
-                        @Html.ValidationMessageFor(model => model.PasswordChange.CurrentPassword, "", new { @class = "field-validation-text" })
-                    </div>
-                    <div class="modal-field">
-                        @Html.LabelFor(model => model.PasswordChange.NewPassword)
-                        @Html.PasswordFor(model => model.PasswordChange.NewPassword, new { autocomplete = "new-password" })
-                        @Html.ValidationMessageFor(model => model.PasswordChange.NewPassword, "", new { @class = "field-validation-text" })
-                    </div>
-                    <div class="modal-field">
-                        @Html.LabelFor(model => model.PasswordChange.ConfirmPassword)
-                        @Html.PasswordFor(model => model.PasswordChange.ConfirmPassword, new { autocomplete = "new-password" })
-                        @Html.ValidationMessageFor(model => model.PasswordChange.ConfirmPassword, "", new { @class = "field-validation-text" })
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="outline-action-button compact-button" type="button" data-bs-dismiss="modal">Cancel</button>
-                    <button class="primary-action-button" type="submit">Update</button>
-                </div>
-            }
-        </div>
-    </div>
-</div>
-
 @section scripts {
     @Scripts.Render("~/bundles/jqueryval")
+
     <script>
-        (function () {
+        document.addEventListener("DOMContentLoaded", function () {
+
+            // ======================
+            // BUTTONS
+            // ======================
             var editButton = document.getElementById("editInfoBtn");
             var changePhotoButton = document.getElementById("changePhotoBtn");
             var uploadQrButton = document.getElementById("uploadQrBtn");
+
             var photoInput = document.getElementById("photoInput");
             var qrInput = document.getElementById("qrInput");
+
             var preview = document.getElementById("profilePreview");
-            var qrPreview = document.getElementById("qrPreview");
-            var qrPlaceholder = document.getElementById("qrPlaceholder");
             var photoData = document.getElementById("PhotoDataUrl");
             var qrData = document.getElementById("QrDataUrl");
+
             var editableFields = document.querySelectorAll(".editable-field");
-            var form = document.getElementById("profileForm");
-            var startEditing = form.getAttribute("data-start-editing") === "true";
+
+            // safety check (prevents crash)
+            if (!editButton || !changePhotoButton || !uploadQrButton) {
+                console.error("Buttons not found. Check _UserProfile.cshtml rendering.");
+                return;
+            }
+
             var editing = false;
 
+            // ======================
+            // EDIT MODE
+            // ======================
             function setEditingState(isEditing) {
                 editing = isEditing;
-                for (var index = 0; index < editableFields.length; index++) {
-                    editableFields[index].readOnly = !isEditing;
-                    editableFields[index].classList.toggle("is-editable", isEditing);
+
+                for (var i = 0; i < editableFields.length; i++) {
+                    editableFields[i].readOnly = !isEditing;
+                    editableFields[i].classList.toggle("is-editable", isEditing);
                 }
 
                 editButton.textContent = isEditing ? "Lock Info" : "Edit Info";
-                form.classList.toggle("is-editing", isEditing);
-            }
-
-            function wireUpload(input, callback) {
-                input.addEventListener("change", function (event) {
-                    var file = event.target.files && event.target.files[0];
-                    if (!file) {
-                        return;
-                    }
-
-                    if (!/^image\//i.test(file.type)) {
-                        alert("Please upload an image file.");
-                        input.value = "";
-                        return;
-                    }
-
-                    if (file.size > 2 * 1024 * 1024) {
-                        alert("Please upload an image smaller than 2 MB.");
-                        input.value = "";
-                        return;
-                    }
-
-                    var reader = new FileReader();
-                    reader.onload = function (loadEvent) {
-                        callback(loadEvent.target.result);
-                    };
-                    reader.readAsDataURL(file);
-                });
             }
 
             editButton.addEventListener("click", function () {
                 setEditingState(!editing);
             });
 
+            // ======================
+            // PHOTO UPLOAD
+            // ======================
             changePhotoButton.addEventListener("click", function () {
                 photoInput.click();
             });
 
+            // ======================
+            // QR UPLOAD
+            // ======================
             uploadQrButton.addEventListener("click", function () {
                 qrInput.click();
             });
 
+            function wireUpload(input, callback) {
+                if (!input) return;
+
+                input.addEventListener("change", function (e) {
+                    var file = e.target.files[0];
+                    if (!file) return;
+
+                    var reader = new FileReader();
+                    reader.onload = function (ev) {
+                        callback(ev.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
             wireUpload(photoInput, function (dataUrl) {
-                preview.src = dataUrl;
-                photoData.value = dataUrl;
+                if (preview) preview.src = dataUrl;
+                if (photoData) photoData.value = dataUrl;
             });
 
             wireUpload(qrInput, function (dataUrl) {
-                qrPreview.src = dataUrl;
-                qrData.value = dataUrl;
-                qrPreview.classList.remove("is-hidden");
-                qrPlaceholder.classList.add("is-hidden");
+                if (qrData) qrData.value = dataUrl;
             });
 
-            setEditingState(startEditing);
-
-            @if (Model.ReopenPasswordModal)
-            {
-                <text>
-                var passwordModalElement = document.getElementById("passwordModal");
-                if (passwordModalElement && window.bootstrap) {
-                    var passwordModal = new bootstrap.Modal(passwordModalElement);
-                    passwordModal.show();
-                }
-                </text>
-            }
-        })();
+        });
     </script>
 }

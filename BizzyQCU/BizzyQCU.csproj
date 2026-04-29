@@ -182,6 +182,10 @@
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Home\Profile.cshtml" />
     <Content Include="Views\Home\Transactions.cshtml" />
+    <Content Include="Views\Home\UserProfile.cshtml" />
+    <Content Include="Views\Home\EnterpriseProfile.cshtml" />
+    <Content Include="Views\Home\ChangePasswordModal.cshtml" />
+    <Content Include="Views\Home\Enterprises.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

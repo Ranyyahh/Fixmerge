@@ -1,0 +1,72 @@
+@model User_Profile_Seller_Juvi.Controllers.AccountSettingsPageViewModel
+
+<div class="profile-sidebar">
+    <h2>Enterprise Manager Information</h2>
+
+    <div class="profile-field-row">
+        @Html.LabelFor(m => m.Profile.ManagerName)
+        <div class="profile-input-wrap">
+            @Html.TextBoxFor(m => m.Profile.ManagerName, new { @class = "profile-input editable-field", @readonly = "readonly" })
+            @Html.ValidationMessageFor(m => m.Profile.ManagerName)
+        </div>
+    </div>
+
+    <div class="profile-field-row">
+        @Html.LabelFor(m => m.Profile.StudentId)
+        <div class="profile-input-wrap">
+            @Html.TextBoxFor(m => m.Profile.StudentId, new { @class = "profile-input editable-field", @readonly = "readonly" })
+            @Html.ValidationMessageFor(m => m.Profile.StudentId)
+        </div>
+    </div>
+
+    <div class="profile-field-row">
+        @Html.LabelFor(m => m.Profile.Section)
+        <div class="profile-input-wrap">
+            @Html.TextBoxFor(m => m.Profile.Section, new { @class = "profile-input editable-field", @readonly = "readonly" })
+            @Html.ValidationMessageFor(m => m.Profile.Section)
+        </div>
+    </div>
+
+    <div class="profile-field-row">
+        @Html.LabelFor(m => m.Profile.ManagerContactNumber)
+        <div class="profile-input-wrap">
+            @Html.TextBoxFor(m => m.Profile.ManagerContactNumber, new { @class = "profile-input editable-field", @readonly = "readonly" })
+            @Html.ValidationMessageFor(m => m.Profile.ManagerContactNumber)
+        </div>
+    </div>
+
+    <!-- QR SECTION -->
+    <div class="profile-field-row profile-qr-row">
+        <label>Gcash QR</label>
+
+        <div class="profile-input-wrap">
+            <div class="profile-qr-card profile-qr-card-inline">
+
+                <div class="profile-qr-frame">
+
+                    <!-- SAFE: only ONE source of truth (main image element) -->
+                    <img id="qrPreview"
+                         class="profile-qr-image @(string.IsNullOrWhiteSpace(Model.Profile.QrDataUrl) ? "is-hidden" : "")"
+                         src="@Model.Profile.QrDataUrl"
+                         alt="QR Code" />
+
+                    <span id="qrPlaceholder"
+                          class="profile-qr-placeholder @(string.IsNullOrWhiteSpace(Model.Profile.QrDataUrl) ? "" : "is-hidden")">
+                        No QR uploaded
+                    </span>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-actions-row">
+        <button class="primary-action-button" type="submit">Save</button>
+
+        <button class="primary-action-button wide" type="button"
+                data-bs-toggle="modal" data-bs-target="#passwordModal">
+            Change Password
+        </button>
+    </div>
+</div>

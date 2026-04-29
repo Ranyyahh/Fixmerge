@@ -1,0 +1,48 @@
+@model User_Profile_Seller_Juvi.Controllers.AccountSettingsPageViewModel
+
+<div class="profile-main">
+    <div class="profile-photo-tools">
+        <img id="profilePreview" class="avatar-image large-avatar"
+             src="@Model.Profile.PhotoDataUrl" />
+
+        <div class="profile-tool-buttons">
+            <button id="changePhotoBtn" class="primary-action-button" type="button">Change Photo</button>
+            <button id="uploadQrBtn" class="primary-action-button secondary" type="button">Upload QR</button>
+            <button id="editInfoBtn" class="primary-action-button secondary" type="button">Edit Info</button>
+        </div>
+    </div>
+    
+    <div class="profile-fields-block">
+        <div class="profile-field-row">
+            @Html.LabelFor(m => m.Profile.EnterpriseName)
+            <div class="profile-input-wrap">
+                @Html.TextBoxFor(m => m.Profile.EnterpriseName, new { @class = "profile-input editable-field", @readonly = "readonly" })
+                @Html.ValidationMessageFor(m => m.Profile.EnterpriseName, "", new { @class = "field-validation-text" })
+            </div>
+        </div>
+
+        <div class="profile-field-row">
+            @Html.LabelFor(m => m.Profile.EnterpriseType)
+            <div class="profile-input-wrap">
+                @Html.TextBoxFor(m => m.Profile.EnterpriseType, new { @class = "profile-input editable-field", @readonly = "readonly" })
+                @Html.ValidationMessageFor(m => m.Profile.EnterpriseType, "", new { @class = "field-validation-text" })
+            </div>
+        </div>
+
+        <div class="profile-field-row">
+            @Html.LabelFor(m => m.Profile.Contact)
+            <div class="profile-input-wrap">
+                @Html.TextBoxFor(m => m.Profile.Contact, new { @class = "profile-input editable-field", @readonly = "readonly" })
+                @Html.ValidationMessageFor(m => m.Profile.Contact, "", new { @class = "field-validation-text" })
+            </div>
+        </div>
+
+        <div class="profile-field-row">
+            @Html.LabelFor(m => m.Profile.Email)
+            <div class="profile-input-wrap">
+                @Html.TextBoxFor(m => m.Profile.Email, new { @class = "profile-input editable-field", @readonly = "readonly" })
+                @Html.ValidationMessageFor(m => m.Profile.Email, "", new { @class = "field-validation-text" })
+            </div>
+        </div>
+    </div>
+</div>
