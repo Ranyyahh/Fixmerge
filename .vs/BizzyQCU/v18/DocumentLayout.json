@@ -1,7 +1,16 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\Admin\\source\\repos\\AdminP\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{8CA599FB-24D8-4678-B296-BEB63F1C933D}|BizzyQCU\\BizzyQCU.csproj|c:\\users\\admin\\source\\repos\\adminp\\bizzyqcu\\views\\adminpanel\\admineditentrep.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{8CA599FB-24D8-4678-B296-BEB63F1C933D}|BizzyQCU\\BizzyQCU.csproj|solutionrelative:bizzyqcu\\views\\adminpanel\\admineditentrep.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8CA599FB-24D8-4678-B296-BEB63F1C933D}|BizzyQCU\\BizzyQCU.csproj|c:\\users\\admin\\source\\repos\\adminp\\bizzyqcu\\app_start\\routeconfig.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8CA599FB-24D8-4678-B296-BEB63F1C933D}|BizzyQCU\\BizzyQCU.csproj|solutionrelative:bizzyqcu\\app_start\\routeconfig.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -43,8 +52,34 @@
         },
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 0,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "AdminEditEntrep.cshtml",
+              "DocumentMoniker": "C:\\Users\\Admin\\source\\repos\\AdminP\\BizzyQCU\\Views\\AdminPanel\\AdminEditEntrep.cshtml",
+              "RelativeDocumentMoniker": "BizzyQCU\\Views\\AdminPanel\\AdminEditEntrep.cshtml",
+              "ToolTip": "C:\\Users\\Admin\\source\\repos\\AdminP\\BizzyQCU\\Views\\AdminPanel\\AdminEditEntrep.cshtml",
+              "RelativeToolTip": "BizzyQCU\\Views\\AdminPanel\\AdminEditEntrep.cshtml",
+              "ViewState": "AgIAAKUAAAAAAAAAAAAAALcAAABHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-29T12:25:40.169Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "RouteConfig.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\source\\repos\\AdminP\\BizzyQCU\\App_Start\\RouteConfig.cs",
+              "RelativeDocumentMoniker": "BizzyQCU\\App_Start\\RouteConfig.cs",
+              "ToolTip": "C:\\Users\\Admin\\source\\repos\\AdminP\\BizzyQCU\\App_Start\\RouteConfig.cs",
+              "RelativeToolTip": "BizzyQCU\\App_Start\\RouteConfig.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-29T12:18:50.118Z",
+              "EditorCaption": ""
+            },
             {
               "$type": "Bookmark",
               "Name": "ST:2:0:{e8034f19-ab72-4f06-83fd-f6832b41aa63}"

@@ -211,7 +211,7 @@ document.getElementById('viewDocsBtn').addEventListener('click', () => {
 });
 
 document.getElementById('viewListingBtn').addEventListener('click', () => {
-    window.location.href = '@Url.Action("AdminItemListing", "AdminPanel")';
+    window.location.href = listingUrl;
 });
 
 // ── REMOVE ITEM ──
