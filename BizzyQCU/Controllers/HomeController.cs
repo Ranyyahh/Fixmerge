@@ -147,6 +147,11 @@ namespace User_Profile_Seller_Juvi.Controllers
             return View("Profile", BuildAccountSettingsViewModel(GetProfile(), new ChangePasswordViewModel()));
         }
 
+        public ActionResult UserProfile()
+        {
+            return RedirectToAction("Profile");
+        }
+
         public ActionResult AccountSettings()
         {
             PrepareProfilePage("AccountSettings", "none");
