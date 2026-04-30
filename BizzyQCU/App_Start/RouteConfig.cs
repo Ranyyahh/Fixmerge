@@ -16,7 +16,7 @@ namespace BizzyQCU
             routes.MapRoute(
                 name: "Default",
                 url: "{controller}/{action}/{id}",
-                defaults: new { controller = "Tracking", action = "Tracking", id = UrlParameter.Optional }
+                defaults: new { controller = "ManageOrders", action = "ManageOrders", id = UrlParameter.Optional }
             );
         }
     }
