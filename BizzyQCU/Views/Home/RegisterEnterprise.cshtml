@@ -1,0 +1,127 @@
+﻿@{
+    ViewBag.Title = "Enterprise Registration";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="auth-bg">
+    <div class="enterprise-card">
+        <h2>ENTERPRISE REGISTER</h2>
+        <div id="messageBox" class="message"></div>
+        <form onsubmit="return registerEnterprise(event)">
+            <input type="text" id="enterpriseName" placeholder="Enterprise Name" required>
+            <select id="enterpriseType" required>
+                <option value="">-- Select Type --</option>
+                <option value="Food Business">Food Business</option>
+                <option value="Product Retail">Product Retail</option>
+            </select>
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <input type="email" id="email" placeholder="Email Address" required>
+
+            <!-- Contact Number - NUMBERS ONLY -->
+            <input type="text" id="contact" placeholder="Contact Number"
+                   onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+                   maxlength="11"
+                   title="Numbers only (0-9)" required>
+
+            <div class="upload-wrapper">
+                <span class="upload-link" onclick="document.getElementById('documents').click()">📎 Upload Documents</span>
+                <span id="fileNames" class="file-name">No files chosen</span>
+                <input type="file" id="documents" multiple style="display:none" onchange="updateFileNames()">
+            </div>
+            <button type="submit" class="auth-btn">REGISTER</button>
+        </form>
+        <div class="auth-links">
+            Already have an account? <a href="@Url.Action("Login", "Home")">Login</a><br>
+            Want to Buy? <a href="@Url.Action("RegisterStudent", "Home")">Sign Up Here</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateFileNames() {
+        var input = document.getElementById('documents');
+        var display = document.getElementById('fileNames');
+        if (input.files.length > 0) {
+            var names = [];
+            for (var i = 0; i < input.files.length; i++) names.push(input.files[i].name);
+            display.textContent = names.join(', ');
+        } else {
+            display.textContent = 'No files chosen';
+        }
+    }
+
+    function showMessage(msg, type) {
+        var box = document.getElementById('messageBox');
+        box.textContent = msg;
+        box.style.backgroundColor = type === 'error' ? '#fee' : '#e8f5e9';
+        box.style.color = type === 'error' ? '#c33' : '#2e7d32';
+        box.style.display = 'block';
+        setTimeout(function() { box.style.display = 'none'; }, 5000);
+    }
+
+    // VALIDATION: Contact Number (11 digits or 7 digits)
+    function validateContactNumber(contact) {
+        var mobilePattern = /^[0-9]{11}$/;
+        var landlinePattern = /^[0-9]{7}$/;
+        return mobilePattern.test(contact) || landlinePattern.test(contact);
+    }
+
+    function registerEnterprise(e) {
+        e.preventDefault();
+
+        var enterpriseName = document.getElementById('enterpriseName').value;
+        var enterpriseType = document.getElementById('enterpriseType').value;
+        var username = document.getElementById('username').value;
+        var email = document.getElementById('email').value;
+        var password = document.getElementById('password').value;
+        var contact = document.getElementById('contact').value;
+
+        if (!enterpriseName || !enterpriseType || !username || !email || !password || !contact) {
+            showMessage('Please fill in all required fields!', 'error');
+            return false;
+        }
+
+        if (!validateContactNumber(contact)) {
+            showMessage('Contact Number must be 11 digits (mobile) or 7 digits (landline)!', 'error');
+            return false;
+        }
+
+        var users = JSON.parse(localStorage.getItem('bizzyqcu_users') || '[]');
+        for (var i = 0; i < users.length; i++) {
+            if (users[i].username === username || users[i].email === email) {
+                showMessage('Username or Email already exists!', 'error');
+                return false;
+            }
+        }
+
+        var fileNames = [];
+        var fileInput = document.getElementById('documents');
+        if (fileInput.files.length > 0) {
+            for (var i = 0; i < fileInput.files.length; i++) {
+                fileNames.push(fileInput.files[i].name);
+            }
+        }
+
+        users.push({
+            id: Date.now(), userType: 'enterprise', isApproved: false,
+            enterpriseName: enterpriseName,
+            enterpriseType: enterpriseType,
+            username: username,
+            email: email,
+            password: password,
+            contact: contact,
+            documents: fileNames.join(', '),
+            registeredDate: new Date().toISOString()
+        });
+
+        localStorage.setItem('bizzyqcu_users', JSON.stringify(users));
+        showMessage('Registration submitted! Redirecting...', 'success');
+
+        setTimeout(function() {
+            window.location.href = '@Url.Action("Login", "Home")';
+        }, 2000);
+
+        return false;
+    }
+</script>

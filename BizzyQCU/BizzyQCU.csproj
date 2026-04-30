@@ -136,6 +136,9 @@
     <Content Include="Content\bootstrap-theme.min.css" />
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
+    <Content Include="Content\images\background.png" />
+    <Content Include="Content\images\bizzyqcu logo.png" />
+    <Content Include="Content\Login.css" />
     <Content Include="Content\home_about_product_ent.css" />
     <Content Include="Content\Images\account-icon.png" />
     <Content Include="Content\Images\ad-sample.png" />
@@ -175,6 +178,11 @@
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
+    <None Include="Views\Home\history.cshtml" />
+    <Content Include="Views\Home\RegisterStudent.cshtml" />
+    <Content Include="Views\Home\RegisterEnterprise.cshtml" />
+    <Content Include="Views\Home\Login.cshtml" />
+    <None Include="Views\Home\tracking.cshtml" />
     <Content Include="Scripts\ProductPageLogic.js" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
