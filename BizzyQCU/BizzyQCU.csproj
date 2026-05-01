@@ -115,6 +115,7 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\EnterpriseListController.cs" />
     <Compile Include="Controllers\ProductListController.cs" />
+	  <Compile Include="Controllers\AdminPanelController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -234,6 +235,11 @@
     <Content Include="Views\Tracking\history.cshtml" />
     <Content Include="Views\ManageOrders\ManageOrders.cshtml" />
     <Content Include="Views\ProductList\ProductList.cshtml" />
+	  <Content Include="Views\AdminPanel\AdminLandingEntrep.cshtml" />
+	  <Content Include="Views\AdminPanel\AdminUsers.cshtml" />
+	  <Content Include="Views\AdminPanel\LandingAdmin.cshtml" />
+	  <Content Include="Views\AdminPanel\AdminEditEntrep.cshtml" />
+	  <Content Include="Views\AdminPanel\AdminItemListing.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
