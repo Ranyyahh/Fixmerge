@@ -1,0 +1,484 @@
+﻿/* ---------- BASE & RESET ---------- */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+body {
+    background: linear-gradient(to bottom, #ffde42, #111fa2);
+    color: #232ab9;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: visible;
+    overflow-x: hidden;
+    background: #343aa8;
+    padding-bottom: 0;
+}
+
+/* ---------- HEADER ---------- */
+.enterprise-header {
+    display: flex;
+    align-items: center;
+    background: #f4cf3b;
+    padding: 10px;
+    border-radius: 0 0 20px 20px;
+    margin-bottom: 20px;
+    color: white;
+}
+
+.enterprise-header h1 {
+    margin-left: 25px;
+    margin-bottom: 0;
+    font-size: clamp(1.15rem, 2.3vw, 2rem);
+}
+
+.profile-icon {
+    width: 60px;
+    height: 60px;
+    background: #ccc;
+    border-radius: 50%;
+    margin-left: 30px;
+}
+
+/* ---------- TOP ROW (STATS + CHART) ---------- */
+.top-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 0 20px;
+    margin-bottom: 15px;
+    align-items: stretch;
+}
+
+/* STATS COLUMN */
+.stats-column {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.stats-card {
+    background: white;
+    border-radius: 20px;
+    padding: 15px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    min-width: 0;
+}
+
+.stats-card-text {
+    flex: 1;
+}
+
+.stats-card h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.stats-card .sub {
+    color: gray;
+    margin-bottom: 8px;
+    font-weight: bold;
+    font-size: 0.85rem;
+}
+
+.stats-card h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: #1f2f8a;
+    font-weight: bold;
+}
+
+.stats-icon {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+}
+/* left borders */
+.sales-card {
+    border-left: 15px solid #4caf50;
+}
+
+.orders-card {
+    border-left: 15px solid #5478ff;
+}
+
+.deliveries-card {
+    border-left: 15px solid #ffde42;
+}
+
+/* CHART COLUMN */
+.chart-column {
+    flex: 2;
+    min-width: 250px;
+}
+
+.sales-box {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.sales-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.dropdown-wrapper select {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    background: #fff;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+#salesChart {
+    max-height: 250px;
+    width: 100%;
+    display: block;
+}
+
+.weekly {
+    text-align: center;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+/* ---------- BOTTOM ROW (NEW ORDERS + BUTTONS) – DESKTOP (no wrap) ---------- */
+.bottom-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 15px;
+    padding: 0 20px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+/* NEW ORDERS BOX – flexible, no fixed width */
+.new-orders-wide {
+    background: #fff5c8;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: 0.2s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0;
+    height: 80px;
+    padding: 0 20px;
+    box-sizing: border-box;
+    margin-bottom: 0; /* no extra bottom margin on desktop */
+    font-size: 2rem;
+    font-weight: bold;
+    flex: 1 1 auto; /* takes needed space, can shrink/grow */
+    color: #000000;
+    width: auto;
+    max-width: 53.5%;
+    min-width: 100px;
+}
+
+.new-orders-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.new-orders-icon {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+}
+
+.new-orders-text {
+    white-space: nowrap;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.arrow-right {
+    font-size: 2.5rem;
+    font-weight: bold;
+    line-height: 1;
+    margin-left: 10px;
+}
+
+.new-orders-wide:hover {
+    background: #f0e3a6;
+    transform: scale(1.01);
+}
+
+/* ACTIONS BUTTONS – inline row, no wrap */
+.actions-column {
+    flex: 1;
+    min-width: 0; /* allows shrinking */
+}
+
+.actions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap; /* buttons stay side by side on desktop */
+    gap: 15px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+    .actions button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        border: none;
+        background: #f4cf3b;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: 0.2s;
+        white-space: nowrap;
+        height: 80px;
+        padding: 0 25px;
+        box-sizing: border-box;
+        flex: 0 1 auto;
+    }
+
+        .actions button img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        .actions button:hover {
+            background: #e0b830;
+            transform: scale(1.02);
+        }
+
+footer {
+    background: #ffffff;
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06);
+    margin-top: 20px !important;
+}
+
+/* ---------- RESPONSIVE (MOBILE) ---------- */
+@media (max-width: 768px) {
+    .dashboard-container {
+        background: #2f359f;
+        padding-bottom: 0;
+    }
+
+    .enterprise-header {
+        padding: 10px 14px;
+        margin-bottom: 14px;
+        border-radius: 0 0 14px 14px;
+    }
+
+    .enterprise-header h1 {
+        margin-left: 12px;
+        font-size: 1.05rem;
+    }
+
+    .profile-icon {
+        width: 44px;
+        height: 44px;
+        margin-left: 6px;
+    }
+
+    /* make layout stack vertically */
+    .top-row {
+        flex-direction: column;
+        padding: 0 15px;
+        gap: 12px;
+    }
+
+    .stats-column {
+        flex-direction: column;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .stats-card {
+        flex: 1 1 100%;
+        padding: 12px;
+        border-left-width: 8px;
+    }
+
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+    }
+
+    .stats-card h2 {
+        font-size: 1.4rem;
+    }
+
+    .stats-card h3 {
+        font-size: 1rem;
+    }
+
+    .chart-column {
+        min-width: 0;
+    }
+
+    .sales-box {
+        padding: 15px;
+        border-radius: 14px;
+    }
+
+    .sales-header h3 {
+        font-size: 1.05rem;
+        margin: 0;
+    }
+
+    .dropdown-wrapper select {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+
+    #salesChart { max-height: 190px; }
+
+    .weekly {
+        font-size: 0.9rem;
+    }
+
+    /* bottom row: nowrap → wrap, and items become full width */
+    .bottom-row {
+        flex-wrap: wrap;
+        padding: 0 15px;
+        margin-bottom: 16px;
+    }
+
+    footer {
+        margin-top: 0 !important;
+    }
+
+    .new-orders-wide {
+        width: 100%;
+        flex: none;
+        height: auto;
+        min-height: 58px;
+        padding: 10px 14px;
+        margin-bottom: 5px;
+        font-size: 1rem;
+        border-radius: 14px;
+        max-width: none;
+    }
+
+    .new-orders-icon {
+        width: 35px;
+        height: 35px;
+    }
+
+    .new-orders-left {
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .arrow-right {
+        font-size: 1.8rem;
+    }
+
+    .actions-column {
+        width: 100%;
+        flex: none;
+    }
+
+    .actions {
+        flex-direction: column;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+        .actions button {
+            width: 100%;
+            justify-content: center;
+            height: auto;
+            min-height: 52px;
+            padding: 12px 14px;
+            font-size: 0.95rem;
+            border-radius: 14px;
+        }
+
+            .actions button img {
+                width: 28px;
+                height: 28px;
+            }
+}
+
+/* Extra small devices (phones under 480px) */
+@media (max-width: 480px) {
+    .top-row,
+    .bottom-row {
+        padding: 0 10px;
+    }
+
+    .dashboard-container {
+        padding-bottom: 0;
+    }
+
+    .stats-card {
+        padding: 10px;
+    }
+
+    .stats-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .stats-card h2 {
+        font-size: 1.2rem;
+    }
+
+    .stats-card h3 {
+        font-size: 0.92rem;
+    }
+
+    .new-orders-wide {
+        font-size: 0.95rem;
+        padding: 10px 12px;
+    }
+
+    .new-orders-icon {
+        width: 28px;
+        height: 28px;
+    }
+
+    .arrow-right {
+        font-size: 1.5rem;
+    }
+
+    .actions button {
+        font-size: 0.88rem;
+        padding: 10px 12px;
+    }
+
+        .actions button img {
+            width: 24px;
+            height: 24px;
+        }
+}

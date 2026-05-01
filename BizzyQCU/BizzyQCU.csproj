@@ -9,6 +9,7 @@
     </ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{19FAABE4-BAA3-40F4-AE00-3209D86DDD0F}</ProjectGuid>
+    <ProjectGuid>{950960EA-81F6-49E9-9FEE-C8A978F48896}</ProjectGuid>
     <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -46,12 +47,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.Web.Infrastructure, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Web.Infrastructure.2.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
-    <Reference Include="System.Web.DynamicData" />
-    <Reference Include="System.Web.Entity" />
-    <Reference Include="System.Web.ApplicationServices" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -114,12 +118,31 @@
   <ItemGroup>
     <Reference Include="Microsoft.CodeDom.Providers.DotNetCompilerPlatform">
       <HintPath>..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1\lib\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll</HintPath>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Web.Abstractions" />
+    <Reference Include="System.Web.Routing" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Net.Http.WebRequest" />
+    <Reference Include="WebGrease, Version=1.6.5135.21930, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\WebGrease.1.6.0\lib\WebGrease.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="Controllers\CheckoutController.cs" />
+    <Compile Include="Controllers\EnterpriseDashboardController.cs" />
+    <Compile Include="Controllers\ManageOrdersController.cs" />
+    <Compile Include="Controllers\TrackingController.cs" />
+    <Compile Include="Controllers\ChatroomController.cs" />
+    <Compile Include="Controllers\EnterpriseController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ProductChild.cs" />
     <Compile Include="Global.asax.cs">
@@ -128,6 +151,30 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Content\bootstrap-grid.css" />
+    <Content Include="Content\bootstrap-grid.min.css" />
+    <Content Include="Content\bootstrap-grid.rtl.css" />
+    <Content Include="Content\bootstrap-grid.rtl.min.css" />
+    <Content Include="Content\bootstrap-reboot.css" />
+    <Content Include="Content\bootstrap-reboot.min.css" />
+    <Content Include="Content\bootstrap-reboot.rtl.css" />
+    <Content Include="Content\bootstrap-reboot.rtl.min.css" />
+    <Content Include="Content\bootstrap-utilities.css" />
+    <Content Include="Content\bootstrap-utilities.min.css" />
+    <Content Include="Content\bootstrap-utilities.rtl.css" />
+    <Content Include="Content\bootstrap-utilities.rtl.min.css" />
+    <Content Include="Content\bootstrap.css" />
+    <Content Include="Content\bootstrap.min.css" />
+    <Content Include="Content\bootstrap.rtl.css" />
+    <Content Include="Content\bootstrap.rtl.min.css" />
+    <Content Include="Content\checkout.css" />
+    <Content Include="Content\EnterpriseDashboard.css" />
+    <Content Include="Content\layout.css" />
+    <Content Include="Content\MobileNavbar.css" />
+    <Content Include="Content\Chatroom.css" />
+    <Content Include="Content\images\background.png" />
+    <Content Include="Content\images\bizzyqcu logo.png" />
+    <Content Include="Content\Login.css" />
     <Content Include="Content\home_about_product_ent.css" />
     <Content Include="Content\Images\back-btn.png" />
     <Content Include="Content\layout.css" />
@@ -149,12 +196,40 @@
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\bootstrap.rtl.css" />
     <Content Include="Content\bootstrap.rtl.min.css" />
+    <Content Include="Content\Images\bee_logo.png" />
+    <Content Include="Content\Images\BizzyQCU-Home-BG.png" />
+    <Content Include="Content\Images\BizzyQCU-navbar-logo.png" />
+    <Content Include="Content\Images\cart-icon.png" />
+    <Content Include="Content\Images\Logo.png" />
+    <Content Include="Content\Images\pl_bento.png" />
+    <Content Include="Content\Images\pl_cf.jpg" />
+    <Content Include="Content\Images\pl_pst.jpg" />
+    <Content Include="Content\Images\pl_psto.jpg" />
+    <Content Include="Content\Images\pl_slg.jpg" />
+    <Content Include="Content\Images\test-img-profile.jpg" />
+    <Content Include="Content\Images\test-img1.jpg" />
+    <Content Include="Content\Images\test-img2.jpg" />
+    <Content Include="Content\ManageStyle.css" />
+    <Content Include="Content\trackingstyle.css" />
+    <Content Include="Content\tracking.css" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
-    <Content Include="Images\account-icon.png" />
+    <Content Include="Images\1.png" />
+    <Content Include="Images\edit-icon.png" />
+    <Content Include="Images\2.png" />
+    <Content Include="Images\3.png" />
+    <Content Include="Images\sales-icon.png" />
+    <Content Include="Images\orders-icon.png" />
+    <Content Include="Images\deliveries-icon.png" />
+    <Content Include="Images\new-orders-icon.png" />
+    <Content Include="Images\add-icon.png" />
+    <Content Include="Images\manage-icon.png" />
     <Content Include="Images\cart-icon.png" />
+    <Content Include="Images\account-icon.png" />
     <Content Include="Images\Logo.png" />
+    <Content Include="Fonts\Proxima Nova Regular.ttf" />
+    <Content Include="Fonts\Proxima Nova Semibold.ttf" />
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />
     <Content Include="Scripts\bootstrap.esm.js" />
@@ -164,6 +239,9 @@
     <Content Include="Content\Fonts\Proxima Nova Regular.ttf" />
     <Content Include="Content\Fonts\Proxima Nova Semibold.ttf" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
+    <Content Include="Scripts\Checkout.js" />
+    <Content Include="Scripts\EnterpriseDashboard.js" />
+    <Content Include="Scripts\Enterprise-Ad-Modal.js" />
     <Content Include="Scripts\jquery-3.7.0.js" />
     <Content Include="Scripts\jquery-3.7.0.min.js" />
     <Content Include="Scripts\jquery-3.7.0.slim.js" />
@@ -175,13 +253,14 @@
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
     <Content Include="Scripts\Pchild.js" />
+    <Content Include="Scripts\ProductPageLogic.js" />
+    <Content Include="Views\Home\history.cshtml" />
+    <Content Include="Views\Home\RegisterStudent.cshtml" />
+    <Content Include="Views\Home\RegisterEnterprise.cshtml" />
+    <Content Include="Views\Home\Login.cshtml" />
+    <Content Include="Views\Home\Manage.cshtml" />
+    <Content Include="Views\Home\tracking.cshtml" />
     <Content Include="Web.config" />
-    <Content Include="Web.Debug.config">
-      <DependentUpon>Web.config</DependentUpon>
-    </Content>
-    <Content Include="Web.Release.config">
-      <DependentUpon>Web.config</DependentUpon>
-    </Content>
     <Content Include="Views\Web.config" />
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Shared\Error.cshtml" />
@@ -221,6 +300,20 @@
     <Content Include="Scripts\bootstrap.bundle.js.map" />
     <Content Include="Scripts\jquery-3.7.0.slim.min.map" />
     <Content Include="Scripts\jquery-3.7.0.min.map" />
+    <Content Include="Views\Checkout\CheckoutPage.cshtml" />
+    <Content Include="Views\EnterpriseDashboard\EnterpriseDashboard.cshtml" />
+    <Content Include="Views\Home\Homepage.cshtml" />
+    <Content Include="Views\EnterpriseList\EnterpriseList.cshtml" />
+    <Content Include="Views\Enterprise\ViewEnterprise.cshtml" />
+    <Content Include="Views\Chatroom\Chatroom.cshtml" />
+    <Content Include="Views\Enterprise\EnterpriseList.cshtml" />
+    <Content Include="Views\Tracking\tracking.cshtml" />
+    <Content Include="Views\Tracking\history.cshtml" />
+    <Content Include="Views\ManageOrders\ManageOrders.cshtml" />
+    <Content Include="Views\ProductList\ProductList.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -241,6 +334,9 @@
           <DevelopmentServerPort>60442</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
           <IISUrl>https://localhost:44311/</IISUrl>
+          <DevelopmentServerPort>59519</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>https://localhost:44343/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>
           <UseCustomServer>False</UseCustomServer>
           <CustomServerUrl>
@@ -250,12 +346,6 @@
       </FlavorProperties>
     </VisualStudio>
   </ProjectExtensions>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target> -->
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
