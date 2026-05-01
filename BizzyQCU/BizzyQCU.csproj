@@ -171,6 +171,11 @@
     <Content Include="Content\trackingstyle.css" />
     <Content Include="Content\tracking.css" />
     <Content Include="Content\Transactions.css" />
+	  <Content Include="Content\AdminEditEntrep.css" />
+	  <Content Include="Content\AdminItemListing.css" />
+	  <Content Include="Content\AdminLandingEntrep.css" />
+	  <Content Include="Content\AdminUsers.css" />
+	  <Content Include="Content\LandingAdmin.css" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
