@@ -1,66 +1,30 @@
-﻿using System.Web.Mvc;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
 
 namespace BizzyQCU.Controllers
 {
     public class HomeController : Controller
     {
-        public ActionResult Login()
+        public ActionResult Index()
         {
-            return View();
-        }
-
-        public ActionResult RegisterStudent()
-        {
-            return View();
-        }
-
-        public ActionResult RegisterEnterprise()
-        {
-            return View();
-        }
-
-        public ActionResult Tracking()
-        {
-            return View();
-        }
-
-        public ActionResult Manage()
-        {
-            return View();
-        }
-
-        public ActionResult History()
-        {
-            return View();
-        }
-
-        public ActionResult Homepage()
-        {
-            ViewBag.Message = "Your Homepage.";
-
-            return View();
-        }
-
-
-        public ActionResult ProductList()
-        {
-            ViewBag.Message = "Product List page.";
-
-            return View();
-        }
-
-        public ActionResult ViewEnterprise()
-        {
-            ViewBag.Message = "Your Enterprises.";
             return View();
         }
 
         public ActionResult About()
         {
-            ViewBag.Message = "About page.";
+            ViewBag.Message = "Your application description page.";
+
+            return View();
+        }
+
+        public ActionResult Contact()
+        {
+            ViewBag.Message = "Your contact page.";
+
             return View();
         }
     }
 }
-
-   
