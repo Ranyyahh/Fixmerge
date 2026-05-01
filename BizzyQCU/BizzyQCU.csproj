@@ -59,6 +59,9 @@
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Web.Abstractions" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Abstractions" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Web.Routing" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Configuration" />
@@ -67,6 +70,9 @@
     <Reference Include="Microsoft.Web.Infrastructure, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <Private>True</Private>
       <HintPath>..\packages\Microsoft.Web.Infrastructure.2.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
+    <Reference Include="Microsoft.Web.Infrastructure, Version=2.0.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.Web.Infrastructure.2.0.1\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
     </Reference>
     <Reference Include="System.Net.Http">
     </Reference>
@@ -101,6 +107,14 @@
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="WebGrease">
+      <Private>True</Private>
+      <HintPath>..\packages\WebGrease.1.6.0\lib\WebGrease.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http.WebRequest">
     </Reference>
     <Reference Include="WebGrease">
       <Private>True</Private>
@@ -122,6 +136,13 @@
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\CheckoutController.cs" />
     <Compile Include="Controllers\EnterpriseDashboardController.cs" />
+    <Compile Include="Controllers\ManageOrdersController.cs" />
+    <Compile Include="Controllers\TrackingController.cs" />
+    <Compile Include="Controllers\ChatroomController.cs" />
+    <Compile Include="Controllers\EnterpriseController.cs" />
+    <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\EnterpriseListController.cs" />
+    <Compile Include="Controllers\ProductListController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -148,6 +169,31 @@
     <Content Include="Content\EnterpriseDashboard.css" />
     <Content Include="Content\layout.css" />
     <Content Include="Content\MobileNavbar.css" />
+    <Content Include="Content\Chatroom.css" />
+    <Content Include="Content\images\background.png" />
+    <Content Include="Content\images\bizzyqcu logo.png" />
+    <Content Include="Content\Login.css" />
+    <Content Include="Content\home_about_product_ent.css" />
+    <Content Include="Content\Images\account-icon.png" />
+    <Content Include="Content\Images\ad-sample.png" />
+    <Content Include="Content\Images\back-btn.png" />
+    <Content Include="Content\Images\bee_logo.png" />
+    <Content Include="Content\Images\BizzyQCU-Home-BG.png" />
+    <Content Include="Content\Images\BizzyQCU-navbar-logo.png" />
+    <Content Include="Content\Images\cart-icon.png" />
+    <Content Include="Content\Images\Logo.png" />
+    <Content Include="Content\Images\pl_bento.png" />
+    <Content Include="Content\Images\pl_cf.jpg" />
+    <Content Include="Content\Images\pl_pst.jpg" />
+    <Content Include="Content\Images\pl_psto.jpg" />
+    <Content Include="Content\Images\pl_slg.jpg" />
+    <Content Include="Content\Images\test-img-profile.jpg" />
+    <Content Include="Content\Images\test-img1.jpg" />
+    <Content Include="Content\Images\test-img2.jpg" />
+    <Content Include="Content\ManageStyle.css" />
+    <Content Include="Content\MobileNavbar.css" />
+    <Content Include="Content\trackingstyle.css" />
+    <Content Include="Content\tracking.css" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
@@ -179,12 +225,30 @@
     <Content Include="Scripts\jquery-3.7.0.min.js" />
     <Content Include="Scripts\jquery-3.7.0.slim.js" />
     <Content Include="Scripts\jquery-3.7.0.slim.min.js" />
+    <Content Include="Images\account-icon.png" />
+    <Content Include="Images\cart-icon.png" />
+    <Content Include="Images\Logo.png" />
+    <Content Include="Scripts\bootstrap.js" />
+    <Content Include="Scripts\bootstrap.min.js" />
+    <None Include="Scripts\jquery-3.4.1.intellisense.js" />
+    <Content Include="Scripts\Enterprise-Ad-Modal.js" />
+    <Content Include="Scripts\jquery-3.4.1.js" />
+    <Content Include="Scripts\jquery-3.4.1.min.js" />
+    <Content Include="Scripts\jquery-3.4.1.slim.js" />
+    <Content Include="Scripts\jquery-3.4.1.slim.min.js" />
     <None Include="Scripts\jquery.validate-vsdoc.js" />
     <Content Include="Scripts\jquery.validate.js" />
     <Content Include="Scripts\jquery.validate.min.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
+    <None Include="Views\Home\history.cshtml" />
+    <Content Include="Views\Home\RegisterStudent.cshtml" />
+    <Content Include="Views\Home\RegisterEnterprise.cshtml" />
+    <Content Include="Views\Home\Login.cshtml" />
+    <Content Include="Views\Home\Manage.cshtml" />
+    <None Include="Views\Home\tracking.cshtml" />
+    <Content Include="Scripts\ProductPageLogic.js" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
@@ -201,6 +265,15 @@
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Checkout\CheckoutPage.cshtml" />
     <Content Include="Views\EnterpriseDashboard\EnterpriseDashboard.cshtml" />
+    <Content Include="Views\Home\Homepage.cshtml" />
+    <Content Include="Views\EnterpriseList\EnterpriseList.cshtml" />
+    <Content Include="Views\Enterprise\ViewEnterprise.cshtml" />
+    <Content Include="Views\Chatroom\Chatroom.cshtml" />
+    <Content Include="Views\Enterprise\EnterpriseList.cshtml" />
+    <Content Include="Views\Tracking\tracking.cshtml" />
+    <Content Include="Views\Tracking\history.cshtml" />
+    <Content Include="Views\ManageOrders\ManageOrders.cshtml" />
+    <Content Include="Views\ProductList\ProductList.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

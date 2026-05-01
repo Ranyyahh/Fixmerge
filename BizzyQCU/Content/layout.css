@@ -18,13 +18,12 @@ body {
     margin: 0;
     padding: 0;
     font-family: 'Proxima', 'Segoe UI', Roboto, sans-serif;
-    overflow-x: hidden;
 }
 
 .navbar {
     position: sticky;
     top: 0;
-    min-height: 90px;
+    height: 90px;
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
@@ -42,7 +41,7 @@ body {
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    min-height: 90px;
+    height: 90px;
 }
 
     .logo img {
@@ -64,8 +63,7 @@ body {
     flex-wrap: nowrap;
     gap: 40px;
     align-items: center;
-    flex-shrink: 1;
-    min-width: 0;
+    flex-shrink: 0;
 }
 
     .nav-links a {
@@ -113,9 +111,8 @@ body {
 
 @media (max-width: 768px) {
     .navbar {
-        padding: 10px 14px;
+        padding: 0 20px;
         gap: 15px;
-        min-height: 72px;
     }
 
     .nav-links {
@@ -127,20 +124,28 @@ body {
     }
 
     .logo img {
-        width: 130px;
-        max-height: 56px;
-        object-fit: contain;
+        width: 150px;
     }
 
     .right-icons {
-        gap: 8px;
+        gap: 10px;
     }
 
     .cart-icon img {
-        height: 24px;
+        height: 28px;
     }
 
     .account-icon img {
-        height: 30px;
+        height: 35px;
     }
 }
+
+
+
+
+
+
+
+
+
+

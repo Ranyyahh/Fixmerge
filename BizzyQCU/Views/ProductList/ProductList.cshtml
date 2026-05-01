@@ -1,0 +1,196 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Product List";
+    ViewBag.BodyClass = "product-page";
+}
+
+
+<div class="product-page-container">
+    <div class="floating-header">
+        <h2>CAMPUS <span class="header-highlight">MARKETPLACE</span></h2>
+        <p>Shop from 12+ student enterprises - food, merch, printing, &amp; more.</p>
+    </div>
+
+    <div class="search-filtering">
+        <div class="search-row">
+            <div class="searchbox-section">
+                @Html.TextBox("searchString", null, new
+                {
+                    @class = "search-input",
+                    placeholder = "Search for products",
+                    id = "productSearch",
+                    autocomplete = "off"
+                })
+            </div>
+
+
+            <button class="filter-icon-btn" id="filterToggleBtn" aria-label="Toggle filters">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+                    <line x1="4" y1="6" x2="20" y2="6" />
+                    <circle cx="14" cy="6" r="2.5" fill="white" />
+                    <line x1="4" y1="12" x2="20" y2="12" />
+                    <circle cx="8" cy="12" r="2.5" fill="white" />
+                    <line x1="4" y1="18" x2="20" y2="18" />
+                    <circle cx="16" cy="18" r="2.5" fill="white" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="filter-section" id="filterSection">
+            @Html.DropDownList("category", new List<SelectListItem>
+        {
+                new SelectListItem { Text = "All Categories", Value = "" },
+                new SelectListItem { Text = "Food",           Value = "food" },
+                new SelectListItem { Text = "Merchandise",    Value = "merch" },
+                new SelectListItem { Text = "Printing",       Value = "printing" },
+                new SelectListItem { Text = "Services",       Value = "services" }
+            }, new { @class = "filter-dropdown", id = "categoryFilter" })
+
+            @Html.DropDownList("popularity", new List<SelectListItem>
+        {
+                new SelectListItem { Text = "Sort by: Recommended", Value = "" },
+                new SelectListItem { Text = "Most Popular",          Value = "high" },
+                new SelectListItem { Text = "Least Popular",         Value = "low" }
+            }, new { @class = "filter-dropdown", id = "popularityFilter" })
+
+            @Html.DropDownList("priceRange", new List<SelectListItem>
+        {
+                new SelectListItem { Text = "All Prices",       Value = "" },
+                new SelectListItem { Text = "Low (₱1 - ₱100)", Value = "lowprice" },
+                new SelectListItem { Text = "High (₱100+)",     Value = "highprice" }
+            }, new { @class = "filter-dropdown", id = "priceFilter" })
+        </div>
+    </div>
+
+    <div class="product-list-wrapper">
+        <div class="product-grid-container" id="productGrid">
+
+            <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice">
+                <div class="product-img-placeholder">
+                    <img src="~/Content/Images/pl_bento.png" />
+                </div>
+                <div class="product-card-info">
+                    <span class="product-store">Store Name</span>
+                    <span class="product-name">Bento Meal</span>
+                    <span class="product-desc">Rice, viand, and side. Fresh Daily.</span>
+                    <div class="product-footer">
+                        <span class="product-price">&#8369;75</span>
+                        <button class="add-btn">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-card" data-category="food" data-popularity="low" data-price="lowprice">
+                <div class="product-img-placeholder">
+                    <img src="~/Content/Images/spasta.png" />
+                </div>
+                <div class="product-card-info">
+                    <span class="product-store">Store Name</span>
+                    <span class="product-name">Pasta Verde</span>
+                    <span class="product-desc">Organic pasta made by natural ingredients.</span>
+                    <div class="product-footer">
+                        <span class="product-price">&#8369;80</span>
+                        <button class="add-btn">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice">
+                <div class="product-img-placeholder">
+                    <img src="~/Content/Images/pl_cf.jpg" />
+                </div>
+                <div class="product-card-info">
+                    <span class="product-store">Store Name</span>
+                    <span class="product-name">Iced Coffee</span>
+                    <span class="product-desc">Locally brewed cold coffee blend.</span>
+                    <div class="product-footer">
+                        <span class="product-price">&#8369;40</span>
+                        <button class="add-btn">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice">
+                <div class="product-img-placeholder">
+                    <img src="~/Content/Images/pl_slg.jpg" />
+                </div>
+                <div class="product-card-info">
+                    <span class="product-store">Store Name</span>
+                    <span class="product-name">Silog Combo</span>
+                    <span class="product-desc">Sinangag, itlog, and your choice of ulam.</span>
+                    <div class="product-footer">
+                        <span class="product-price">&#8369;85</span>
+                        <button class="add-btn">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice">
+                <div class="product-img-placeholder">
+                    <img src="~/Content/Images/siomai.jpg" />
+                </div>
+                <div class="product-card-info">
+                    <span class="product-store">Store Name</span>
+                    <span class="product-name">Siomai Rice</span>
+                    <span class="product-desc">Steamed siomai served with garlic rice.</span>
+                    <div class="product-footer">
+                        <span class="product-price">&#8369;55</span>
+                        <button class="add-btn">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-card" data-category="merch" data-popularity="low" data-price="highprice">
+                <div class="product-img-placeholder">
+                    <img src="~/Content/Images/toteb.jpeg" />
+                </div>
+                <div class="product-card-info">
+                    <span class="product-store">Store Name</span>
+                    <span class="product-name">QCU Tote Bag</span>
+                    <span class="product-desc">Canvas tote with QCU logo print.</span>
+                    <div class="product-footer">
+                        <span class="product-price">&#8369;150</span>
+                        <button class="add-btn">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-card" data-category="printing" data-popularity="low" data-price="highprice">
+                <div class="product-img-placeholder">
+                    <img src="~/Content/Images/qcuprint.jpg" />
+                </div>
+                <div class="product-card-info">
+                    <span class="product-store">Store Name</span>
+                    <span class="product-name">Thesis Printing</span>
+                    <span class="product-desc">Full color, hard bound thesis printing.</span>
+                    <div class="product-footer">
+                        <span class="product-price">&#8369;200</span>
+                        <button class="add-btn">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice">
+                <div class="product-img-placeholder">
+                    <img src="~/Content/Images/brownie-r.jpg" />
+                </div>
+                <div class="product-card-info">
+                    <span class="product-store">Store Name</span>
+                    <span class="product-name">Brownies</span>
+                    <span class="product-desc">Fudgy dark chocolate brownies.</span>
+                    <div class="product-footer">
+                        <span class="product-price">&#8369;45</span>
+                        <button class="add-btn">+</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <p class="no-results" id="noResults" style="display:none;">No products found.</p>
+    </div>
+</div>
+
+<!--SCRIPT FOR PRODUCT LIST-->
+@section scripts {
+    <script src="~/Scripts/ProductPageLogic.js"></script>
+}
