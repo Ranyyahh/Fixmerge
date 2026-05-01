@@ -1,0 +1,152 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model User_Profile_Seller_Juvi.Controllers.AccountSettingsPageViewModel
+@{
+    var showProfileSaveActions = ViewBag.ShowProfileSaveActions == null || (bool)ViewBag.ShowProfileSaveActions;
+    var showProfileEditTools = ViewBag.ShowProfileEditTools == true;
+}
+
+<link rel="stylesheet" href="~/Content/EnterpriseProfile.css" />
+
+<form method="post" action="@Url.Action("SaveEnterpriseInfo", "YourController")" enctype="multipart/form-data">
+    <div class="enterprise-container">
+        <div class="header">
+            <h1>Enterprise Information</h1>
+        </div>
+
+        <div class="content">
+            <!-- Two Columns: Enterprise Info + Manager Info -->
+            <div class="two-columns">
+                <!-- LEFT CARD: Enterprise Information -->
+                <div class="info-card">
+                    <div class="card-title">Enterprise Information</div>
+
+                    <!-- Profile Picture -->
+                    <div class="profile-pic-area">
+                        <div class="profile-pic" onclick="document.getElementById('profileUpload').click()">
+                            <span>🏢</span>
+                        </div>
+                        <input type="file" id="profileUpload" name="profileFile" accept="image/*" style="display: none;" />
+                        <button type="button" class="change-photo-btn" onclick="document.getElementById('profileUpload').click()">Change Photo</button>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-label">Enterprise Name</div>
+                        <div class="info-value">
+                            <input type="text" name="EnterpriseName" value="Magic Powder" />
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Enterprise Type</div>
+                        <div class="info-value">
+                            <input type="text" name="EnterpriseType" value="Partnership" />
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Gcash No.</div>
+                        <div class="info-value">
+                            <input type="text" name="EnterpriseGcashNo" value="09561234567" />
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Email</div>
+                        <div class="info-value">
+                            <input type="email" name="EnterpriseEmail" value="Pabluezkubr@gmail.com" />
+                        </div>
+                    </div>
+                </div> <!-- END OF LEFT CARD -->
+                <!-- RIGHT CARD: Enterprise Manager Information + QR Section -->
+                <div class="info-card">
+                    <div class="card-title">Enterprise Manager Information</div>
+
+                    <div class="info-row">
+                        <div class="info-label">Manager Name</div>
+                        <div class="info-value">
+                            @Html.TextBoxFor(m => m.Profile.ManagerName, new { @class = "editable-field" })
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Student ID</div>
+                        <div class="info-value">
+                            @Html.TextBoxFor(m => m.Profile.StudentId, new { @class = "editable-field" })
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Section</div>
+                        <div class="info-value">
+                            @Html.TextBoxFor(m => m.Profile.Section, new { @class = "editable-field" })
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Manager Gcash No.</div>
+                        <div class="info-value">
+                            @Html.TextBoxFor(m => m.Profile.ManagerContactNumber, new { @class = "editable-field" })
+                        </div>
+                    </div>
+
+                    <!-- QR SECTION - NASA LOOB NG RIGHT CARD -->
+                    <div class="qr-bottom-section">
+                        <div class="qr-left">
+                            <h3>Gcash QR</h3>
+                            <p>Scan to pay</p>
+                        </div>
+                        <div class="qr-code-box">
+                            @if (!string.IsNullOrWhiteSpace(Model.Profile.QrDataUrl))
+                            {
+                                <img id="qrPreview" src="@Model.Profile.QrDataUrl" alt="QR Code" />
+                            }
+                            else
+                            {
+                                <span>No QR</span>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Upload QR and Edit Info Buttons -->
+                    <div class="upload-qr-area">
+                        <button type="button" class="upload-qr-btn" onclick="document.getElementById('qrUpload').click()">📷 Upload QR</button>
+                        <input type="file" id="qrUpload" name="qrFile" accept="image/*" style="display: none;" />
+                        <button type="button" class="edit-info-btn">Edit Info</button>
+                    </div>
+                </div> <!-- END OF RIGHT CARD -->
+            </div> <!-- END OF TWO COLUMNS -->
+            <!-- Action Buttons - NASA PINAKABABA -->
+            @if (showProfileSaveActions)
+            {
+                <div class="actions-row">
+                    <button class="btn-save" type="submit">Save</button>
+                    <button class="btn-password" type="button" data-bs-toggle="modal" data-bs-target="#passwordModal">Change Password</button>
+                </div>
+            }
+        </div>
+    </div>
+</form>
+
+<script>
+    // Profile picture preview
+    document.getElementById('profileUpload')?.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const profilePic = document.querySelector('.profile-pic');
+                profilePic.innerHTML = `<img src="${event.target.result}" alt="Profile" style="width:100%;height:100%;object-fit:cover;" />`;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // QR preview
+    document.getElementById('qrUpload')?.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const qrBox = document.querySelector('.qr-code-box');
+                qrBox.innerHTML = `<img src="${event.target.result}" alt="QR" style="width:80px;height:80px;object-fit:contain;" />`;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+</script>

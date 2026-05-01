@@ -1,0 +1,184 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model User_Profile_Seller_Juvi.Controllers.AccountSettingsPageViewModel
+@{
+    var showProfileSaveActions = ViewBag.ShowProfileSaveActions == null || (bool)ViewBag.ShowProfileSaveActions;
+    var showProfileEditTools = ViewBag.ShowProfileEditTools == true;
+    ViewBag.PageClass = "page-profile";
+}
+<style>
+    .dashboard-container {
+        padding: 30px;
+    }
+
+    .dashboard-card {
+        background: #f5f5f5;
+        border-radius: 20px;
+        padding: 25px 35px;
+        box-shadow: 6px 6px 0 #4b4b6b;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .card-header h2 {
+            color: #2d3cb3;
+            font-weight: 700;
+        }
+
+    .card-divider {
+        height: 2px;
+        background: #aaa;
+        margin: 15px 0 25px;
+    }
+
+    .profile-content {
+        display: flex;
+        align-items: flex-start;
+        gap: 50px;
+    }
+
+    .profile-left {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .profile-photo img {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: #ddd;
+        object-fit: cover;
+    }
+
+    .profile-tool-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .primary-action-button {
+        background: #2d3cb3;
+        color: white;
+        border: none;
+        padding: 8px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 140px;
+    }
+
+        .primary-action-button:hover {
+            background: #1f2aa0;
+        }
+
+    /* INPUT STYLE */
+    .info-input {
+        width: 100%;
+        border: none;
+        background: transparent;
+        font-weight: bold;
+        color: #000;
+    }
+
+        .info-input[readonly] {
+            pointer-events: none;
+        }
+
+        .info-input:focus {
+            outline: none;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 4px;
+        }
+
+    .profile-info {
+        flex: 1;
+    }
+
+    .info-row {
+        display: grid;
+        grid-template-columns: 180px 1fr;
+        margin-bottom: 14px;
+    }
+
+        .info-row span {
+            font-weight: 500;
+            color: #555;
+        }
+</style>
+
+
+
+<link rel="stylesheet" href="~/Content/Edit.css" />
+<div class="dashboard-container">
+
+    <div class="dashboard-card profile-card">
+
+        <div class="card-header">
+            <h2>User Profile</h2>
+
+            @if (showProfileEditTools)
+            {
+                <button id="headerEditBtn" class="primary-action-button">Edit Profile</button>
+            }
+        </div>
+
+        <div class="card-divider"></div>
+
+        <div class="profile-content">
+
+            <!-- LEFT -->
+            <div class="profile-left">
+
+                <div class="profile-photo">
+                    <img id="profileImage" src="@Model.Profile.PhotoDataUrl" />
+                </div>
+
+                <div class="profile-tool-buttons">
+                    <button id="changePhotoBtn" class="primary-action-button" type="button">
+                        Change Photo
+                    </button>
+
+                    <button id="editInfoBtn" class="primary-action-button" type="button">
+                        Edit Info
+                    </button>
+                </div>
+
+                <input type="file" id="photoInput" accept="image/*" style="display:none;" />
+
+            </div>
+
+            <!-- RIGHT -->
+            <div class="profile-info">
+
+                <div class="info-row">
+                    <span>Name</span>
+                    <input id="nameInput" class="info-input" value="@Model.Profile.ManagerName" readonly />
+                </div>
+
+                <div class="info-row">
+                    <span>Contact Number</span>
+                    <input id="contactInput" class="info-input" value="@Model.Profile.ManagerContactNumber" readonly />
+                </div>
+
+                <div class="info-row">
+                    <span>Email</span>
+                    <input id="emailInput" class="info-input" value="@Model.Profile.Email" readonly />
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="~/Scripts/UserProfile.js"></script>

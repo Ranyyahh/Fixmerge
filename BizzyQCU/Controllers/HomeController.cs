@@ -60,6 +60,14 @@ namespace BizzyQCU.Controllers
             ViewBag.Message = "About page.";
             return View();
         }
+        public ActionResult UserProfile()
+        {
+            return RedirectToAction("UserProfile", "Profile");
+        }
+        public new ActionResult Profile()
+        {
+            return RedirectToAction("EnterpriseProfile", "Profile");
+        }
     }
 }
 
