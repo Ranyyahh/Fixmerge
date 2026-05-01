@@ -123,6 +123,8 @@
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="Controllers\ManageOrdersController.cs" />
+    <Compile Include="Controllers\TrackingController.cs" />
     <Compile Include="Controllers\ChatroomController.cs" />
     <Compile Include="Controllers\EnterpriseController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
@@ -159,7 +161,9 @@
     <Content Include="Content\Images\test-img-profile.jpg" />
     <Content Include="Content\Images\test-img1.jpg" />
     <Content Include="Content\Images\test-img2.jpg" />
+    <Content Include="Content\ManageStyle.css" />
     <Content Include="Content\MobileNavbar.css" />
+    <Content Include="Content\trackingstyle.css" />
     <Content Include="Content\tracking.css" />
     <Content Include="favicon.ico" />
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
@@ -208,6 +212,9 @@
     <Content Include="Views\Enterprise\ViewEnterprise.cshtml" />
     <Content Include="Views\Chatroom\Chatroom.cshtml" />
     <Content Include="Views\Enterprise\EnterpriseList.cshtml" />
+    <Content Include="Views\Tracking\tracking.cshtml" />
+    <Content Include="Views\Tracking\history.cshtml" />
+    <Content Include="Views\ManageOrders\ManageOrders.cshtml" />
     <Content Include="Views\ProductList\ProductList.cshtml" />
   </ItemGroup>
   <ItemGroup>
