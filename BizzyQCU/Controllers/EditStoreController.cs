@@ -6,13 +6,12 @@ using System.Web.Mvc;
 
 namespace BizzyQCU.Controllers
 {
-    public class EnterpriseDashboardController : Controller
+    public class EditStoreController : Controller
     {
-        public ActionResult EnterpriseDashboard()
+        // GET: EditStore
+        public ActionResult EditStore()
         {
-            return View("EnterpriseDashboard");
+            return View();
         }
-
-
     }
 }

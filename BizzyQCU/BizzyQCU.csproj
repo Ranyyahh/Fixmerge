@@ -104,7 +104,9 @@
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="Controllers\AddProductController.cs" />
     <Compile Include="Controllers\CheckoutController.cs" />
+    <Compile Include="Controllers\EditStoreController.cs" />
     <Compile Include="Controllers\EnterpriseDashboardController.cs" />
     <Compile Include="Controllers\ManageOrdersController.cs" />
     <Compile Include="Controllers\ProductChildController.cs" />
@@ -115,7 +117,7 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\EnterpriseListController.cs" />
     <Compile Include="Controllers\ProductListController.cs" />
-	  <Compile Include="Controllers\AdminPanelController.cs" />
+    <Compile Include="Controllers\AdminPanelController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -171,11 +173,11 @@
     <Content Include="Content\trackingstyle.css" />
     <Content Include="Content\tracking.css" />
     <Content Include="Content\Transactions.css" />
-	  <Content Include="Content\AdminEditEntrep.css" />
-	  <Content Include="Content\AdminItemListing.css" />
-	  <Content Include="Content\AdminLandingEntrep.css" />
-	  <Content Include="Content\AdminUsers.css" />
-	  <Content Include="Content\LandingAdmin.css" />
+    <Content Include="Content\AdminEditEntrep.css" />
+    <Content Include="Content\AdminItemListing.css" />
+    <Content Include="Content\AdminLandingEntrep.css" />
+    <Content Include="Content\AdminUsers.css" />
+    <Content Include="Content\LandingAdmin.css" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
@@ -240,11 +242,11 @@
     <Content Include="Views\Tracking\history.cshtml" />
     <Content Include="Views\ManageOrders\ManageOrders.cshtml" />
     <Content Include="Views\ProductList\ProductList.cshtml" />
-	  <Content Include="Views\AdminPanel\AdminLandingEntrep.cshtml" />
-	  <Content Include="Views\AdminPanel\AdminUsers.cshtml" />
-	  <Content Include="Views\AdminPanel\LandingAdmin.cshtml" />
-	  <Content Include="Views\AdminPanel\AdminEditEntrep.cshtml" />
-	  <Content Include="Views\AdminPanel\AdminItemListing.cshtml" />
+    <Content Include="Views\AdminPanel\AdminLandingEntrep.cshtml" />
+    <Content Include="Views\AdminPanel\AdminUsers.cshtml" />
+    <Content Include="Views\AdminPanel\LandingAdmin.cshtml" />
+    <Content Include="Views\AdminPanel\AdminEditEntrep.cshtml" />
+    <Content Include="Views\AdminPanel\AdminItemListing.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -255,6 +257,8 @@
     <Content Include="Views\Profile\Transactions.cshtml" />
     <Content Include="Views\Profile\Index.cshtml" />
     <Content Include="Views\ProductChild\ProductChild.cshtml" />
+    <Content Include="Views\AddProduct\Addproduct.cshtml" />
+    <Content Include="Views\EditStore\EditStore.cshtml" />
   </ItemGroup>
   <ItemGroup />
   <PropertyGroup>

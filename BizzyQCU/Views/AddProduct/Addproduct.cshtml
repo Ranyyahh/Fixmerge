@@ -1,0 +1,35 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Add Product - BizzyQCU";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/Content/EnterpriseDashboard.css">
+}
+
+<div class="add-product-page">
+    <section class="add-product-shell">
+        <div class="add-product-grid">
+            <div class="add-product-left">
+                <label for="productImage" class="add-product-image-box" title="Upload Product Image">
+                    <input id="productImage" type="file" accept="image/*" class="add-product-image-input" />
+                    <span class="add-product-image-icon"><i class="fa-regular fa-image"></i></span>
+                </label>
+
+                <div class="add-product-actions">
+                    <button type="submit" form="addProductForm" class="add-product-btn add-product-btn-save">Save</button>
+                    <button type="button" class="add-product-btn add-product-btn-cancel" onclick="history.back()">Cancel</button>
+                </div>
+            </div>
+
+            <form id="addProductForm" class="add-product-form" method="post">
+                <input type="text" name="Name" placeholder="Name" aria-label="Name" />
+                <input type="number" step="0.01" min="0" name="Price" placeholder="Price" aria-label="Price" />
+                <input type="text" name="Category" placeholder="Category" aria-label="Category" />
+                <input type="text" name="PreparationTime" placeholder="Preparation Time" aria-label="Preparation Time" />
+                <input type="text" name="Delivery" placeholder="Delivery" aria-label="Delivery" />
+                <textarea name="Description" placeholder="Description" aria-label="Description"></textarea>
+            </form>
+        </div>
+    </section>
+</div>

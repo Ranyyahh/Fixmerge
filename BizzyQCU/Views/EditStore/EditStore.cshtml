@@ -1,0 +1,128 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Edit Store";
+    ViewBag.BodyClass = "product-page";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/Content/EnterpriseDashboard.css">
+}
+
+<div class="edit-store-page">
+    <section class="edit-store-header">
+        <div class="profile-icon"></div>
+        <h1>Enterprise Name</h1>
+    </section>
+
+    <section class="edit-store-content">
+        <div class="edit-store-ad-panel">
+            <label for="adImage" class="edit-store-ad-box">
+                <input id="adImage" type="file" accept="image/*" class="add-product-image-input" />
+                <span class="edit-store-ad-icon"><i class="fa-regular fa-image"></i></span>
+                <span class="edit-store-ad-text">Ad</span>
+            </label>
+        </div>
+
+        <div class="edit-store-products">
+            <h2>Products</h2>
+
+            <div class="product-grid-container edit-store-grid" id="productGrid">
+                <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" onclick="window.location.href = '@Url.Action("ProductChild", "ProductChild")'">
+                    <div class="product-img-placeholder">
+                        <img src="~/Content/Images/pl_bento.png" />
+                    </div>
+                    <div class="product-card-info">
+                        <span class="product-store">Store Name</span>
+                        <span class="product-name">Bento Meal</span>
+                        <span class="product-desc">Rice, viand, and side. Fresh Daily.</span>
+                        <div class="product-footer">
+                            <span class="product-price">&#8369;75</span>
+                            <button class="add-btn">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card" data-category="food" data-popularity="low" data-price="lowprice" onclick="window.location.href = '@Url.Action("ProductChild", "ProductChild")'">
+                    <div class="product-img-placeholder">
+                        <img src="~/Content/Images/spasta.png" />
+                    </div>
+                    <div class="product-card-info">
+                        <span class="product-store">Store Name</span>
+                        <span class="product-name">Pasta Verde</span>
+                        <span class="product-desc">Organic pasta made by natural ingredients.</span>
+                        <div class="product-footer">
+                            <span class="product-price">&#8369;80</span>
+                            <button class="add-btn">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" onclick="window.location.href = '@Url.Action("ProductChild", "ProductChild")'">
+                    <div class="product-img-placeholder">
+                        <img src="~/Content/Images/pl_cf.jpg" />
+                    </div>
+                    <div class="product-card-info">
+                        <span class="product-store">Store Name</span>
+                        <span class="product-name">Iced Coffee</span>
+                        <span class="product-desc">Locally brewed cold coffee blend.</span>
+                        <div class="product-footer">
+                            <span class="product-price">&#8369;40</span>
+                            <button class="add-btn">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" onclick="window.location.href = '@Url.Action("ProductChild", "ProductChild")'">
+                    <div class="product-img-placeholder">
+                        <img src="~/Content/Images/pl_slg.jpg" />
+                    </div>
+                    <div class="product-card-info">
+                        <span class="product-store">Store Name</span>
+                        <span class="product-name">Silog Combo</span>
+                        <span class="product-desc">Sinangag, itlog, and your choice of ulam.</span>
+                        <div class="product-footer">
+                            <span class="product-price">&#8369;85</span>
+                            <button class="add-btn">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" onclick="window.location.href = '@Url.Action("ProductChild", "ProductChild")'">
+                    <div class="product-img-placeholder">
+                        <img src="~/Content/Images/siomai.jpg" />
+                    </div>
+                    <div class="product-card-info">
+                        <span class="product-store">Store Name</span>
+                        <span class="product-name">Siomai Rice</span>
+                        <span class="product-desc">Steamed siomai served with garlic rice.</span>
+                        <div class="product-footer">
+                            <span class="product-price">&#8369;55</span>
+                            <button class="add-btn">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card" data-category="merch" data-popularity="low" data-price="highprice" onclick="window.location.href = '@Url.Action("ProductChild", "ProductChild")'">
+                    <div class="product-img-placeholder">
+                        <img src="~/Content/Images/toteb.jpeg" />
+                    </div>
+                    <div class="product-card-info">
+                        <span class="product-store">Store Name</span>
+                        <span class="product-name">QCU Tote Bag</span>
+                        <span class="product-desc">Canvas tote with QCU logo print.</span>
+                        <div class="product-footer">
+                            <span class="product-price">&#8369;150</span>
+                            <button class="add-btn">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="no-results" id="noResults" style="display:none;">No products found.</p>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/Scripts/ProductPageLogic.js"></script>
+}
