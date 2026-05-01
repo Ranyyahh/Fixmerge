@@ -107,6 +107,7 @@
     <Compile Include="Controllers\CheckoutController.cs" />
     <Compile Include="Controllers\EnterpriseDashboardController.cs" />
     <Compile Include="Controllers\ManageOrdersController.cs" />
+    <Compile Include="Controllers\ProductChildController.cs" />
     <Compile Include="Controllers\ProfileController.cs" />
     <Compile Include="Controllers\TrackingController.cs" />
     <Compile Include="Controllers\ChatroomController.cs" />
@@ -165,6 +166,7 @@
     <Content Include="Content\Images\test-img1.jpg" />
     <Content Include="Content\Images\test-img2.jpg" />
     <Content Include="Content\ManageStyle.css" />
+    <Content Include="Content\Pchild.css" />
     <Content Include="Content\trackingstyle.css" />
     <Content Include="Content\tracking.css" />
     <Content Include="Content\Transactions.css" />
@@ -204,6 +206,7 @@
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
+    <Content Include="Scripts\Pchild.js" />
     <Content Include="Scripts\ProductPageLogic.js" />
     <Content Include="Scripts\UserProfile.js" />
     <Content Include="Views\Home\history.cshtml" />
@@ -240,6 +243,7 @@
     <Content Include="Views\Profile\ChangePasswordModal.cshtml" />
     <Content Include="Views\Profile\Transactions.cshtml" />
     <Content Include="Views\Profile\Index.cshtml" />
+    <Content Include="Views\ProductChild\ProductChild.cshtml" />
   </ItemGroup>
   <ItemGroup />
   <PropertyGroup>
