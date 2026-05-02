@@ -42,9 +42,19 @@ namespace BizzyQCU.Controllers
                 Session["Email"] = user.Email;
                 Session["Role"] = user.Role;
 
-                string redirectUrl = user.Role == "enterprise"
-                    ? Url.Action("EnterpriseDashboard", "EnterpriseDashboard")
-                    : Url.Action("ProductList", "ProductList");
+                string redirectUrl = "";
+                if (user.Role == "admin")
+                {
+                    redirectUrl = Url.Action("LandingAdmin", "AdminPanel");
+                }
+                else if (user.Role == "enterprise")
+                {
+                    redirectUrl = Url.Action("EnterpriseDashboard", "EnterpriseDashboard");
+                }
+                else
+                {
+                    redirectUrl = Url.Action("ProductList", "ProductList");
+                }
 
                 return Json(new
                 {

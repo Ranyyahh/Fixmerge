@@ -1,0 +1,415 @@
+﻿using MySql.Data.MySqlClient;
+using System;
+using System.Collections.Generic;
+using BizzyQCU.Models.Admin;
+using BizzyQCU.Models.Landingpage;
+
+namespace BizzyQCU.Models.Admin
+{
+    public class AdminDb
+    {
+        private string connectionString = "server=localhost;database=BizzyQCU;uid=root;pwd=;";
+
+        // ========== GET ALL USERS ==========
+        public List<Users> GetAllUsers()
+        {
+            var users = new List<Users>();
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = "SELECT user_id, username, email, role, is_approved, created_at FROM users ORDER BY created_at DESC";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            users.Add(new Users
+                            {
+                                UserId = reader.GetInt32("user_id"),
+                                Username = reader.GetString("username"),
+                                Email = reader.GetString("email"),
+                                Role = reader.GetString("role"),
+                                IsApproved = reader.GetBoolean("is_approved"),
+                                CreatedAt = reader.GetDateTime("created_at")
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetAllUsers error: " + ex.Message);
+            }
+            return users;
+        }
+
+        public List<ApprovalRequests> GetAllStudentRequests()
+        {
+            var requests = new List<ApprovalRequests>();
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"SELECT request_id, username, email, role, firstname, lastname, 
+                                  student_number, section, contact_number, status, submitted_at 
+                           FROM approval_requests 
+                           WHERE role = 'student'
+                           ORDER BY 
+                               CASE status 
+                                   WHEN 'pending' THEN 1 
+                                   WHEN 'approved' THEN 2 
+                                   WHEN 'rejected' THEN 3 
+                               END, 
+                               submitted_at DESC";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            requests.Add(new ApprovalRequests
+                            {
+                                RequestId = reader.GetInt32("request_id"),
+                                Username = reader.GetString("username"),
+                                Email = reader.GetString("email"),
+                                Role = reader.GetString("role"),
+                                Firstname = reader.IsDBNull(reader.GetOrdinal("firstname")) ? "" : reader.GetString("firstname"),
+                                Lastname = reader.IsDBNull(reader.GetOrdinal("lastname")) ? "" : reader.GetString("lastname"),
+                                StudentNumber = reader.IsDBNull(reader.GetOrdinal("student_number")) ? "" : reader.GetString("student_number"),
+                                Section = reader.IsDBNull(reader.GetOrdinal("section")) ? "" : reader.GetString("section"),
+                                ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
+                                Status = reader.GetString("status"),
+                                SubmittedAt = reader.GetDateTime("submitted_at")
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetAllStudentRequests error: " + ex.Message);
+            }
+            return requests;
+        }
+
+
+        public List<ApprovalRequests> GetAllEnterpriseRequests()
+        {
+            var requests = new List<ApprovalRequests>();
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"SELECT request_id, username, email, role, store_name, store_description, 
+                                  contact_number, gcash_number, status, submitted_at 
+                           FROM approval_requests 
+                           WHERE role = 'enterprise'
+                           ORDER BY 
+                               CASE status 
+                                   WHEN 'pending' THEN 1 
+                                   WHEN 'approved' THEN 2 
+                                   WHEN 'rejected' THEN 3 
+                               END, 
+                               submitted_at DESC";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            requests.Add(new ApprovalRequests
+                            {
+                                RequestId = reader.GetInt32("request_id"),
+                                Username = reader.GetString("username"),
+                                Email = reader.GetString("email"),
+                                Role = reader.GetString("role"),
+                                StoreName = reader.IsDBNull(reader.GetOrdinal("store_name")) ? "" : reader.GetString("store_name"),
+                                StoreDescription = reader.IsDBNull(reader.GetOrdinal("store_description")) ? "" : reader.GetString("store_description"),
+                                ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
+                                GcashNumber = reader.IsDBNull(reader.GetOrdinal("gcash_number")) ? "" : reader.GetString("gcash_number"),
+                                Status = reader.GetString("status"),
+                                SubmittedAt = reader.GetDateTime("submitted_at")
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetAllEnterpriseRequests error: " + ex.Message);
+            }
+            return requests;
+        }
+        // ========== GET PENDING STUDENT APPROVALS ==========
+        public List<ApprovalRequests> GetPendingStudentRequests()
+        {
+            var requests = new List<ApprovalRequests>();
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"SELECT request_id, username, email, role, firstname, lastname, 
+                                          student_number, section, contact_number, status, submitted_at 
+                                   FROM approval_requests 
+                                   WHERE role = 'student' AND status = 'pending' 
+                                   ORDER BY submitted_at DESC";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            requests.Add(new ApprovalRequests
+                            {
+                                RequestId = reader.GetInt32("request_id"),
+                                Username = reader.GetString("username"),
+                                Email = reader.GetString("email"),
+                                Role = reader.GetString("role"),
+                                Firstname = reader.IsDBNull(reader.GetOrdinal("firstname")) ? "" : reader.GetString("firstname"),
+                                Lastname = reader.IsDBNull(reader.GetOrdinal("lastname")) ? "" : reader.GetString("lastname"),
+                                StudentNumber = reader.IsDBNull(reader.GetOrdinal("student_number")) ? "" : reader.GetString("student_number"),
+                                Section = reader.IsDBNull(reader.GetOrdinal("section")) ? "" : reader.GetString("section"),
+                                ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
+                                Status = reader.GetString("status"),
+                                SubmittedAt = reader.GetDateTime("submitted_at")
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetPendingStudentRequests error: " + ex.Message);
+            }
+            return requests;
+        }
+
+
+        public List<ApprovalRequests> GetPendingEnterpriseRequests()
+        {
+            var requests = new List<ApprovalRequests>();
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"SELECT request_id, username, email, role, store_name, store_description, 
+                                          contact_number, gcash_number, status, submitted_at 
+                                   FROM approval_requests 
+                                   WHERE role = 'enterprise' AND status = 'pending' 
+                                   ORDER BY submitted_at DESC";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            requests.Add(new ApprovalRequests
+                            {
+                                RequestId = reader.GetInt32("request_id"),
+                                Username = reader.GetString("username"),
+                                Email = reader.GetString("email"),
+                                Role = reader.GetString("role"),
+                                StoreName = reader.IsDBNull(reader.GetOrdinal("store_name")) ? "" : reader.GetString("store_name"),
+                                StoreDescription = reader.IsDBNull(reader.GetOrdinal("store_description")) ? "" : reader.GetString("store_description"),
+                                ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
+                                GcashNumber = reader.IsDBNull(reader.GetOrdinal("gcash_number")) ? "" : reader.GetString("gcash_number"),
+                                Status = reader.GetString("status"),
+                                SubmittedAt = reader.GetDateTime("submitted_at")
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetPendingEnterpriseRequests error: " + ex.Message);
+            }
+            return requests;
+        }
+
+        // ========== UPDATE USER APPROVAL ==========
+        public bool UpdateUserApproval(int userId, bool isApproved)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = "UPDATE users SET is_approved = @isApproved WHERE user_id = @userId";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@isApproved", isApproved ? 1 : 0);
+                        cmd.Parameters.AddWithValue("@userId", userId);
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("UpdateUserApproval error: " + ex.Message);
+                return false;
+            }
+        }
+
+        // ========== DELETE USER ==========
+        public bool DeleteUser(int userId)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = "DELETE FROM users WHERE user_id = @userId";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@userId", userId);
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("DeleteUser error: " + ex.Message);
+                return false;
+            }
+        }
+
+        // ========== APPROVE REQUEST ==========
+        public bool ApproveRequest(int requestId)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                   
+                    string selectSql = "SELECT * FROM approval_requests WHERE request_id = @requestId";
+                    ApprovalRequests request = null;
+                    using (var cmd = new MySqlCommand(selectSql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@requestId", requestId);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                request = new ApprovalRequests
+                                {
+                                    Username = reader.GetString("username"),
+                                    Password = reader.GetString("password"),
+                                    Email = reader.GetString("email"),
+                                    Role = reader.GetString("role"),
+                                    Firstname = reader.IsDBNull(reader.GetOrdinal("firstname")) ? "" : reader.GetString("firstname"),
+                                    Lastname = reader.IsDBNull(reader.GetOrdinal("lastname")) ? "" : reader.GetString("lastname"),
+                                    StudentNumber = reader.IsDBNull(reader.GetOrdinal("student_number")) ? "" : reader.GetString("student_number"),
+                                    Section = reader.IsDBNull(reader.GetOrdinal("section")) ? "" : reader.GetString("section"),
+                                    ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
+                                    StoreName = reader.IsDBNull(reader.GetOrdinal("store_name")) ? "" : reader.GetString("store_name"),
+                                    StoreDescription = reader.IsDBNull(reader.GetOrdinal("store_description")) ? "" : reader.GetString("store_description"),
+                                    GcashNumber = reader.IsDBNull(reader.GetOrdinal("gcash_number")) ? "" : reader.GetString("gcash_number")
+                                };
+                            }
+                        }
+                    }
+
+                    if (request == null) return false;
+
+                 
+                    string insertSql = @"INSERT INTO users (username, password, email, role, is_approved, created_at) 
+                                         VALUES (@username, @password, @email, @role, 1, NOW())";
+                    using (var cmd = new MySqlCommand(insertSql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@username", request.Username);
+                        cmd.Parameters.AddWithValue("@password", request.Password);
+                        cmd.Parameters.AddWithValue("@email", request.Email);
+                        cmd.Parameters.AddWithValue("@role", request.Role);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                
+                    int userId = 0;
+                    string getUserIdSql = "SELECT user_id FROM users WHERE username = @username";
+                    using (var cmd = new MySqlCommand(getUserIdSql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@username", request.Username);
+                        userId = Convert.ToInt32(cmd.ExecuteScalar());
+                    }
+
+                  
+                    if (request.Role == "student")
+                    {
+                        string insertStudentSql = @"INSERT INTO students (user_id, firstname, lastname, student_number, section, contact_number) 
+                                                    VALUES (@userId, @firstname, @lastname, @studentNumber, @section, @contact)";
+                        using (var cmd = new MySqlCommand(insertStudentSql, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@userId", userId);
+                            cmd.Parameters.AddWithValue("@firstname", request.Firstname);
+                            cmd.Parameters.AddWithValue("@lastname", request.Lastname);
+                            cmd.Parameters.AddWithValue("@studentNumber", request.StudentNumber);
+                            cmd.Parameters.AddWithValue("@section", request.Section);
+                            cmd.Parameters.AddWithValue("@contact", request.ContactNumber);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    else if (request.Role == "enterprise")
+                    {
+                        string insertEnterpriseSql = @"INSERT INTO enterprises (user_id, store_name, store_description, contact_number, gcash_number, status) 
+                                                       VALUES (@userId, @storeName, @storeDesc, @contact, @gcash, 'approved')";
+                        using (var cmd = new MySqlCommand(insertEnterpriseSql, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@userId", userId);
+                            cmd.Parameters.AddWithValue("@storeName", request.StoreName);
+                            cmd.Parameters.AddWithValue("@storeDesc", request.StoreDescription);
+                            cmd.Parameters.AddWithValue("@contact", request.ContactNumber);
+                            cmd.Parameters.AddWithValue("@gcash", request.GcashNumber);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                   
+                    string updateSql = "UPDATE approval_requests SET status = 'approved' WHERE request_id = @requestId";
+                    using (var cmd = new MySqlCommand(updateSql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@requestId", requestId);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("ApproveRequest error: " + ex.Message);
+                return false;
+            }
+        }
+
+       
+        public bool RejectRequest(int requestId)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = "UPDATE approval_requests SET status = 'rejected' WHERE request_id = @requestId";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@requestId", requestId);
+                        cmd.ExecuteNonQuery();
+                    }
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("RejectRequest error: " + ex.Message);
+                return false;
+            }
+        }
+    }
+}

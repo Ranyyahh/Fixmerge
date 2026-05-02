@@ -1,6 +1,7 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
+using BizzyQCU.Models.Admin; 
 
 namespace BizzyQCU.Models.Landingpage
 {
@@ -319,5 +320,6 @@ namespace BizzyQCU.Models.Landingpage
                 return false;
             }
         }
+           
+        }
     }
-}
