@@ -11,7 +11,7 @@
 <div class="edit-store-page">
     <section class="edit-store-header">
         <div class="profile-icon"></div>
-        <h1>Enterprise Name</h1>
+        <h1 id="enterpriseName">@ViewBag.EnterpriseName</h1>
     </section>
 
     <section class="edit-store-content">
@@ -87,7 +87,7 @@
                     </div>
                 </div>
 
-                <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice"onclick="window.location.href = '@Url.Action("AddProduct", "AddProduct")'">
+                <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" onclick="window.location.href = '@Url.Action("AddProduct", "AddProduct")'">
                     <div class="product-img-placeholder">
                         <img src="~/Content/Images/siomai.jpg" />
                     </div>

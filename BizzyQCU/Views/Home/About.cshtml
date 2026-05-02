@@ -138,6 +138,7 @@
             <p class="sec-text">Are you a student entrepreneur or a customer? We want to hear from you. Your feedback shapes how BizzyQCU grows.</p>
 
             <div class="fb-form">
+                <div id="feedbackMessage" class="feedback-message" style="display:none;"></div>
 
                 <div class="fb-section-label">Your details</div>
                 <div class="fb-row">
@@ -157,18 +158,18 @@
                     <div class="fb-group">
                         <label for="fb-role">I am a</label>
                         <select id="fb-role">
-                            <option>Entrepreneur student</option>
-                            <option>Buyer</option>
+                            <option value="entrepreneur">Entrepreneur student</option>
+                            <option value="customer">Buyer / Customer</option>
                         </select>
                     </div>
                     <div class="fb-group">
                         <label for="fb-cat">Category</label>
                         <select id="fb-cat">
-                            <option>General feedback</option>
-                            <option>Bug / issue report</option>
-                            <option>Feature suggestion</option>
-                            <option>Enterprise concern</option>
-                            <option>Other</option>
+                            <option value="General feedback">General feedback</option>
+                            <option value="Bug / issue report">Bug / issue report</option>
+                            <option value="Feature suggestion">Feature suggestion</option>
+                            <option value="Enterprise concern">Enterprise concern</option>
+                            <option value="Other">Other</option>
                         </select>
                     </div>
                 </div>
@@ -192,7 +193,7 @@
                 <hr class="fb-divider" />
                 <div class="fb-footer">
                     <button class="submit-btn" id="sub-btn">Submit feedback</button>
-                    <div class="ok-msg" id="ok-msg">Thank you for your feedback! It helps us build a better platform for QCU student entrepreneurs.</div>
+                    <div class="ok-msg" id="ok-msg" style="display:none;">Thank you for your feedback! It helps us build a better platform for QCU student entrepreneurs.</div>
                 </div>
 
             </div>
@@ -224,22 +225,50 @@
             document.getElementById('sub-btn').addEventListener('click', function () {
                 var email = document.getElementById('fb-email').value.trim();
                 var msg = document.getElementById('fb-msg').value.trim();
+
                 if (!email || !msg) {
                     alert('Please fill in at least your email and message.');
                     return;
                 }
-                document.getElementById('ok-msg').style.display = 'block';
-                ['fb-email', 'fb-contact', 'fb-msg'].forEach(function (id) {
-                    var el = document.getElementById(id);
-                    if (el) el.value = '';
+
+                var formData = {
+                    email: email,
+                    contactNumber: document.getElementById('fb-contact').value.trim(),
+                    userType: document.getElementById('fb-role').value,
+                    category: document.getElementById('fb-cat').value,
+                    message: msg,
+                    rating: rating
+                };
+
+                fetch('@Url.Action("SubmitFeedback", "Home")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    var okMsg = document.getElementById('ok-msg');
+                    if (data.success) {
+                        okMsg.style.display = 'block';
+                        document.getElementById('fb-email').value = '';
+                        document.getElementById('fb-contact').value = '';
+                        document.getElementById('fb-msg').value = '';
+                        document.getElementById('fb-role').value = 'entrepreneur';
+                        document.getElementById('fb-cat').value = 'General feedback';
+                        rating = 0;
+                        stars.forEach(function (x) { x.classList.remove('on'); });
+                        setTimeout(function () {
+                            okMsg.style.display = 'none';
+                        }, 5000);
+                    } else {
+                        alert(data.message || 'Error submitting feedback. Please try again.');
+                    }
+                })
+                .catch(function() {
+                    alert('An error occurred. Please try again.');
                 });
-                document.getElementById('fb-role').value = '';
-                document.getElementById('fb-cat').value = '';
-                rating = 0;
-                stars.forEach(function (x) { x.classList.remove('on'); });
-                setTimeout(function () {
-                    document.getElementById('ok-msg').style.display = 'none';
-                }, 5000);
             });
         })();
     </script>

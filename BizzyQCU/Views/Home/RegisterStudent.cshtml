@@ -8,7 +8,7 @@
     <div class="register-card">
         <h2>STUDENT REGISTER</h2>
         <div id="messageBox" class="message"></div>
-        <form onsubmit="return registerStudent(event)">
+        <form id="registerForm" onsubmit="return registerStudent(event)">
             <input type="text" id="firstName" placeholder="First Name" required>
             <input type="text" id="lastName" placeholder="Last Name" required>
             <input type="text" id="username" placeholder="Username" required>
@@ -16,7 +16,6 @@
             <input type="password" id="password" placeholder="Password" required>
             <input type="date" id="birthdate">
 
-            <!-- Contact Number - NUMBERS ONLY -->
             <input type="text" id="contact" placeholder="Contact Number"
                    onkeypress="return event.charCode >= 48 && event.charCode <= 57"
                    maxlength="11"
@@ -24,7 +23,6 @@
 
             <input type="text" id="section" placeholder="Section (e.g., BSIT-3A)">
 
-            <!-- Student ID - FORMAT: 24-1574 -->
             <input type="text" id="studentId" placeholder="Student ID No. (e.g., 24-1574)"
                    maxlength="7"
                    title="Format: 24-1574 or 23-1587">
@@ -43,6 +41,7 @@
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     function updateFileName() {
         var input = document.getElementById('qcidFile');
@@ -59,22 +58,18 @@
         setTimeout(function() { box.style.display = 'none'; }, 5000);
     }
 
-    // VALIDATION: Student ID format (24-1574 or 23-1587)
     function validateStudentId(id) {
         var pattern = /^[0-9]{2}-[0-9]{4}$/;
         return pattern.test(id);
     }
 
-    // VALIDATION: Contact Number (11 digits, numbers only)
     function validateContactNumber(contact) {
         var pattern = /^[0-9]{11}$/;
         return pattern.test(contact);
     }
 
-    // RESTRICT: Student ID - numbers and dash only
     function restrictStudentId(input) {
         input.value = input.value.replace(/[^0-9-]/g, '');
-        // Auto-insert dash after 2 digits
         var val = input.value.replace(/-/g, '');
         if (val.length >= 2) {
             input.value = val.substring(0, 2) + (val.length > 2 ? '-' + val.substring(2, 6) : '');
@@ -84,7 +79,6 @@
         }
     }
 
-    // Attach restrict function to studentId input
     document.addEventListener('DOMContentLoaded', function() {
         var studentIdInput = document.getElementById('studentId');
         if (studentIdInput) {
@@ -95,66 +89,52 @@
     function registerStudent(e) {
         e.preventDefault();
 
-        var firstName = document.getElementById('firstName').value;
-        var lastName = document.getElementById('lastName').value;
-        var username = document.getElementById('username').value;
-        var email = document.getElementById('email').value;
-        var password = document.getElementById('password').value;
-        var studentId = document.getElementById('studentId').value;
-        var contact = document.getElementById('contact').value;
+        var formData = {
+            Firstname: document.getElementById('firstName').value,
+            Lastname: document.getElementById('lastName').value,
+            Username: document.getElementById('username').value,
+            Email: document.getElementById('email').value,
+            Password: document.getElementById('password').value,
+            Birthdate: document.getElementById('birthdate').value,
+            ContactNumber: document.getElementById('contact').value,
+            Section: document.getElementById('section').value,
+            StudentNumber: document.getElementById('studentId').value
+        };
 
-        if (!firstName || !lastName || !username || !email || !password) {
+        if (!formData.Firstname || !formData.Lastname || !formData.Username || !formData.Email || !formData.Password) {
             showMessage('Please fill in all required fields!', 'error');
             return false;
         }
 
-        // Validate Student ID if provided
-        if (studentId && !validateStudentId(studentId)) {
+        if (formData.StudentNumber && !validateStudentId(formData.StudentNumber)) {
             showMessage('Student ID must be in format: 24-1574 or 23-1587', 'error');
             return false;
         }
 
-        // Validate Contact Number if provided
-        if (contact && !validateContactNumber(contact)) {
+        if (formData.ContactNumber && !validateContactNumber(formData.ContactNumber)) {
             showMessage('Contact Number must be 11 digits (e.g., 09123456789)', 'error');
             return false;
         }
 
-        var users = JSON.parse(localStorage.getItem('bizzyqcu_users') || '[]');
-        for (var i = 0; i < users.length; i++) {
-            if (users[i].username === username || users[i].email === email) {
-                showMessage('Username or Email already exists!', 'error');
-                return false;
+        $.ajax({
+            url: '@Url.Action("RegisterStudent", "Account")',
+            type: 'POST',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.success) {
+                    showMessage(response.message, 'success');
+                    setTimeout(function() {
+                        window.location.href = '@Url.Action("Login", "Home")';
+                    }, 2000);
+                } else {
+                    showMessage(response.message, 'error');
+                }
+            },
+            error: function() {
+                showMessage('An error occurred. Please try again.', 'error');
             }
-        }
-
-        var fileInfo = '';
-        var fileInput = document.getElementById('qcidFile');
-        if (fileInput.files.length > 0) {
-            fileInfo = fileInput.files[0].name;
-        }
-
-        users.push({
-            id: Date.now(), userType: 'student',
-            firstName: firstName,
-            lastName: lastName,
-            username: username,
-            email: email,
-            password: password,
-            birthdate: document.getElementById('birthdate').value,
-            contact: contact,
-            section: document.getElementById('section').value,
-            studentId: studentId,
-            qcidFile: fileInfo,
-            registeredDate: new Date().toISOString()
         });
-
-        localStorage.setItem('bizzyqcu_users', JSON.stringify(users));
-        showMessage('Registration successful! Redirecting...', 'success');
-
-        setTimeout(function() {
-            window.location.href = '@Url.Action("Login", "Home")';
-        }, 2000);
 
         return false;
     }

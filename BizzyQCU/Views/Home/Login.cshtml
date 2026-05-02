@@ -10,7 +10,7 @@
     <div class="login-card">
         <h2>LOGIN</h2>
         <div id="messageBox" class="message"></div>
-        <form onsubmit="return loginUser(event)">
+        <form id="loginForm" onsubmit="return loginUser(event)">
             <input type="text" id="username" placeholder="Username" required>
             <input type="password" id="password" placeholder="Password" required>
             <button type="submit" class="auth-btn">LOGIN</button>
@@ -21,6 +21,7 @@
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     function showMessage(message, type) {
         var msgBox = document.getElementById('messageBox');
@@ -30,30 +31,55 @@
         msgBox.style.display = 'block';
         setTimeout(function () { msgBox.style.display = 'none'; }, 3000);
     }
+
     function loginUser(event) {
-        event.preventDefault();
-        var users = JSON.parse(localStorage.getItem('bizzyqcu_users') || '[]');
-        var username = document.getElementById('username').value;
-        var password = document.getElementById('password').value;
-        var user = null;
-        for (var i = 0; i < users.length; i++) {
-            if (users[i].username === username && users[i].password === password) {
-                user = users[i];
-                break;
-            }
-        }
-        if (user) {
-            sessionStorage.setItem('currentUser', JSON.stringify(user));
-            var displayName = user.firstName || user.enterpriseName || user.username;
-            showMessage('Welcome ' + displayName + '! Login successful.', 'success');
-            setTimeout(function () {
-                alert('Logged in as: ' + displayName + '\nUser Type: ' + (user.userType === 'student' ? 'Student' : 'Enterprise'));
-                document.getElementById('username').value = '';
-                document.getElementById('password').value = '';
-            }, 1500);
-        } else {
-            showMessage('Invalid username or password!', 'error');
-        }
+    event.preventDefault();
+
+    var username = document.getElementById('username').value;
+    var password = document.getElementById('password').value;
+
+    if (username === '' || password === '') {
+        showMessage('Please enter username and password.', 'error');
         return false;
     }
+
+    $.ajax({
+        url: '@Url.Action("Login", "Account")',
+        type: 'POST',
+        data: {
+            username: username,
+            password: password
+        },
+        success: function(response) {
+            if (response.success) {
+                showMessage('Welcome ' + response.displayName + '! Login successful.', 'success');
+
+                sessionStorage.setItem('currentUser', JSON.stringify({
+                    username: response.username,
+                    role: response.role,
+                    displayName: response.displayName
+                }));
+
+              setTimeout(function() {
+    if (response.redirectUrl) {
+        window.location.href = response.redirectUrl;
+    } else if (response.role === 'enterprise') {
+        window.location.href = '@Url.Action("EnterpriseDashboard", "EnterpriseDashboard")';
+    } else {
+        window.location.href = '@Url.Action("ProductList", "ProductList")';
+    }
+}, 1500);
+            } else {
+                showMessage(response.message || 'Invalid username or password!', 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.log("Error:", error);
+            console.log("Response:", xhr.responseText);
+            showMessage('Server error. Please try again.', 'error');
+        }
+    });
+
+    return false;
+}
 </script>

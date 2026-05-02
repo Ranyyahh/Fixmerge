@@ -65,7 +65,7 @@
     <div class="product-list-wrapper">
         <div class="product-grid-container" id="productGrid">
 
-            <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" onclick="window.location.href = '@Url.Action("ProductChild", "ProductChild")'">
+            <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" data-product-url="@Url.Action("ProductChild", "ProductChild")">
                 <div class="product-img-placeholder">
                     <img src="~/Content/Images/pl_bento.png" />
                 </div>
@@ -80,7 +80,7 @@
                 </div>
             </div>
 
-            <div class="product-card" data-category="food" data-popularity="low" data-price="lowprice" onclick="window.location.href = '@Url.Action("ProductChild", "ProductChild")'">
+            <div class="product-card" data-category="food" data-popularity="low" data-price="lowprice" data-product-url="@Url.Action("ProductChild", "ProductChild")">
                 <div class="product-img-placeholder">
                     <img src="~/Content/Images/spasta.png" />
                 </div>
@@ -95,7 +95,7 @@
                 </div>
             </div>
 
-            <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" onclick="window.location.href = '@Url.Action("ProductChild", "ProductChild")'">
+            <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" data-product-url="@Url.Action("ProductChild", "ProductChild")">
                 <div class="product-img-placeholder">
                     <img src="~/Content/Images/pl_cf.jpg" />
                 </div>
@@ -110,7 +110,7 @@
                 </div>
             </div>
 
-            <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" onclick="window.location.href = '@Url.Action("ProductChild", "ProductChild")'">
+            <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" data-product-url="@Url.Action("ProductChild", "ProductChild")">
                 <div class="product-img-placeholder">
                     <img src="~/Content/Images/pl_slg.jpg" />
                 </div>
@@ -125,7 +125,7 @@
                 </div>
             </div>
 
-            <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" onclick="window.location.href = '@Url.Action("ProductChild", "ProductChild")'">
+            <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" data-product-url="@Url.Action("ProductChild", "ProductChild")">
                 <div class="product-img-placeholder">
                     <img src="~/Content/Images/siomai.jpg" />
                 </div>
@@ -140,7 +140,7 @@
                 </div>
             </div>
 
-            <div class="product-card" data-category="merch" data-popularity="low" data-price="highprice" onclick="window.location.href = '@Url.Action("ProductChild", "ProductChild")'">
+            <div class="product-card" data-category="merch" data-popularity="low" data-price="highprice" data-product-url="@Url.Action("ProductChild", "ProductChild")">
                 <div class="product-img-placeholder">
                     <img src="~/Content/Images/toteb.jpeg" />
                 </div>
@@ -155,7 +155,7 @@
                 </div>
             </div>
 
-            <div class="product-card" data-category="printing" data-popularity="low" data-price="highprice" onclick="window.location.href = '@Url.Action("ProductChild", "ProductChild")'">
+            <div class="product-card" data-category="printing" data-popularity="low" data-price="highprice" data-product-url="@Url.Action("ProductChild", "ProductChild")">
                 <div class="product-img-placeholder">
                     <img src="~/Content/Images/qcuprint.jpg" />
                 </div>
@@ -170,7 +170,7 @@
                 </div>
             </div>
 
-            <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" onclick="window.location.href = '@Url.Action("ProductChild", "ProductChild")'">
+            <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" data-product-url="@Url.Action("ProductChild", "ProductChild")">
                 <div class="product-img-placeholder">
                     <img src="~/Content/Images/brownie-r.jpg" />
                 </div>
@@ -190,7 +190,6 @@
     </div>
 </div>
 
-<!--SCRIPT FOR PRODUCT LIST-->
 @section scripts {
     <script src="~/Scripts/ProductPageLogic.js"></script>
 }
