@@ -184,7 +184,7 @@ namespace BizzyQCU.Controllers
                 string contactNumber = GetValue(data, "ContactNumber");
                 string gcashNumber = GetValue(data, "GcashNumber");
 
-                // validate yung req field 
+          
                 if (string.IsNullOrEmpty(storeName) || string.IsNullOrEmpty(enterpriseType) ||
                     string.IsNullOrEmpty(username) || string.IsNullOrEmpty(email) ||
                     string.IsNullOrEmpty(password) || string.IsNullOrEmpty(contactNumber))
@@ -192,13 +192,13 @@ namespace BizzyQCU.Controllers
                     return Json(new { success = false, message = "Please fill all required fields correctly." });
                 }
 
-                // ichick ang usirnim
+              
                 if (db.IsUsernameRequestExists(username))
                 {
                     return Json(new { success = false, message = "Username already submitted for approval." });
                 }
 
-                // icchik nya kung exist na ba ang email sa approval_requests
+               
                 if (db.IsEmailRequestExists(email))
                 {
                     return Json(new { success = false, message = "Email already submitted for approval." });

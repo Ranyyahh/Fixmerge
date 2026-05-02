@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
-using BizzyQCU.Models.Admin;  // DAGDAG: Para sa AdminDb at ApprovalRequests
-using BizzyQCU.Models.Landingpage;  // DAGDAG: Para sa SimpleDb (kung may kailangan)
+using BizzyQCU.Models.Admin;  
+using BizzyQCU.Models.Landingpage;  
 
 namespace BizzyQCU.Controllers
 {
     public class AdminPanelController : Controller
     {
-        private readonly AdminDb adminDb = new AdminDb();  // DAGDAG: Para sa admin functions
-        private readonly SimpleDb db = new SimpleDb();     // DAGDAG: Para sa existing functions (kung may kailangan)
+        private readonly AdminDb adminDb = new AdminDb();  
+        private readonly SimpleDb db = new SimpleDb();     
 
-        // CHECK IF USER IS ADMIN
+      
         private bool IsAdmin()
         {
             return Session["UserId"] != null && Session["Role"]?.ToString() == "admin";
@@ -49,9 +49,7 @@ namespace BizzyQCU.Controllers
             return View();
         }
 
-        // ========== USER MANAGEMENT ACTIONS ==========
-
-        // GET ALL USERS
+  
         [HttpGet]
         public JsonResult GetAllUsers()
         {
@@ -61,7 +59,7 @@ namespace BizzyQCU.Controllers
             return Json(users, JsonRequestBehavior.AllowGet);
         }
 
-        // GET PENDING STUDENTS
+  
         [HttpGet]
         public JsonResult GetPendingStudents()
         {
@@ -71,7 +69,7 @@ namespace BizzyQCU.Controllers
             return Json(students, JsonRequestBehavior.AllowGet);
         }
 
-        // GET PENDING ENTERPRISES
+  
         [HttpGet]
         public JsonResult GetPendingEnterprises()
         {
@@ -81,7 +79,7 @@ namespace BizzyQCU.Controllers
             return Json(enterprises, JsonRequestBehavior.AllowGet);
         }
 
-        // UPDATE USER APPROVAL STATUS
+ 
         [HttpPost]
         public JsonResult UpdateUserApproval(int userId, bool isApproved)
         {
@@ -91,7 +89,7 @@ namespace BizzyQCU.Controllers
             return Json(new { success = result });
         }
 
-        // DELETE USER
+    
         [HttpPost]
         public JsonResult DeleteUser(int userId)
         {
@@ -101,7 +99,7 @@ namespace BizzyQCU.Controllers
             return Json(new { success = result });
         }
 
-        // APPROVE REQUEST (from approval_requests to users)
+      
         [HttpPost]
         public JsonResult ApproveRequest(int requestId)
         {
@@ -111,7 +109,7 @@ namespace BizzyQCU.Controllers
             return Json(new { success = result });
         }
 
-        // REJECT REQUEST
+
         [HttpPost]
         public JsonResult RejectRequest(int requestId)
         {
@@ -120,7 +118,8 @@ namespace BizzyQCU.Controllers
             bool result = adminDb.RejectRequest(requestId);
             return Json(new { success = result });
         }
-        // GET ALL STUDENT REQUESTS (pending, approved, rejected)
+       
+
         [HttpGet]
         public JsonResult GetAllStudentRequests()
         {
@@ -130,7 +129,7 @@ namespace BizzyQCU.Controllers
             return Json(students, JsonRequestBehavior.AllowGet);
         }
 
-        // GET ALL ENTERPRISE REQUESTS (pending, approved, rejected)
+     
         [HttpGet]
         public JsonResult GetAllEnterpriseRequests()
         {

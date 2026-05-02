@@ -229,7 +229,7 @@ namespace BizzyQCU.Models.Admin
             return requests;
         }
 
-        // ========== UPDATE USER APPROVAL ==========
+        //UPDATE USER APPROVAL 
         public bool UpdateUserApproval(int userId, bool isApproved)
         {
             try
@@ -254,7 +254,7 @@ namespace BizzyQCU.Models.Admin
             }
         }
 
-        // ========== DELETE USER ==========
+        //DELETE USER 
         public bool DeleteUser(int userId)
         {
             try
@@ -278,7 +278,7 @@ namespace BizzyQCU.Models.Admin
             }
         }
 
-        // ========== APPROVE REQUEST ==========
+        //APPROVE REQUEST
         public bool ApproveRequest(int requestId)
         {
             try
