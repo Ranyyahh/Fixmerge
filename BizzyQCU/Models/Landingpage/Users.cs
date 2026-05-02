@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BizzyQCU.Models
+namespace BizzyQCU.Models.Landingpage
 {
     [Table("users")]
     public class Users

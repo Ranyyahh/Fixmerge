@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Web.Mvc;
-using BizzyQCU.Models;
+using BizzyQCU.Models.Landingpage;
 using System.Web.Script.Serialization;
 using System.IO;
 

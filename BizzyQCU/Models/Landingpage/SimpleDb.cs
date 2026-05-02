@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BizzyQCU.Models
+namespace BizzyQCU.Models.Landingpage
 {
     public class SimpleDb
     {

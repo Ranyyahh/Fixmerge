@@ -1,5 +1,5 @@
 ﻿using System.Web.Mvc;
-using BizzyQCU.Models;
+using BizzyQCU.Models.Landingpage;
 
 namespace BizzyQCU.Controllers
 {

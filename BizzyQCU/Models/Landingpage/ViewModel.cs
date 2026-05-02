@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BizzyQCU.Models
+namespace BizzyQCU.Models.Landingpage
 {
     public class StudentRegisterViewModel
     {

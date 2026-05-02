@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Web.Mvc;
-using BizzyQCU.Models;
+using BizzyQCU.Models.Landingpage;
 
 namespace BizzyQCU.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly SimpleDb db = new SimpleDb();  // ADD THIS LINE
+        private readonly SimpleDb db = new SimpleDb(); 
 
         public ActionResult Login()
         {
