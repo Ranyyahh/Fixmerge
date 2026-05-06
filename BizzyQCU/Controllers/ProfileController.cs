@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using BizzyQCU.Models.Landingpage;
 
 namespace User_Profile_Seller_Juvi.Controllers
 {
@@ -128,10 +129,19 @@ namespace User_Profile_Seller_Juvi.Controllers
         public IList<TransactionRecordViewModel> Transactions { get; set; }
     }
 
+    public class UserProfileApiRequest
+    {
+        public string ManagerName { get; set; }
+        public string ManagerContactNumber { get; set; }
+        public string Email { get; set; }
+        public string PhotoDataUrl { get; set; }
+    }
+
     public class ProfileController : Controller
     {
         private const string ProfileSessionKey = "ProfileState";
         private const string PasswordSessionKey = "ProfilePassword";
+        private readonly SimpleDb db = new SimpleDb();
 
         public ActionResult Index()
         {
@@ -187,7 +197,28 @@ namespace User_Profile_Seller_Juvi.Controllers
             ViewBag.ShowProfileEditTools = false;
             ViewBag.ShowProfileSaveActions = false;
 
-            return View("UserProfile", BuildAccountSettingsViewModel(GetProfile(), new ChangePasswordViewModel()));
+            var userId = GetCurrentUserId();
+            if (userId <= 0)
+            {
+                TempData["FlashMessage"] = "Please log in first.";
+                return RedirectToAction("Login", "Home");
+            }
+
+            var profile = BuildUserProfileFromDatabase(userId) ?? new UserProfileViewModel
+            {
+                PhotoDataUrl = DefaultPhotoDataUrl(),
+                QrDataUrl = string.Empty,
+                EnterpriseName = string.Empty,
+                EnterpriseType = string.Empty,
+                Contact = string.Empty,
+                Email = string.Empty,
+                ManagerName = string.Empty,
+                StudentId = string.Empty,
+                Section = string.Empty,
+                ManagerContactNumber = string.Empty
+            };
+
+            return View("UserProfile", BuildAccountSettingsViewModel(profile, new ChangePasswordViewModel()));
         }
         // ==================== END OF UPDATED USERPROFILE ACTION ====================
 
@@ -233,6 +264,79 @@ namespace User_Profile_Seller_Juvi.Controllers
             Session[ProfileSessionKey] = model;
             TempData["FlashMessage"] = "User profile saved successfully.";
             return RedirectToAction("UserProfile");
+        }
+
+        [HttpGet]
+        public JsonResult GetUserProfile()
+        {
+            var userId = GetCurrentUserId();
+            if (userId <= 0)
+            {
+                return Json(new { success = false, message = "Please log in first." }, JsonRequestBehavior.AllowGet);
+            }
+
+            var profile = BuildUserProfileFromDatabase(userId);
+            if (profile == null)
+            {
+                return Json(new { success = false, message = "No profile found for the logged-in account." }, JsonRequestBehavior.AllowGet);
+            }
+
+            return Json(new
+            {
+                success = true,
+                data = new
+                {
+                    managerName = profile.ManagerName ?? string.Empty,
+                    managerContactNumber = profile.ManagerContactNumber ?? string.Empty,
+                    email = profile.Email ?? string.Empty,
+                    photoDataUrl = profile.PhotoDataUrl ?? DefaultPhotoDataUrl()
+                }
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpPost]
+        [ValidateInput(false)]
+        public JsonResult UpdateUserProfile(UserProfileApiRequest request)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (request == null)
+                {
+                    return Json(new { success = false, message = "Invalid request payload." });
+                }
+
+                if (userId <= 0)
+                {
+                    return Json(new { success = false, message = "Please log in first." });
+                }
+
+                var updated = db.UpdateStudentUserProfile(
+                    userId,
+                    request.ManagerName ?? string.Empty,
+                    request.ManagerContactNumber ?? string.Empty,
+                    request.Email ?? string.Empty,
+                    request.PhotoDataUrl ?? string.Empty);
+
+                if (!updated)
+                {
+                    return Json(new { success = false, message = "Unable to save profile." });
+                }
+
+                Session.Remove(ProfileSessionKey);
+                var refreshed = BuildUserProfileFromDatabase(userId);
+                if (refreshed != null)
+                {
+                    Session[ProfileSessionKey] = refreshed;
+                }
+
+                return Json(new { success = true, message = "Profile updated successfully." });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { success = false, message = "Server error: " + ex.Message });
+            }
         }
 
         [HttpPost]
@@ -433,6 +537,17 @@ namespace User_Profile_Seller_Juvi.Controllers
 
         private UserProfileViewModel GetProfile()
         {
+            var userId = GetCurrentUserId();
+            if (userId > 0)
+            {
+                var dbProfile = BuildUserProfileFromDatabase(userId);
+                if (dbProfile != null)
+                {
+                    Session[ProfileSessionKey] = dbProfile;
+                    return dbProfile;
+                }
+            }
+
             var profile = Session[ProfileSessionKey] as UserProfileViewModel;
             if (profile != null)
             {
@@ -502,6 +617,40 @@ namespace User_Profile_Seller_Juvi.Controllers
                 "<circle cx='80' cy='58' r='28' fill='#c9c9c9'/>" +
                 "<path d='M39 136c7-24 23-38 41-38s34 14 41 38' fill='#c9c9c9'/>" +
                 "</svg>");
+        }
+
+        private int GetCurrentUserId()
+        {
+            if (Session["UserId"] == null)
+            {
+                return 0;
+            }
+
+            int userId;
+            return int.TryParse(Session["UserId"].ToString(), out userId) ? userId : 0;
+        }
+
+        private UserProfileViewModel BuildUserProfileFromDatabase(int userId)
+        {
+            var data = db.GetStudentUserProfileByUserId(userId);
+            if (data == null)
+            {
+                return null;
+            }
+
+            return new UserProfileViewModel
+            {
+                PhotoDataUrl = string.IsNullOrWhiteSpace(data.PhotoDataUrl) ? DefaultPhotoDataUrl() : data.PhotoDataUrl,
+                QrDataUrl = string.Empty,
+                EnterpriseName = string.Empty,
+                EnterpriseType = string.Empty,
+                Contact = data.ContactNumber ?? string.Empty,
+                Email = data.Email ?? string.Empty,
+                ManagerName = data.Name ?? string.Empty,
+                StudentId = data.StudentNumber ?? string.Empty,
+                Section = data.Section ?? string.Empty,
+                ManagerContactNumber = data.ContactNumber ?? string.Empty
+            };
         }
     }
 }

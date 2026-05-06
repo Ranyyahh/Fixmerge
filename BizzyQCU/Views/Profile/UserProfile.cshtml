@@ -77,6 +77,36 @@
             background: #1f2aa0;
         }
 
+        .primary-action-button:disabled {
+            background: #8f95d1;
+            cursor: not-allowed;
+        }
+
+    .secondary-action-button {
+        background: #eceefc;
+        color: #2d3cb3;
+        border: 1px solid #2d3cb3;
+        padding: 8px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 140px;
+    }
+
+    .status-message {
+        min-height: 20px;
+        margin-top: 8px;
+        font-weight: 600;
+        font-size: 13px;
+    }
+
+    .status-message.error {
+        color: #c62828;
+    }
+
+    .status-message.success {
+        color: #1b7f3a;
+    }
+
     /* INPUT STYLE */
     .info-input {
         width: 100%;
@@ -147,7 +177,11 @@
                     </button>
 
                     <button id="editInfoBtn" class="primary-action-button" type="button">
-                        Edit Info
+                        Edit Profile
+                    </button>
+
+                    <button id="cancelEditBtn" class="secondary-action-button" type="button" style="display:none;">
+                        Cancel
                     </button>
                 </div>
 
@@ -172,6 +206,8 @@
                     <span>Email</span>
                     <input id="emailInput" class="info-input" value="@Model.Profile.Email" readonly />
                 </div>
+
+                <div id="profileStatus" class="status-message"></div>
 
             </div>
 
