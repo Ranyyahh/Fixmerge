@@ -154,7 +154,7 @@ namespace BizzyQCU.Models.Admin
                     string sql = @"SELECT request_id, username, email, role, firstname, lastname, 
                                           student_number, section, contact_number, status, submitted_at 
                                    FROM approval_requests 
-                                   WHERE role = 'student' AND status = 'pending' 
+                                   WHERE role = 'student' AND status = 'Pending' 
                                    ORDER BY submitted_at DESC";
                     using (var cmd = new MySqlCommand(sql, conn))
                     using (var reader = cmd.ExecuteReader())
@@ -198,7 +198,7 @@ namespace BizzyQCU.Models.Admin
                     string sql = @"SELECT request_id, username, email, role, store_name, store_description, 
                                           contact_number, gcash_number, status, submitted_at 
                                    FROM approval_requests 
-                                   WHERE role = 'enterprise' AND status = 'pending' 
+                                   WHERE role = 'enterprise' AND status = 'Pending' 
                                    ORDER BY submitted_at DESC";
                     using (var cmd = new MySqlCommand(sql, conn))
                     using (var reader = cmd.ExecuteReader())
@@ -306,7 +306,7 @@ namespace BizzyQCU.Models.Admin
                                     return false;
                                 }
                                 currentStatus = result.ToString();
-                                if (currentStatus != "pending")
+                                if (currentStatus != "Pending")
                                 {
                                     System.Diagnostics.Debug.WriteLine($"Request {requestId} is not pending. Current status: {currentStatus}");
                                     return false;
@@ -412,7 +412,7 @@ namespace BizzyQCU.Models.Admin
                             }
 
                             // Step 6: Update approval_requests status
-                            string updateSql = "UPDATE approval_requests SET status = 'approved' WHERE request_id = @requestId";
+                            string updateSql = "UPDATE approval_requests SET status = 'Approved' WHERE request_id = @requestId";
                             using (var cmd = new MySqlCommand(updateSql, conn, transaction))
                             {
                                 cmd.Parameters.AddWithValue("@requestId", requestId);
@@ -453,7 +453,7 @@ namespace BizzyQCU.Models.Admin
                 {
                     conn.Open();
 
-                    // Check if request exists and is pending
+
                     string checkSql = "SELECT status FROM approval_requests WHERE request_id = @requestId";
                     string currentStatus = null;
                     using (var cmd = new MySqlCommand(checkSql, conn))
@@ -466,14 +466,14 @@ namespace BizzyQCU.Models.Admin
                             return false;
                         }
                         currentStatus = result.ToString();
-                        if (currentStatus != "pending")
+                        if (currentStatus != "Pending")
                         {
                             System.Diagnostics.Debug.WriteLine($"Request {requestId} is not pending. Current status: {currentStatus}");
                             return false;
                         }
                     }
 
-                    string sql = "UPDATE approval_requests SET status = 'rejected' WHERE request_id = @requestId";
+                    string sql = "UPDATE approval_requests SET status = 'Rejected' WHERE request_id = @requestId";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@requestId", requestId);

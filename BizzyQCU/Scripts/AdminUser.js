@@ -1,8 +1,6 @@
-﻿
-document.addEventListener('DOMContentLoaded', function () {
-    loadAllStudentRequests();     
-    loadAllEnterpriseRequests();  
-
+﻿document.addEventListener('DOMContentLoaded', function () {
+    loadAllStudentRequests();
+    loadAllEnterpriseRequests();
 
     document.getElementById('tabUsers').addEventListener('click', function () {
         document.getElementById('tabUsers').classList.add('active');
@@ -17,7 +15,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('panelEnterprises').classList.remove('hidden');
         document.getElementById('panelUsers').classList.add('hidden');
     });
-
 
     document.getElementById('searchInput').addEventListener('keyup', function () {
         const searchTerm = this.value.toLowerCase();
@@ -36,10 +33,11 @@ function loadAllStudentRequests() {
     fetch('/AdminPanel/GetAllStudentRequests')
         .then(response => response.json())
         .then(data => {
+            console.log('Student data:', data);
             const tbody = document.getElementById('usersTableBody');
             tbody.innerHTML = '';
 
-            if (data.length === 0) {
+            if (!data || data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No student requests found</td></tr>';
                 return;
             }
@@ -52,20 +50,20 @@ function loadAllStudentRequests() {
                 row.insertCell(2).innerHTML = student.Section || 'N/A';
                 row.insertCell(3).innerHTML = student.StudentNumber || 'N/A';
 
-           
                 let statusClass = '';
-                let statusText = student.Status;
-                if (student.Status === 'Pending') {
+                const statusText = student.Status || '';
+                const statusLower = statusText.toLowerCase();
+
+                if (statusLower === 'pending') {
                     statusClass = 'status-pending';
-                } else if (student.Status === 'Approved') {
+                } else if (statusLower === 'approved') {
                     statusClass = 'status-approved';
-                } else if (student.Status === 'Rejected') {
+                } else if (statusLower === 'rejected') {
                     statusClass = 'status-rejected';
                 }
                 row.insertCell(4).innerHTML = `<span class="${statusClass}">${statusText}</span>`;
 
-             
-                if (student.Status === 'pending') {
+                if (statusLower === 'pending') {
                     row.insertCell(5).innerHTML = `
                         <div class="action-btns">
                             <button class="approve-btn" onclick="approveRequest(${student.RequestId})">Approve</button>
@@ -73,7 +71,7 @@ function loadAllStudentRequests() {
                         </div>
                     `;
                 } else {
-                    row.insertCell(5).innerHTML = `<span class="status-${student.Status}">—</span>`;
+                    row.insertCell(5).innerHTML = `<span>—</span>`;
                 }
             });
         })
@@ -83,15 +81,15 @@ function loadAllStudentRequests() {
         });
 }
 
-
 function loadAllEnterpriseRequests() {
     fetch('/AdminPanel/GetAllEnterpriseRequests')
         .then(response => response.json())
         .then(data => {
+            console.log('Enterprise data:', data);
             const tbody = document.getElementById('enterprisesTableBody');
             tbody.innerHTML = '';
 
-            if (data.length === 0) {
+            if (!data || data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No enterprise requests found</td></tr>';
                 return;
             }
@@ -103,19 +101,20 @@ function loadAllEnterpriseRequests() {
                 row.insertCell(2).innerHTML = enterprise.StoreDescription || 'N/A';
                 row.insertCell(3).innerHTML = enterprise.ContactNumber || 'N/A';
 
-              
                 let statusClass = '';
-                if (enterprise.Status === 'pending') {
+                const statusText = enterprise.Status || '';
+                const statusLower = statusText.toLowerCase();
+
+                if (statusLower === 'pending') {
                     statusClass = 'status-pending';
-                } else if (enterprise.Status === 'approved') {
+                } else if (statusLower === 'approved') {
                     statusClass = 'status-approved';
-                } else if (enterprise.Status === 'rejected') {
+                } else if (statusLower === 'rejected') {
                     statusClass = 'status-rejected';
                 }
-                row.insertCell(4).innerHTML = `<span class="${statusClass}">${enterprise.Status}</span>`;
+                row.insertCell(4).innerHTML = `<span class="${statusClass}">${statusText}</span>`;
 
-             
-                if (enterprise.Status === 'pending') {
+                if (statusLower === 'pending') {
                     row.insertCell(5).innerHTML = `
                         <div class="action-btns">
                             <button class="approve-btn" onclick="approveRequest(${enterprise.RequestId})">Approve</button>
@@ -123,7 +122,7 @@ function loadAllEnterpriseRequests() {
                         </div>
                     `;
                 } else {
-                    row.insertCell(5).innerHTML = `<span class="status-${enterprise.Status}">—</span>`;
+                    row.insertCell(5).innerHTML = `<span>—</span>`;
                 }
             });
         })
@@ -136,16 +135,15 @@ function loadAllEnterpriseRequests() {
 
 function approveRequest(requestId) {
     if (confirm('Approve this user?')) {
-        // Use URLSearchParams instead of JSON
         const formData = new URLSearchParams();
         formData.append('requestId', requestId);
 
         fetch('/AdminPanel/ApproveRequest', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',  // Changed!
+                'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: formData  // Send as form data, not JSON
+            body: formData
         })
             .then(response => response.json())
             .then(data => {
@@ -154,7 +152,7 @@ function approveRequest(requestId) {
                     loadAllStudentRequests();
                     loadAllEnterpriseRequests();
                 } else {
-                    alert('Failed to approve user. Response: ' + JSON.stringify(data));
+                    alert('Failed to approve user: ' + (data.message || 'Unknown error'));
                 }
             })
             .catch(error => {
@@ -163,6 +161,7 @@ function approveRequest(requestId) {
             });
     }
 }
+
 
 function rejectRequest(requestId) {
     if (confirm('Reject this user?')) {
@@ -183,7 +182,7 @@ function rejectRequest(requestId) {
                     loadAllStudentRequests();
                     loadAllEnterpriseRequests();
                 } else {
-                    alert('Failed to reject user. Response: ' + JSON.stringify(data));
+                    alert('Failed to reject user: ' + (data.message || 'Unknown error'));
                 }
             })
             .catch(error => {
@@ -192,6 +191,7 @@ function rejectRequest(requestId) {
             });
     }
 }
+
 
 function filterTable(tableId, searchTerm) {
     const table = document.getElementById(tableId);
