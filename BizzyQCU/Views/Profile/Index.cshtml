@@ -5,6 +5,64 @@
 }
 
 <link rel="stylesheet" href="~/Content/EnterpriseInfo.css" />
+<style>
+    .logout-confirm-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .logout-confirm-overlay.show {
+        display: flex;
+    }
+
+    .logout-confirm-card {
+        width: min(92vw, 420px);
+        background: #fff;
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .logout-confirm-card h3 {
+        margin: 0 0 8px;
+        color: #1e2f98;
+    }
+
+    .logout-confirm-card p {
+        margin: 0;
+        color: #555;
+    }
+
+    .logout-confirm-actions {
+        margin-top: 18px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .logout-confirm-actions button {
+        border: none;
+        border-radius: 8px;
+        padding: 8px 14px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .logout-cancel-btn {
+        background: #eceefc;
+        color: #2d3cb3;
+    }
+
+    .logout-proceed-btn {
+        background: #f0c330;
+        color: #2b2b2b;
+    }
+</style>
 
 <section class="screen screen-dashboard">
     <div class="dashboard-panel">
@@ -174,3 +232,50 @@
         </button>
     </form>
 </section>
+
+<div id="logoutConfirmModal" class="logout-confirm-overlay" aria-hidden="true">
+    <div class="logout-confirm-card" role="dialog" aria-modal="true" aria-labelledby="logoutConfirmTitle">
+        <h3 id="logoutConfirmTitle">Log Out</h3>
+        <p>Are you sure you want to log out?</p>
+        <div class="logout-confirm-actions">
+            <button id="logoutCancelBtn" type="button" class="logout-cancel-btn">Cancel</button>
+            <button id="logoutConfirmBtn" type="button" class="logout-proceed-btn">Log Out</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var logoutForm = document.querySelector(".logout-form");
+        var logoutModal = document.getElementById("logoutConfirmModal");
+        var logoutCancelBtn = document.getElementById("logoutCancelBtn");
+        var logoutConfirmBtn = document.getElementById("logoutConfirmBtn");
+        var allowSubmit = false;
+
+        if (!logoutForm) return;
+
+        logoutForm.addEventListener("submit", function (event) {
+            if (allowSubmit) return;
+            event.preventDefault();
+            logoutModal.classList.add("show");
+            logoutModal.setAttribute("aria-hidden", "false");
+        });
+
+        logoutCancelBtn.addEventListener("click", function () {
+            logoutModal.classList.remove("show");
+            logoutModal.setAttribute("aria-hidden", "true");
+        });
+
+        logoutConfirmBtn.addEventListener("click", function () {
+            allowSubmit = true;
+            logoutForm.submit();
+        });
+
+        logoutModal.addEventListener("click", function (event) {
+            if (event.target === logoutModal) {
+                logoutModal.classList.remove("show");
+                logoutModal.setAttribute("aria-hidden", "true");
+            }
+        });
+    })();
+</script>
