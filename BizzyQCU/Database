@@ -147,7 +147,7 @@ CREATE TABLE approval_requests (
     store_description TEXT,
     gcash_number VARCHAR(15),
     status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
-    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     qcu_id LONGBLOB NULL
 ); 
 
