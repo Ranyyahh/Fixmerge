@@ -500,5 +500,60 @@ namespace BizzyQCU.Models.Admin
                 return false;
             }
         }
+
+        public List<Feedback> GetFeedbacks(int? rating = null)
+        {
+            var feedbacks = new List<Feedback>();
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"SELECT feedback_id, user_id, user_type, email, contact_number, category, message, rating, status, created_at
+                                   FROM feedbacks";
+
+                    if (rating.HasValue)
+                    {
+                        sql += " WHERE rating = @rating";
+                    }
+
+                    sql += " ORDER BY feedback_id DESC";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        if (rating.HasValue)
+                        {
+                            cmd.Parameters.AddWithValue("@rating", rating.Value);
+                        }
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                feedbacks.Add(new Feedback
+                                {
+                                    FeedbackId = reader.GetInt32("feedback_id"),
+                                    UserId = reader.GetInt32("user_id"),
+                                    UserType = reader.GetString("user_type"),
+                                    Email = reader.GetString("email"),
+                                    ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
+                                    Category = reader.IsDBNull(reader.GetOrdinal("category")) ? "" : reader.GetString("category"),
+                                    Message = reader.GetString("message"),
+                                    Rating = reader.GetInt32("rating"),
+                                    Status = reader.GetString("status"),
+                                    CreatedAt = reader.IsDBNull(reader.GetOrdinal("created_at")) ? (DateTime?)null : reader.GetDateTime("created_at")
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetFeedbacks error: " + ex.Message);
+            }
+
+            return feedbacks;
+        }
     }
 }

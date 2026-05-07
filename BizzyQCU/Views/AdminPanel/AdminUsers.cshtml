@@ -46,6 +46,23 @@
             <div class="tabs">
                 <button class="tab active" id="tabUsers">User Approval</button>
                 <button class="tab" id="tabEnterprises">Enterprise Approval</button>
+                <button class="tab" id="tabFeedbacks">Feedbacks</button>
+            </div>
+
+            <div class="feedback-filter-wrap hidden" id="feedbackFilterWrap">
+                <label for="ratingFilter">Filter by Rating:</label>
+                <select id="ratingFilter">
+                    <option value="">All Ratings</option>
+                    <option value="5">5 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="2">2 Stars</option>
+                    <option value="1">1 Star</option>
+                </select>
+                <label for="categoryFilter">Filter by Category:</label>
+                <select id="categoryFilter">
+                    <option value="">All Categories</option>
+                </select>
             </div>
 
             <div class="tab-panel" id="panelUsers">
@@ -83,6 +100,25 @@
                     <tbody id="enterprisesTableBody">
                         <tr>
                             <td colspan="6" style="text-align:center;">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="tab-panel hidden" id="panelFeedbacks">
+                <table class="approval-table">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Contact No.</th>
+                            <th>Category</th>
+                            <th>Message</th>
+                            <th>Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody id="feedbacksTableBody">
+                        <tr>
+                            <td colspan="5" style="text-align:center;">Loading...</td>
                         </tr>
                     </tbody>
                 </table>
