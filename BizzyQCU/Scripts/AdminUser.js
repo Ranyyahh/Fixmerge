@@ -136,52 +136,59 @@ function loadAllEnterpriseRequests() {
 
 function approveRequest(requestId) {
     if (confirm('Approve this user?')) {
+        // Use URLSearchParams instead of JSON
+        const formData = new URLSearchParams();
+        formData.append('requestId', requestId);
+
         fetch('/AdminPanel/ApproveRequest', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/x-www-form-urlencoded',  // Changed!
             },
-            body: JSON.stringify({ requestId: requestId })
+            body: formData  // Send as form data, not JSON
         })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     alert('User approved successfully!');
-                    loadAllStudentRequests();     
-                    loadAllEnterpriseRequests();   
+                    loadAllStudentRequests();
+                    loadAllEnterpriseRequests();
                 } else {
-                    alert('Failed to approve user.');
+                    alert('Failed to approve user. Response: ' + JSON.stringify(data));
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred.');
+                alert('An error occurred: ' + error.message);
             });
     }
 }
 
 function rejectRequest(requestId) {
     if (confirm('Reject this user?')) {
+        const formData = new URLSearchParams();
+        formData.append('requestId', requestId);
+
         fetch('/AdminPanel/RejectRequest', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: JSON.stringify({ requestId: requestId })
+            body: formData
         })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     alert('User rejected!');
-                    loadAllStudentRequests();    
-                    loadAllEnterpriseRequests();   
+                    loadAllStudentRequests();
+                    loadAllEnterpriseRequests();
                 } else {
-                    alert('Failed to reject user.');
+                    alert('Failed to reject user. Response: ' + JSON.stringify(data));
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred.');
+                alert('An error occurred: ' + error.message);
             });
     }
 }

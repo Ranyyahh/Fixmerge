@@ -279,6 +279,7 @@ namespace BizzyQCU.Models.Admin
         }
 
         //APPROVE REQUEST
+        //APPROVE REQUEST - WITH PROPER ERROR HANDLING
         public bool ApproveRequest(int requestId)
         {
             try
@@ -287,108 +288,163 @@ namespace BizzyQCU.Models.Admin
                 {
                     conn.Open();
 
-                   
-                    string selectSql = "SELECT * FROM approval_requests WHERE request_id = @requestId";
-                    ApprovalRequests request = null;
-                    using (var cmd = new MySqlCommand(selectSql, conn))
+                    // Start a transaction para kung may error, mag-rollback lahat
+                    using (var transaction = conn.BeginTransaction())
                     {
-                        cmd.Parameters.AddWithValue("@requestId", requestId);
-                        using (var reader = cmd.ExecuteReader())
+                        try
                         {
-                            if (reader.Read())
+                            // Step 1: Check if request exists and is pending
+                            string checkSql = "SELECT status FROM approval_requests WHERE request_id = @requestId FOR UPDATE";
+                            string currentStatus = null;
+                            using (var cmd = new MySqlCommand(checkSql, conn, transaction))
                             {
-                                request = new ApprovalRequests
+                                cmd.Parameters.AddWithValue("@requestId", requestId);
+                                var result = cmd.ExecuteScalar();
+                                if (result == null)
                                 {
-                                    Username = reader.GetString("username"),
-                                    Password = reader.GetString("password"),
-                                    Email = reader.GetString("email"),
-                                    Role = reader.GetString("role"),
-                                    Firstname = reader.IsDBNull(reader.GetOrdinal("firstname")) ? "" : reader.GetString("firstname"),
-                                    Lastname = reader.IsDBNull(reader.GetOrdinal("lastname")) ? "" : reader.GetString("lastname"),
-                                    StudentNumber = reader.IsDBNull(reader.GetOrdinal("student_number")) ? "" : reader.GetString("student_number"),
-                                    Section = reader.IsDBNull(reader.GetOrdinal("section")) ? "" : reader.GetString("section"),
-                                    ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
-                                    StoreName = reader.IsDBNull(reader.GetOrdinal("store_name")) ? "" : reader.GetString("store_name"),
-                                    StoreDescription = reader.IsDBNull(reader.GetOrdinal("store_description")) ? "" : reader.GetString("store_description"),
-                                    GcashNumber = reader.IsDBNull(reader.GetOrdinal("gcash_number")) ? "" : reader.GetString("gcash_number")
-                                };
+                                    System.Diagnostics.Debug.WriteLine($"Request {requestId} not found");
+                                    return false;
+                                }
+                                currentStatus = result.ToString();
+                                if (currentStatus != "pending")
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"Request {requestId} is not pending. Current status: {currentStatus}");
+                                    return false;
+                                }
                             }
-                        }
-                    }
 
-                    if (request == null) return false;
+                            // Step 2: Get the request details
+                            string selectSql = "SELECT * FROM approval_requests WHERE request_id = @requestId";
+                            ApprovalRequests request = null;
+                            using (var cmd = new MySqlCommand(selectSql, conn, transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@requestId", requestId);
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    if (reader.Read())
+                                    {
+                                        request = new ApprovalRequests
+                                        {
+                                            Username = reader.GetString("username"),
+                                            Password = reader.GetString("password"),
+                                            Email = reader.GetString("email"),
+                                            Role = reader.GetString("role"),
+                                            Firstname = reader.IsDBNull(reader.GetOrdinal("firstname")) ? "" : reader.GetString("firstname"),
+                                            Lastname = reader.IsDBNull(reader.GetOrdinal("lastname")) ? "" : reader.GetString("lastname"),
+                                            StudentNumber = reader.IsDBNull(reader.GetOrdinal("student_number")) ? "" : reader.GetString("student_number"),
+                                            Section = reader.IsDBNull(reader.GetOrdinal("section")) ? "" : reader.GetString("section"),
+                                            ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
+                                            StoreName = reader.IsDBNull(reader.GetOrdinal("store_name")) ? "" : reader.GetString("store_name"),
+                                            StoreDescription = reader.IsDBNull(reader.GetOrdinal("store_description")) ? "" : reader.GetString("store_description"),
+                                            GcashNumber = reader.IsDBNull(reader.GetOrdinal("gcash_number")) ? "" : reader.GetString("gcash_number")
+                                        };
+                                    }
+                                }
+                            }
 
-                 
-                    string insertSql = @"INSERT INTO users (username, password, email, role, is_approved, created_at) 
+                            if (request == null)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Request {requestId} not found after select");
+                                return false;
+                            }
+
+                            System.Diagnostics.Debug.WriteLine($"Processing approval for {request.Role}: {request.Username}");
+
+                            // Step 3: Insert into users table
+                            string insertSql = @"INSERT INTO users (username, password, email, role, is_approved, created_at) 
                                          VALUES (@username, @password, @email, @role, 1, NOW())";
-                    using (var cmd = new MySqlCommand(insertSql, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@username", request.Username);
-                        cmd.Parameters.AddWithValue("@password", request.Password);
-                        cmd.Parameters.AddWithValue("@email", request.Email);
-                        cmd.Parameters.AddWithValue("@role", request.Role);
-                        cmd.ExecuteNonQuery();
-                    }
+                            using (var cmd = new MySqlCommand(insertSql, conn, transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@username", request.Username);
+                                cmd.Parameters.AddWithValue("@password", request.Password);
+                                cmd.Parameters.AddWithValue("@email", request.Email);
+                                cmd.Parameters.AddWithValue("@role", request.Role);
+                                int rowsAffected = cmd.ExecuteNonQuery();
+                                System.Diagnostics.Debug.WriteLine($"Inserted into users, rows affected: {rowsAffected}");
+                            }
 
-                
-                    int userId = 0;
-                    string getUserIdSql = "SELECT user_id FROM users WHERE username = @username";
-                    using (var cmd = new MySqlCommand(getUserIdSql, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@username", request.Username);
-                        userId = Convert.ToInt32(cmd.ExecuteScalar());
-                    }
+                            // Step 4: Get the new user_id
+                            int userId = 0;
+                            string getUserIdSql = "SELECT user_id FROM users WHERE username = @username";
+                            using (var cmd = new MySqlCommand(getUserIdSql, conn, transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@username", request.Username);
+                                var result = cmd.ExecuteScalar();
+                                if (result == null)
+                                {
+                                    throw new Exception("Failed to retrieve user_id after insert");
+                                }
+                                userId = Convert.ToInt32(result);
+                                System.Diagnostics.Debug.WriteLine($"Created user_id: {userId}");
+                            }
 
-                  
-                    if (request.Role == "student")
-                    {
-                        string insertStudentSql = @"INSERT INTO students (user_id, firstname, lastname, student_number, section, contact_number) 
+                            // Step 5: Insert into role-specific table
+                            if (request.Role == "student")
+                            {
+                                string insertStudentSql = @"INSERT INTO students (user_id, firstname, lastname, student_number, section, contact_number) 
                                                     VALUES (@userId, @firstname, @lastname, @studentNumber, @section, @contact)";
-                        using (var cmd = new MySqlCommand(insertStudentSql, conn))
-                        {
-                            cmd.Parameters.AddWithValue("@userId", userId);
-                            cmd.Parameters.AddWithValue("@firstname", request.Firstname);
-                            cmd.Parameters.AddWithValue("@lastname", request.Lastname);
-                            cmd.Parameters.AddWithValue("@studentNumber", request.StudentNumber);
-                            cmd.Parameters.AddWithValue("@section", request.Section);
-                            cmd.Parameters.AddWithValue("@contact", request.ContactNumber);
-                            cmd.ExecuteNonQuery();
-                        }
-                    }
-                    else if (request.Role == "enterprise")
-                    {
-                        string insertEnterpriseSql = @"INSERT INTO enterprises (user_id, store_name, store_description, contact_number, gcash_number, status) 
+                                using (var cmd = new MySqlCommand(insertStudentSql, conn, transaction))
+                                {
+                                    cmd.Parameters.AddWithValue("@userId", userId);
+                                    cmd.Parameters.AddWithValue("@firstname", request.Firstname ?? "");
+                                    cmd.Parameters.AddWithValue("@lastname", request.Lastname ?? "");
+                                    cmd.Parameters.AddWithValue("@studentNumber", request.StudentNumber ?? "");
+                                    cmd.Parameters.AddWithValue("@section", request.Section ?? "");
+                                    cmd.Parameters.AddWithValue("@contact", request.ContactNumber ?? "");
+                                    int rowsAffected = cmd.ExecuteNonQuery();
+                                    System.Diagnostics.Debug.WriteLine($"Inserted into students, rows affected: {rowsAffected}");
+                                }
+                            }
+                            else if (request.Role == "enterprise")
+                            {
+                                string insertEnterpriseSql = @"INSERT INTO enterprises (user_id, store_name, store_description, contact_number, gcash_number, status) 
                                                        VALUES (@userId, @storeName, @storeDesc, @contact, @gcash, 'approved')";
-                        using (var cmd = new MySqlCommand(insertEnterpriseSql, conn))
+                                using (var cmd = new MySqlCommand(insertEnterpriseSql, conn, transaction))
+                                {
+                                    cmd.Parameters.AddWithValue("@userId", userId);
+                                    cmd.Parameters.AddWithValue("@storeName", request.StoreName ?? "");
+                                    cmd.Parameters.AddWithValue("@storeDesc", request.StoreDescription ?? "");
+                                    cmd.Parameters.AddWithValue("@contact", request.ContactNumber ?? "");
+                                    cmd.Parameters.AddWithValue("@gcash", request.GcashNumber ?? "");
+                                    int rowsAffected = cmd.ExecuteNonQuery();
+                                    System.Diagnostics.Debug.WriteLine($"Inserted into enterprises, rows affected: {rowsAffected}");
+                                }
+                            }
+
+                            // Step 6: Update approval_requests status
+                            string updateSql = "UPDATE approval_requests SET status = 'approved' WHERE request_id = @requestId";
+                            using (var cmd = new MySqlCommand(updateSql, conn, transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@requestId", requestId);
+                                int rowsAffected = cmd.ExecuteNonQuery();
+                                System.Diagnostics.Debug.WriteLine($"Updated approval_requests status, rows affected: {rowsAffected}");
+                            }
+
+                            // Commit the transaction
+                            transaction.Commit();
+                            System.Diagnostics.Debug.WriteLine($"Request {requestId} approved successfully");
+                            return true;
+                        }
+                        catch (Exception ex)
                         {
-                            cmd.Parameters.AddWithValue("@userId", userId);
-                            cmd.Parameters.AddWithValue("@storeName", request.StoreName);
-                            cmd.Parameters.AddWithValue("@storeDesc", request.StoreDescription);
-                            cmd.Parameters.AddWithValue("@contact", request.ContactNumber);
-                            cmd.Parameters.AddWithValue("@gcash", request.GcashNumber);
-                            cmd.ExecuteNonQuery();
+                            // Rollback on error
+                            transaction.Rollback();
+                            System.Diagnostics.Debug.WriteLine($"Transaction rolled back. Error: {ex.Message}");
+                            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                            throw; // Re-throw to be caught by outer catch
                         }
                     }
-
-                   
-                    string updateSql = "UPDATE approval_requests SET status = 'approved' WHERE request_id = @requestId";
-                    using (var cmd = new MySqlCommand(updateSql, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@requestId", requestId);
-                        cmd.ExecuteNonQuery();
-                    }
-
-                    return true;
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("ApproveRequest error: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("Stack trace: " + ex.StackTrace);
                 return false;
             }
         }
 
-       
+
         public bool RejectRequest(int requestId)
         {
             try
@@ -396,18 +452,42 @@ namespace BizzyQCU.Models.Admin
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
+
+                    // Check if request exists and is pending
+                    string checkSql = "SELECT status FROM approval_requests WHERE request_id = @requestId";
+                    string currentStatus = null;
+                    using (var cmd = new MySqlCommand(checkSql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@requestId", requestId);
+                        var result = cmd.ExecuteScalar();
+                        if (result == null)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Request {requestId} not found");
+                            return false;
+                        }
+                        currentStatus = result.ToString();
+                        if (currentStatus != "pending")
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Request {requestId} is not pending. Current status: {currentStatus}");
+                            return false;
+                        }
+                    }
+
                     string sql = "UPDATE approval_requests SET status = 'rejected' WHERE request_id = @requestId";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@requestId", requestId);
-                        cmd.ExecuteNonQuery();
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        bool success = rowsAffected > 0;
+                        System.Diagnostics.Debug.WriteLine($"RejectRequest: Request {requestId}, Rows affected: {rowsAffected}, Success: {success}");
+                        return success;
                     }
-                    return true;
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("RejectRequest error: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("Stack trace: " + ex.StackTrace);
                 return false;
             }
         }
