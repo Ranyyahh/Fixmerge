@@ -311,12 +311,19 @@ namespace User_Profile_Seller_Juvi.Controllers
                     return Json(new { success = false, message = "Please log in first." });
                 }
 
-                var updated = db.UpdateStudentUserProfile(
-                    userId,
-                    request.ManagerName ?? string.Empty,
-                    request.ManagerContactNumber ?? string.Empty,
-                    request.Email ?? string.Empty,
-                    request.PhotoDataUrl ?? string.Empty);
+                var isEnterpriseUser = db.GetEnterpriseByUserId(userId) != null;
+                var updated = isEnterpriseUser
+                    ? db.UpdateEnterpriseUserProfile(
+                        userId,
+                        request.ManagerName ?? string.Empty,
+                        request.ManagerContactNumber ?? string.Empty,
+                        request.Email ?? string.Empty)
+                    : db.UpdateStudentUserProfile(
+                        userId,
+                        request.ManagerName ?? string.Empty,
+                        request.ManagerContactNumber ?? string.Empty,
+                        request.Email ?? string.Empty,
+                        request.PhotoDataUrl ?? string.Empty);
 
                 if (!updated)
                 {
@@ -466,11 +473,95 @@ namespace User_Profile_Seller_Juvi.Controllers
 
         public ActionResult EnterpriseProfile()
         {
+            var userId = GetCurrentUserId();
+            if (userId <= 0)
+            {
+                TempData["FlashMessage"] = "Please log in first.";
+                return RedirectToAction("Login", "Home");
+            }
+
             PrepareProfilePage("EnterpriseProfile", "enterprises");
             ViewBag.ShowProfileSaveActions = true;
             ViewBag.ShowProfileEditTools = true;
             ViewBag.Title = "Enterprise Profile";
-            return View("EnterpriseProfile", BuildAccountSettingsViewModel(GetProfile(), new ChangePasswordViewModel()));
+            return View("EnterpriseProfile", BuildAccountSettingsViewModel(GetEnterpriseProfile(userId), new ChangePasswordViewModel()));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult SaveEnterpriseProfile([Bind(Prefix = "Profile")] UserProfileViewModel model, HttpPostedFileBase profileFile, HttpPostedFileBase qrFile)
+        {
+            var userId = GetCurrentUserId();
+            if (userId <= 0)
+            {
+                TempData["FlashMessage"] = "Please log in first.";
+                return RedirectToAction("Login", "Home");
+            }
+
+            PrepareProfilePage("EnterpriseProfile", "enterprises");
+            ViewBag.ShowProfileSaveActions = true;
+            ViewBag.ShowProfileEditTools = true;
+            ViewBag.Title = "Enterprise Profile";
+
+            // Enterprise profile uses a shared model with student-specific validators.
+            // Clear unrelated validation entries so enterprise saves are not blocked.
+            ModelState.Remove("Profile.StudentId");
+            ModelState.Remove("Profile.ManagerContactNumber");
+            ModelState.Remove("Profile.ManagerName");
+
+            if (!ModelState.IsValid)
+            {
+                TempData["FlashMessage"] = "Please complete required enterprise fields correctly.";
+                return View("EnterpriseProfile", BuildAccountSettingsViewModel(model, new ChangePasswordViewModel()));
+            }
+
+            string logoPath = null;
+            if (profileFile != null && profileFile.ContentLength > 0)
+            {
+                var uploadsFolder = Server.MapPath("~/Content/Uploads");
+                if (!System.IO.Directory.Exists(uploadsFolder))
+                {
+                    System.IO.Directory.CreateDirectory(uploadsFolder);
+                }
+
+                var extension = System.IO.Path.GetExtension(profileFile.FileName);
+                var safeExt = string.IsNullOrWhiteSpace(extension) ? ".png" : extension;
+                var fileName = $"enterprise_{userId}_logo{safeExt}";
+                var fullPath = System.IO.Path.Combine(uploadsFolder, fileName);
+                profileFile.SaveAs(fullPath);
+                logoPath = "/Content/Uploads/" + fileName;
+            }
+
+            byte[] qrBytes = null;
+            if (qrFile != null && qrFile.ContentLength > 0)
+            {
+                using (var br = new System.IO.BinaryReader(qrFile.InputStream))
+                {
+                    qrBytes = br.ReadBytes(qrFile.ContentLength);
+                }
+            }
+
+            var ok = db.SaveEnterpriseProfileData(
+                userId,
+                model.EnterpriseName,
+                model.EnterpriseType,
+                model.Contact,
+                model.Email,
+                model.ManagerName,
+                model.StudentId,
+                model.ManagerContactNumber,
+                model.Section,
+                logoPath,
+                qrBytes);
+
+            if (!ok)
+            {
+                TempData["FlashMessage"] = "Unable to save enterprise profile.";
+                return View("EnterpriseProfile", BuildAccountSettingsViewModel(model, new ChangePasswordViewModel()));
+            }
+
+            TempData["FlashMessage"] = "Enterprise profile saved.";
+            return RedirectToAction("EnterpriseProfile");
         }
 
         private void PrepareProfilePage(string settingsAction, string navSection)
@@ -506,31 +597,41 @@ namespace User_Profile_Seller_Juvi.Controllers
 
         private EnterpriseDashboardViewModel BuildDashboardViewModel()
         {
-            var profile = GetProfile();
+            var userId = GetCurrentUserId();
+            var enterpriseData = userId > 0 ? db.GetEnterpriseProfileDataByUserId(userId) : null;
+            var statsData = userId > 0 ? db.GetEnterpriseDashboardStatsByUserId(userId) : new EnterpriseDashboardStatsData();
+            var role = Session["Role"] == null ? "enterprise" : Session["Role"].ToString();
+            var enterpriseName = enterpriseData == null ? string.Empty : (enterpriseData.StoreName ?? string.Empty);
+            var enterpriseType = enterpriseData == null ? string.Empty : (enterpriseData.EnterpriseType ?? string.Empty);
+            var enterpriseGcash = enterpriseData == null ? string.Empty : (enterpriseData.GcashNumber ?? string.Empty);
+            var enterprisePhoto = enterpriseData == null || string.IsNullOrWhiteSpace(enterpriseData.StoreLogoPath)
+                ? DefaultPhotoDataUrl()
+                : enterpriseData.StoreLogoPath;
+            var enterpriseQr = enterpriseData == null ? string.Empty : (enterpriseData.QrDataUrl ?? string.Empty);
 
             return new EnterpriseDashboardViewModel
             {
                 Enterprise = new EnterpriseSummary
                 {
-                    PhotoDataUrl = profile.PhotoDataUrl,
-                    QrDataUrl = profile.QrDataUrl,
-                    Name = profile.EnterpriseName,
-                    Type = profile.EnterpriseType == "Partnership" ? "Food" : profile.EnterpriseType,
-                    Gcash = profile.Contact,
-                    Role = "Innovation Strategist"
+                    PhotoDataUrl = enterprisePhoto,
+                    QrDataUrl = enterpriseQr,
+                    Name = enterpriseName,
+                    Type = enterpriseType,
+                    Gcash = enterpriseGcash,
+                    Role = role
                 },
                 Manager = new ManagerSummary
                 {
-                    Name = profile.ManagerName,
-                    Section = profile.Section,
-                    StudentId = profile.StudentId,
-                    ContactNumber = profile.ManagerContactNumber
+                    Name = enterpriseData == null ? string.Empty : (enterpriseData.ManagerName ?? string.Empty),
+                    Section = enterpriseData == null ? string.Empty : (enterpriseData.Section ?? string.Empty),
+                    StudentId = enterpriseData == null ? string.Empty : (enterpriseData.ManagerStudentId ?? string.Empty),
+                    ContactNumber = enterpriseData == null ? string.Empty : (enterpriseData.ManagerContact ?? string.Empty)
                 },
                 Stats = new EnterpriseStatsSummary
                 {
-                    OrdersCompleted = 120,
-                    ProductsListed = 35,
-                    TotalSales = 50000m
+                    OrdersCompleted = statsData.OrdersCompleted,
+                    ProductsListed = statsData.ProductsListed,
+                    TotalSales = statsData.TotalSales
                 }
             };
         }
@@ -632,7 +733,10 @@ namespace User_Profile_Seller_Juvi.Controllers
 
         private UserProfileViewModel BuildUserProfileFromDatabase(int userId)
         {
-            var data = db.GetStudentUserProfileByUserId(userId);
+            var isEnterpriseUser = db.GetEnterpriseByUserId(userId) != null;
+            var data = isEnterpriseUser
+                ? db.GetEnterpriseUserProfileByUserId(userId)
+                : db.GetStudentUserProfileByUserId(userId);
             if (data == null)
             {
                 return null;
@@ -650,6 +754,41 @@ namespace User_Profile_Seller_Juvi.Controllers
                 StudentId = data.StudentNumber ?? string.Empty,
                 Section = data.Section ?? string.Empty,
                 ManagerContactNumber = data.ContactNumber ?? string.Empty
+            };
+        }
+
+        private UserProfileViewModel GetEnterpriseProfile(int userId)
+        {
+            var data = db.GetEnterpriseProfileDataByUserId(userId);
+            if (data == null)
+            {
+                return new UserProfileViewModel
+                {
+                    PhotoDataUrl = DefaultPhotoDataUrl(),
+                    QrDataUrl = string.Empty,
+                    EnterpriseName = string.Empty,
+                    EnterpriseType = string.Empty,
+                    Contact = string.Empty,
+                    Email = string.Empty,
+                    ManagerName = string.Empty,
+                    StudentId = string.Empty,
+                    Section = string.Empty,
+                    ManagerContactNumber = string.Empty
+                };
+            }
+
+            return new UserProfileViewModel
+            {
+                PhotoDataUrl = string.IsNullOrWhiteSpace(data.StoreLogoPath) ? DefaultPhotoDataUrl() : data.StoreLogoPath,
+                QrDataUrl = data.QrDataUrl ?? string.Empty,
+                EnterpriseName = data.StoreName ?? string.Empty,
+                EnterpriseType = data.EnterpriseType ?? string.Empty,
+                Contact = data.GcashNumber ?? string.Empty,
+                Email = data.Email ?? string.Empty,
+                ManagerName = data.ManagerName ?? string.Empty,
+                StudentId = data.ManagerStudentId ?? string.Empty,
+                Section = data.Section ?? string.Empty,
+                ManagerContactNumber = data.ManagerContact ?? string.Empty
             };
         }
     }

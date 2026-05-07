@@ -13,6 +13,12 @@
     @RenderSection("Styles", required: false)
 </head>
 <body>
+    @{
+        var sessionRole = Session["Role"] == null ? string.Empty : Session["Role"].ToString();
+        var accountUrl = string.Equals(sessionRole, "enterprise", StringComparison.OrdinalIgnoreCase)
+            ? Url.Action("Index", "Profile")
+            : Url.Action("UserProfile", "Profile");
+    }
 
     <div class="navbar">
 
@@ -32,7 +38,7 @@
             <a href="@Url.Action("EnterpriseList", "EnterpriseList")">ENTERPRISES</a>
             <a href="@Url.Action("About", "Home")">ABOUT US</a>
 
-            <a href="@Url.Action("UserProfile", "Profile")" class="account-mobile">
+            <a href="@accountUrl" class="account-mobile">
                 ACCOUNT
             </a>
         </div>
@@ -42,7 +48,7 @@
                 <a href="#"><img src="~/Images/cart-icon.png" alt="Cart"  onclick="window.location.href = '@Url.Action("tracking", "Home")'"/></a>
             </div>
             <div class="account-icon account-desktop">
-                <a href="@Url.Action("UserProfile", "Profile")">
+                <a href="@accountUrl">
                     <img src="~/Images/account-icon.png" alt="Account" />
                 </a>
             </div>

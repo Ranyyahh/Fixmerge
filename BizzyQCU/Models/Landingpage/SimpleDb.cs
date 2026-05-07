@@ -15,6 +15,28 @@ namespace BizzyQCU.Models.Landingpage
         public string PhotoDataUrl { get; set; }
     }
 
+    public class EnterpriseProfileData
+    {
+        public int EnterpriseId { get; set; }
+        public string StoreName { get; set; }
+        public string EnterpriseType { get; set; }
+        public string GcashNumber { get; set; }
+        public string Email { get; set; }
+        public string ManagerName { get; set; }
+        public string ManagerStudentId { get; set; }
+        public string ManagerContact { get; set; }
+        public string Section { get; set; }
+        public string StoreLogoPath { get; set; }
+        public string QrDataUrl { get; set; }
+    }
+
+    public class EnterpriseDashboardStatsData
+    {
+        public int OrdersCompleted { get; set; }
+        public int ProductsListed { get; set; }
+        public decimal TotalSales { get; set; }
+    }
+
     public class SimpleDb
     {
         private string connectionString = "server=localhost;database=BizzyQCU;uid=root;pwd=;";
@@ -327,6 +349,356 @@ namespace BizzyQCU.Models.Landingpage
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("SubmitEnterpriseRequest error: " + ex.Message);
+                return false;
+            }
+        }
+
+        public StudentUserProfileData GetEnterpriseUserProfileByUserId(int userId)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"SELECT u.username, u.email, e.store_name, e.contact_number
+                                   FROM users u
+                                   LEFT JOIN enterprises e ON e.user_id = u.user_id
+                                   WHERE u.user_id = @userId
+                                   LIMIT 1";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@userId", userId);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (!reader.Read())
+                            {
+                                return null;
+                            }
+
+                            var username = reader.IsDBNull(reader.GetOrdinal("username")) ? "" : reader.GetString("username");
+                            var storeName = reader.IsDBNull(reader.GetOrdinal("store_name")) ? "" : reader.GetString("store_name");
+
+                            return new StudentUserProfileData
+                            {
+                                Name = string.IsNullOrWhiteSpace(storeName) ? username : storeName,
+                                ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
+                                Email = reader.IsDBNull(reader.GetOrdinal("email")) ? "" : reader.GetString("email"),
+                                Section = "",
+                                StudentNumber = "",
+                                PhotoDataUrl = ""
+                            };
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetEnterpriseUserProfileByUserId error: " + ex.Message);
+            }
+
+            return null;
+        }
+
+        public bool UpdateEnterpriseUserProfile(int userId, string nameOrStoreName, string contactNumber, string email)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    using (var tx = conn.BeginTransaction())
+                    {
+                        string enterpriseSql = @"UPDATE enterprises
+                                                 SET store_name = @storeName,
+                                                     contact_number = @contact
+                                                 WHERE user_id = @userId";
+
+                        using (var entCmd = new MySqlCommand(enterpriseSql, conn, tx))
+                        {
+                            entCmd.Parameters.AddWithValue("@storeName", nameOrStoreName ?? "");
+                            entCmd.Parameters.AddWithValue("@contact", contactNumber ?? "");
+                            entCmd.Parameters.AddWithValue("@userId", userId);
+                            entCmd.ExecuteNonQuery();
+                        }
+
+                        string userSql = @"UPDATE users
+                                           SET email = @email
+                                           WHERE user_id = @userId";
+
+                        using (var userCmd = new MySqlCommand(userSql, conn, tx))
+                        {
+                            userCmd.Parameters.AddWithValue("@email", email ?? "");
+                            userCmd.Parameters.AddWithValue("@userId", userId);
+                            userCmd.ExecuteNonQuery();
+                        }
+
+                        tx.Commit();
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("UpdateEnterpriseUserProfile error: " + ex.Message);
+                return false;
+            }
+        }
+
+        public EnterpriseProfileData GetEnterpriseProfileDataByUserId(int userId)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"SELECT e.enterprise_id, e.store_name, e.enterprise_type, e.gcash_number, u.email,
+                                          e.store_logo, e.uploaded_document,
+                                          em.manager_name, em.manager_student_id, em.manager_contact,
+                                          COALESCE(NULLIF(em.manager_section, ''), s.section, '') AS manager_section
+                                   FROM users u
+                                   INNER JOIN enterprises e ON e.user_id = u.user_id
+                                   LEFT JOIN enterprise_managers em ON em.enterprise_id = e.enterprise_id
+                                   LEFT JOIN students s ON s.student_number = em.manager_student_id
+                                   WHERE u.user_id = @userId
+                                   LIMIT 1";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@userId", userId);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (!reader.Read())
+                            {
+                                return null;
+                            }
+
+                            return new EnterpriseProfileData
+                            {
+                                EnterpriseId = reader.GetInt32("enterprise_id"),
+                                StoreName = reader.IsDBNull(reader.GetOrdinal("store_name")) ? "" : reader.GetString("store_name"),
+                                EnterpriseType = reader.IsDBNull(reader.GetOrdinal("enterprise_type")) ? "" : reader.GetString("enterprise_type"),
+                                GcashNumber = reader.IsDBNull(reader.GetOrdinal("gcash_number")) ? "" : reader.GetString("gcash_number"),
+                                Email = reader.IsDBNull(reader.GetOrdinal("email")) ? "" : reader.GetString("email"),
+                                ManagerName = reader.IsDBNull(reader.GetOrdinal("manager_name")) ? "" : reader.GetString("manager_name"),
+                                ManagerStudentId = reader.IsDBNull(reader.GetOrdinal("manager_student_id")) ? "" : reader.GetString("manager_student_id"),
+                                ManagerContact = reader.IsDBNull(reader.GetOrdinal("manager_contact")) ? "" : reader.GetString("manager_contact"),
+                                Section = reader.IsDBNull(reader.GetOrdinal("manager_section")) ? "" : reader.GetString("manager_section"),
+                                StoreLogoPath = reader.IsDBNull(reader.GetOrdinal("store_logo")) ? "" : reader.GetString("store_logo"),
+                                QrDataUrl = reader.IsDBNull(reader.GetOrdinal("uploaded_document"))
+                                    ? ""
+                                    : "data:image/png;base64," + Convert.ToBase64String((byte[])reader["uploaded_document"])
+                            };
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetEnterpriseProfileDataByUserId error: " + ex.Message);
+                return null;
+            }
+        }
+
+        public EnterpriseDashboardStatsData GetEnterpriseDashboardStatsByUserId(int userId)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"SELECT
+                                      (SELECT COUNT(*)
+                                       FROM orders o
+                                       WHERE o.enterprise_id = e.enterprise_id
+                                         AND o.status = 'completed') AS orders_completed,
+                                      (SELECT COUNT(*)
+                                       FROM products p
+                                       WHERE p.enterprise_id = e.enterprise_id
+                                         AND p.status = 'active') AS products_listed,
+                                      (SELECT COALESCE(SUM(th.amount), 0)
+                                       FROM transaction_history th
+                                       WHERE th.enterprise_id = e.enterprise_id
+                                         AND th.transaction_type = 'sale') AS total_sales
+                                   FROM enterprises e
+                                   WHERE e.user_id = @userId
+                                   LIMIT 1";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@userId", userId);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (!reader.Read())
+                            {
+                                return new EnterpriseDashboardStatsData();
+                            }
+
+                            return new EnterpriseDashboardStatsData
+                            {
+                                OrdersCompleted = reader.IsDBNull(reader.GetOrdinal("orders_completed")) ? 0 : Convert.ToInt32(reader["orders_completed"]),
+                                ProductsListed = reader.IsDBNull(reader.GetOrdinal("products_listed")) ? 0 : Convert.ToInt32(reader["products_listed"]),
+                                TotalSales = reader.IsDBNull(reader.GetOrdinal("total_sales")) ? 0m : Convert.ToDecimal(reader["total_sales"])
+                            };
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetEnterpriseDashboardStatsByUserId error: " + ex.Message);
+                return new EnterpriseDashboardStatsData();
+            }
+        }
+
+        public bool SaveEnterpriseProfileData(int userId, string storeName, string enterpriseType, string gcashNumber, string email, string managerName, string managerStudentId, string managerContact, string section, string storeLogoPath, byte[] qrBytes)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    using (var tx = conn.BeginTransaction())
+                    {
+                        int enterpriseRowsAffected;
+                        string enterpriseSql = @"UPDATE enterprises
+                                                 SET store_name = @storeName,
+                                                     enterprise_type = @enterpriseType,
+                                                     gcash_number = @gcashNumber,
+                                                     store_logo = COALESCE(@storeLogo, store_logo),
+                                                     uploaded_document = COALESCE(@qrBlob, uploaded_document)
+                                                 WHERE user_id = @userId";
+                        using (var enterpriseCmd = new MySqlCommand(enterpriseSql, conn, tx))
+                        {
+                            enterpriseCmd.Parameters.AddWithValue("@storeName", storeName ?? "");
+                            enterpriseCmd.Parameters.AddWithValue("@enterpriseType", enterpriseType ?? "");
+                            enterpriseCmd.Parameters.AddWithValue("@gcashNumber", gcashNumber ?? "");
+                            if (string.IsNullOrWhiteSpace(storeLogoPath))
+                            {
+                                enterpriseCmd.Parameters.AddWithValue("@storeLogo", DBNull.Value);
+                            }
+                            else
+                            {
+                                enterpriseCmd.Parameters.AddWithValue("@storeLogo", storeLogoPath);
+                            }
+                            if (qrBytes == null || qrBytes.Length == 0)
+                            {
+                                enterpriseCmd.Parameters.AddWithValue("@qrBlob", DBNull.Value);
+                            }
+                            else
+                            {
+                                enterpriseCmd.Parameters.Add("@qrBlob", MySqlDbType.Blob).Value = qrBytes;
+                            }
+                            enterpriseCmd.Parameters.AddWithValue("@userId", userId);
+                            enterpriseRowsAffected = enterpriseCmd.ExecuteNonQuery();
+                        }
+
+                        if (enterpriseRowsAffected == 0)
+                        {
+                            string enterpriseInsertSql = @"INSERT INTO enterprises
+                                                           (user_id, store_name, contact_number, enterprise_type, gcash_number, store_logo, uploaded_document, status)
+                                                           VALUES (@userId, @storeName, @contactNumber, @enterpriseType, @gcashNumber, @storeLogo, @qrBlob, 'approved')";
+                            using (var enterpriseInsertCmd = new MySqlCommand(enterpriseInsertSql, conn, tx))
+                            {
+                                enterpriseInsertCmd.Parameters.AddWithValue("@userId", userId);
+                                enterpriseInsertCmd.Parameters.AddWithValue("@storeName", storeName ?? "");
+                                enterpriseInsertCmd.Parameters.AddWithValue("@contactNumber", managerContact ?? "");
+                                enterpriseInsertCmd.Parameters.AddWithValue("@enterpriseType", enterpriseType ?? "");
+                                enterpriseInsertCmd.Parameters.AddWithValue("@gcashNumber", gcashNumber ?? "");
+                                if (string.IsNullOrWhiteSpace(storeLogoPath))
+                                {
+                                    enterpriseInsertCmd.Parameters.AddWithValue("@storeLogo", DBNull.Value);
+                                }
+                                else
+                                {
+                                    enterpriseInsertCmd.Parameters.AddWithValue("@storeLogo", storeLogoPath);
+                                }
+                                if (qrBytes == null || qrBytes.Length == 0)
+                                {
+                                    enterpriseInsertCmd.Parameters.AddWithValue("@qrBlob", DBNull.Value);
+                                }
+                                else
+                                {
+                                    enterpriseInsertCmd.Parameters.Add("@qrBlob", MySqlDbType.Blob).Value = qrBytes;
+                                }
+                                enterpriseInsertCmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        int enterpriseId = 0;
+                        string enterpriseIdSql = @"SELECT enterprise_id FROM enterprises WHERE user_id = @userId LIMIT 1";
+                        using (var enterpriseIdCmd = new MySqlCommand(enterpriseIdSql, conn, tx))
+                        {
+                            enterpriseIdCmd.Parameters.AddWithValue("@userId", userId);
+                            object result = enterpriseIdCmd.ExecuteScalar();
+                            if (result != null && result != DBNull.Value)
+                            {
+                                enterpriseId = Convert.ToInt32(result);
+                            }
+                        }
+
+                        if (enterpriseId > 0)
+                        {
+                            string managerCountSql = "SELECT COUNT(*) FROM enterprise_managers WHERE enterprise_id = @enterpriseId";
+                            long managerCount;
+                            using (var managerCountCmd = new MySqlCommand(managerCountSql, conn, tx))
+                            {
+                                managerCountCmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                                managerCount = Convert.ToInt64(managerCountCmd.ExecuteScalar());
+                            }
+
+                            if (managerCount > 0)
+                            {
+                                string managerUpdateSql = @"UPDATE enterprise_managers
+                                                            SET manager_name = @managerName,
+                                                                manager_student_id = @managerStudentId,
+                                                                manager_contact = @managerContact,
+                                                                manager_section = @managerSection
+                                                            WHERE enterprise_id = @enterpriseId";
+                                using (var managerUpdateCmd = new MySqlCommand(managerUpdateSql, conn, tx))
+                                {
+                                    managerUpdateCmd.Parameters.AddWithValue("@managerName", managerName ?? "");
+                                    managerUpdateCmd.Parameters.AddWithValue("@managerStudentId", managerStudentId ?? "");
+                                    managerUpdateCmd.Parameters.AddWithValue("@managerContact", managerContact ?? "");
+                                    managerUpdateCmd.Parameters.AddWithValue("@managerSection", section ?? "");
+                                    managerUpdateCmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                                    managerUpdateCmd.ExecuteNonQuery();
+                                }
+                            }
+                            else
+                            {
+                                string managerInsertSql = @"INSERT INTO enterprise_managers
+                                                            (enterprise_id, manager_name, manager_student_id, manager_contact, manager_email, manager_section)
+                                                            VALUES (@enterpriseId, @managerName, @managerStudentId, @managerContact, @managerEmail, @managerSection)";
+                                using (var managerInsertCmd = new MySqlCommand(managerInsertSql, conn, tx))
+                                {
+                                    managerInsertCmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                                    managerInsertCmd.Parameters.AddWithValue("@managerName", managerName ?? "");
+                                    managerInsertCmd.Parameters.AddWithValue("@managerStudentId", managerStudentId ?? "");
+                                    managerInsertCmd.Parameters.AddWithValue("@managerContact", managerContact ?? "");
+                                    managerInsertCmd.Parameters.AddWithValue("@managerEmail", email ?? "");
+                                    managerInsertCmd.Parameters.AddWithValue("@managerSection", section ?? "");
+                                    managerInsertCmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
+
+                        string userSql = @"UPDATE users SET email = @email WHERE user_id = @userId";
+                        using (var userCmd = new MySqlCommand(userSql, conn, tx))
+                        {
+                            userCmd.Parameters.AddWithValue("@email", email ?? "");
+                            userCmd.Parameters.AddWithValue("@userId", userId);
+                            userCmd.ExecuteNonQuery();
+                        }
+
+                        tx.Commit();
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("SaveEnterpriseProfileData error: " + ex.Message);
                 return false;
             }
         }
