@@ -872,6 +872,350 @@ namespace BizzyQCU.Models.Admin
             }
             return enterprises;
         }
+
+
+        public EnterpriseDetails GetEnterpriseDetails(int enterpriseId)
+        {
+            EnterpriseDetails enterprise = null;
+
+            using (var conn = new MySqlConnection(connectionString))
+            {
+                conn.Open();
+
+                // Simple SELECT - inalis ang created_at dahil wala sa enterprises table
+                MySqlCommand cmd = new MySqlCommand();
+                cmd.Connection = conn;
+                cmd.CommandText = "SELECT enterprise_id, user_id, store_name, store_description, contact_number, rating_avg, enterprise_type, gcash_number, status FROM enterprises WHERE enterprise_id = " + enterpriseId;
+
+                MySqlDataReader reader = cmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    enterprise = new EnterpriseDetails();
+                    enterprise.EnterpriseId = reader.GetInt32("enterprise_id");
+                    enterprise.UserId = reader.GetInt32("user_id");
+                    enterprise.StoreName = reader.GetString("store_name");
+                    enterprise.StoreDescription = reader.IsDBNull(reader.GetOrdinal("store_description")) ? "" : reader.GetString("store_description");
+                    enterprise.ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number");
+                    enterprise.RatingAvg = reader.IsDBNull(reader.GetOrdinal("rating_avg")) ? 0 : reader.GetDecimal("rating_avg");
+                    enterprise.EnterpriseType = reader.IsDBNull(reader.GetOrdinal("enterprise_type")) ? "" : reader.GetString("enterprise_type");
+                    enterprise.GcashNumber = reader.IsDBNull(reader.GetOrdinal("gcash_number")) ? "" : reader.GetString("gcash_number");
+                    enterprise.Status = reader.GetString("status");
+                    enterprise.CreatedAt = DateTime.Now; // Default value since wala sa database
+                }
+
+                reader.Close();
+
+                // Kunin ang username at email
+                if (enterprise != null)
+                {
+                    cmd.CommandText = "SELECT username, email FROM users WHERE user_id = " + enterprise.UserId;
+                    reader = cmd.ExecuteReader();
+                    if (reader.Read())
+                    {
+                        enterprise.Username = reader.GetString("username");
+                        enterprise.Email = reader.GetString("email");
+                    }
+                    reader.Close();
+                }
+            }
+
+            return enterprise;
+        }
+
+        // ========== GET PRODUCTS BY ENTERPRISE ID ==========
+        public List<EnterpriseProduct> GetProductsByEnterpriseId(int enterpriseId)
+        {
+            var products = new List<EnterpriseProduct>();
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"SELECT product_id, enterprise_id, product_name, description, 
+                                          price, product_image, status
+                                   FROM products 
+                                   WHERE enterprise_id = @enterpriseId AND status = 'active'
+                                   ORDER BY product_id DESC";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                products.Add(new EnterpriseProduct
+                                {
+                                    ProductId = reader.GetInt32("product_id"),
+                                    EnterpriseId = reader.GetInt32("enterprise_id"),
+                                    ProductName = reader.GetString("product_name"),
+                                    Description = reader.IsDBNull(reader.GetOrdinal("description")) ? "" : reader.GetString("description"),
+                                    Price = reader.GetDecimal("price"),
+                                    ProductImage = "", // Handle image conversion if needed
+                                    Status = reader.GetString("status")
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetProductsByEnterpriseId error: " + ex.Message);
+            }
+            return products;
+        }
+
+        // ========== DELETE ENTERPRISE ==========
+        public bool DeleteEnterprise(int enterpriseId)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    using (var transaction = conn.BeginTransaction())
+                    {
+                        try
+                        {
+                            // Get user_id first
+                            string getUserIdSql = "SELECT user_id FROM enterprises WHERE enterprise_id = @enterpriseId";
+                            int userId = 0;
+                            using (var cmd = new MySqlCommand(getUserIdSql, conn, transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                                var result = cmd.ExecuteScalar();
+                                if (result != null)
+                                {
+                                    userId = Convert.ToInt32(result);
+                                }
+                            }
+
+                            // Delete from enterprises
+                            string deleteEnterpriseSql = "DELETE FROM enterprises WHERE enterprise_id = @enterpriseId";
+                            using (var cmd = new MySqlCommand(deleteEnterpriseSql, conn, transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                                cmd.ExecuteNonQuery();
+                            }
+
+                            // Delete from users
+                            if (userId > 0)
+                            {
+                                string deleteUserSql = "DELETE FROM users WHERE user_id = @userId";
+                                using (var cmd = new MySqlCommand(deleteUserSql, conn, transaction))
+                                {
+                                    cmd.Parameters.AddWithValue("@userId", userId);
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+
+                            transaction.Commit();
+                            return true;
+                        }
+                        catch
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("DeleteEnterprise error: " + ex.Message);
+                return false;
+            }
+        }
+
+
+
+        // ========== GET SALES DATA FOR CHART ==========
+        public List<ChartData> GetSalesData(int enterpriseId, int days = 7)
+        {
+            var salesData = new List<ChartData>();
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"SELECT DATE(order_date) as date, 
+                                          SUM(total_amount) as total_sales,
+                                          COUNT(*) as order_count
+                                   FROM orders 
+                                   WHERE enterprise_id = @enterpriseId 
+                                   AND order_date >= DATE_SUB(CURDATE(), INTERVAL @days DAY)
+                                   GROUP BY DATE(order_date)
+                                   ORDER BY date ASC";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                        cmd.Parameters.AddWithValue("@days", days);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                salesData.Add(new ChartData
+                                {
+                                    Label = reader.GetDateTime("date").ToString("MMM dd"),
+                                    Value = reader.GetDecimal("total_sales")
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetSalesData error: " + ex.Message);
+            }
+            return salesData;
+        }
+
+        // ========== GET RATINGS DATA FOR CHART ==========
+        public List<ChartData> GetRatingsData(int enterpriseId, int days = 7)
+        {
+            var ratingsData = new List<ChartData>();
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"SELECT DATE(f.created_at) as date, 
+                                          AVG(f.rating) as avg_rating
+                                   FROM feedbacks f
+                                   INNER JOIN users u ON f.user_id = u.user_id
+                                   INNER JOIN enterprises e ON e.user_id = u.user_id
+                                   WHERE e.enterprise_id = @enterpriseId 
+                                   AND f.created_at >= DATE_SUB(CURDATE(), INTERVAL @days DAY)
+                                   GROUP BY DATE(f.created_at)
+                                   ORDER BY date ASC";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                        cmd.Parameters.AddWithValue("@days", days);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                ratingsData.Add(new ChartData
+                                {
+                                    Label = reader.GetDateTime("date").ToString("MMM dd"),
+                                    Value = reader.GetDecimal("avg_rating")
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetRatingsData error: " + ex.Message);
+            }
+            return ratingsData;
+        }
+
+
+        // ========== GET ALL PRODUCTS BY ENTERPRISE ID FOR LISTING ==========
+        public List<ViewListing> GetProductsForListing(int enterpriseId)
+        {
+            var products = new List<ViewListing>();
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"SELECT p.product_id, p.enterprise_id, p.product_name, p.description, 
+                                          p.price, p.product_image, p.status, p.created_at,
+                                          e.store_name, u.email, e.rating_avg, e.status as enterprise_status
+                                   FROM products p
+                                   INNER JOIN enterprises e ON p.enterprise_id = e.enterprise_id
+                                   INNER JOIN users u ON e.user_id = u.user_id
+                                   WHERE p.enterprise_id = @enterpriseId
+                                   ORDER BY p.product_id DESC";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                products.Add(new ViewListing
+                                {
+                                    ProductId = reader.GetInt32("product_id"),
+                                    EnterpriseId = reader.GetInt32("enterprise_id"),
+                                    ProductName = reader.GetString("product_name"),
+                                    Description = reader.IsDBNull(reader.GetOrdinal("description")) ? "" : reader.GetString("description"),
+                                    Price = reader.GetDecimal("price"),
+                                    ProductImage = "", // Handle image if needed
+                                    Status = reader.GetString("status"),
+                                    CreatedAt = reader.GetDateTime("created_at"),
+                                    StoreName = reader.GetString("store_name"),
+                                    Email = reader.GetString("email"),
+                                    RatingAvg = reader.IsDBNull(reader.GetOrdinal("rating_avg")) ? 0 : reader.GetDecimal("rating_avg"),
+                                    EnterpriseStatus = reader.GetString("enterprise_status")
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetProductsForListing error: " + ex.Message);
+            }
+            return products;
+        }
+
+        // ========== APPROVE PRODUCT ==========
+        public bool ApproveProduct(int productId)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = "UPDATE products SET status = 'active' WHERE product_id = @productId";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@productId", productId);
+                        return cmd.ExecuteNonQuery() > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("ApproveProduct error: " + ex.Message);
+                return false;
+            }
+        }
+
+        // ========== REMOVE PRODUCT ==========
+        public bool RemoveProduct(int productId)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = "DELETE FROM products WHERE product_id = @productId";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@productId", productId);
+                        return cmd.ExecuteNonQuery() > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("RemoveProduct error: " + ex.Message);
+                return false;
+            }
+        }
     }
 }
 

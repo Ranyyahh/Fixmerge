@@ -1,18 +1,12 @@
-// ============================================================
-// AdminLandingEntrep.js (DYNAMIC - FETCH FROM BACKEND)
-// ============================================================
 
-// ── DOM REFS ──
 const searchInput = document.getElementById('searchInput');
 const grid = document.getElementById('enterprisesGrid');
 const countBadge = document.getElementById('countBadge');
 
-// Safety check
 if (!grid || !countBadge) {
     console.error("Missing required DOM elements (grid or countBadge).");
 }
 
-// ── FETCH ENTERPRISES FROM BACKEND ──
 function loadEnterprises() {
     fetch('/AdminPanel/GetAllApprovedEnterprises')
         .then(response => response.json())

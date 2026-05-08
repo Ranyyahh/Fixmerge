@@ -1,285 +1,342 @@
-const params = new URLSearchParams(window.location.search);
-const id = params.get('enterpriseId');
+// ============================================================
+// AdminItemListing.js - Dynamic Products Listing
+// ============================================================
 
-// TODO (DB): GET enterprise ID from URL
+// Get enterprise ID from URL - declare once only
+const urlParamsItem = new URLSearchParams(window.location.search);
+const enterpriseIdItem = urlParamsItem.get('enterpriseId');
+let allProductsItem = [];
+let selectedProductIdItem = null;
 
-const CHART_DATA = {
-    sales: {
-        labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'],
-        values: [8, 19, 20, 33, 37],
-        color: '#4A6CF7',
-        title: 'Daily Sales'
-    },
-    ratings: {
-        labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'],
-        values: [3.2, 3.8, 4.0, 4.3, 4.6],
-        color: '#d4a017',
-        title: 'Daily Ratings'
-    }
-};
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('Enterprise ID from URL:', enterpriseIdItem);
 
-function drawChart(canvas, dataset) {
-    canvas.style.width = '';
-    canvas.style.height = '';
-
-    const wrap = canvas.parentElement;
-    const W = wrap.clientWidth || 600;
-    const H = wrap.clientHeight || 220;
-
-    canvas.width = W;
-    canvas.height = H;
-
-    const ctx = canvas.getContext('2d');
-
-    const pad = { top: 20, right: 20, bottom: 56, left: 44 };
-    const chartW = W - pad.left - pad.right;
-    const chartH = H - pad.top - pad.bottom;
-
-    const vals = dataset.values;
-    const labels = dataset.labels;
-    const n = vals.length;
-
-    const minVal = 0;
-    const maxVal = Math.ceil(Math.max(...vals) * 1.2);
-    const color = dataset.color;
-
-    ctx.clearRect(0, 0, W, H);
-
-    const xPos = i => pad.left + (i / (n - 1)) * chartW;
-    const yPos = v => pad.top + chartH - ((v - minVal) / (maxVal - minVal)) * chartH;
-
-    ctx.font = '11px DM Sans, sans-serif';
-    ctx.fillStyle = '#9aa3bf';
-    ctx.textAlign = 'right';
-
-    const ySteps = 5;
-
-    for (let i = 0; i <= ySteps; i++) {
-        const v = minVal + (i / ySteps) * (maxVal - minVal);
-        const y = yPos(v);
-
-        ctx.strokeStyle = 'rgba(0,0,0,0.06)';
-        ctx.beginPath();
-        ctx.moveTo(pad.left, y);
-        ctx.lineTo(pad.left + chartW, y);
-        ctx.stroke();
-
-        ctx.fillText(Math.round(v), pad.left - 6, y + 4);
+    if (enterpriseIdItem && enterpriseIdItem !== 'null' && enterpriseIdItem !== 'undefined') {
+        loadEnterpriseDetailsItem();
+        loadProductsItem();
+    } else {
+        console.error('No enterprise ID provided');
+        document.getElementById('profileName').textContent = 'No Enterprise Selected';
+        document.getElementById('productsGrid').innerHTML = '<div class="empty-state">No enterprise selected</div>';
     }
 
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
+    setupEventListenersItem();
+});
 
-    labels.forEach((lbl, i) => {
-        ctx.fillStyle = '#9aa3bf';
-        ctx.fillText(lbl, xPos(i), pad.top + chartH + 8);
-    });
+function loadEnterpriseDetailsItem() {
+    console.log('Fetching enterprise details for ID:', enterpriseIdItem);
 
-    ctx.beginPath();
-    ctx.moveTo(xPos(0), yPos(vals[0]));
-
-    for (let i = 1; i < n; i++) {
-        const x0 = xPos(i - 1);
-        const y0 = yPos(vals[i - 1]);
-        const x1 = xPos(i);
-        const y1 = yPos(vals[i]);
-        const cpx = (x0 + x1) / 2;
-
-        ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
-    }
-
-    ctx.lineTo(xPos(n - 1), pad.top + chartH);
-    ctx.lineTo(xPos(0), pad.top + chartH);
-    ctx.closePath();
-
-    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + chartH);
-    grad.addColorStop(0, color + '30');
-    grad.addColorStop(1, color + '05');
-
-    ctx.fillStyle = grad;
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.moveTo(xPos(0), yPos(vals[0]));
-
-    for (let i = 1; i < n; i++) {
-        const x0 = xPos(i - 1);
-        const y0 = yPos(vals[i - 1]);
-        const x1 = xPos(i);
-        const y1 = yPos(vals[i]);
-        const cpx = (x0 + x1) / 2;
-
-        ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
-    }
-
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-
-    vals.forEach((v, i) => {
-        ctx.beginPath();
-        ctx.arc(xPos(i), yPos(v), 4, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-    });
+    fetch(`/AdminPanel/GetEnterpriseDetails?enterpriseId=${enterpriseIdItem}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Enterprise details received:', data);
+            if (data && data.EnterpriseId) {
+                populateProfileItem(data);
+            } else if (data.message) {
+                console.error('API message:', data.message);
+                document.getElementById('profileName').textContent = 'Enterprise not found';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading enterprise:', error);
+            document.getElementById('profileName').textContent = 'Error loading enterprise';
+        });
 }
 
-let activeTab = 'sales';
+function loadProductsItem() {
+    console.log('Fetching products for enterprise ID:', enterpriseIdItem);
 
-window.addEventListener('DOMContentLoaded', () => {
-    const canvas = document.getElementById('detailChart');
-
-    if (canvas) {
-        renderChart('sales');
-
-        window.addEventListener('resize', () => {
-            renderChart(activeTab);
+    fetch(`/AdminPanel/GetProductsForListing?enterpriseId=${enterpriseIdItem}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Products received:', data);
+            allProductsItem = data || [];
+            renderProductsItem(allProductsItem);
+        })
+        .catch(error => {
+            console.error('Error loading products:', error);
+            document.getElementById('productsGrid').innerHTML = '<div class="empty-state">Error loading products</div>';
         });
+}
+
+function populateProfileItem(enterprise) {
+    const nameEl = document.getElementById('profileName');
+    if (nameEl) nameEl.textContent = enterprise.StoreName || 'Enterprise Name';
+
+    const idEl = document.getElementById('profileId');
+    if (idEl) idEl.textContent = enterprise.EnterpriseId || 'N/A';
+
+    const emailEl = document.getElementById('profileEmail');
+    if (emailEl) emailEl.textContent = enterprise.Email || 'No email';
+
+    const statusEl = document.getElementById('profileStatus');
+    const status = enterprise.Status || 'pending';
+    if (statusEl) {
+        statusEl.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        statusEl.className = 'info-value status-' + status.toLowerCase();
     }
 
-    const tabSales = document.getElementById('tabSales');
-    const tabRatings = document.getElementById('tabRatings');
-
-    if (tabSales && tabRatings) {
-        tabSales.addEventListener('click', () => {
-            if (activeTab === 'sales') return;
-
-            activeTab = 'sales';
-            tabSales.classList.add('active');
-            tabRatings.classList.remove('active');
-
-            renderChart('sales');
-        });
-
-        tabRatings.addEventListener('click', () => {
-            if (activeTab === 'ratings') return;
-
-            activeTab = 'ratings';
-            tabRatings.classList.add('active');
-            tabSales.classList.remove('active');
-
-            renderChart('ratings');
-        });
-    }
-
-    const modalBackdrop = document.getElementById('deleteModal');
-    const deleteBtn = document.querySelector('.delete-btn');
-
-    function closeModal() {
-        if (modalBackdrop) {
-            modalBackdrop.classList.remove('active');
+    const rating = enterprise.RatingAvg || 0;
+    const starsEl = document.getElementById('profileStars');
+    if (starsEl) {
+        starsEl.innerHTML = '';
+        const roundedRating = Math.round(rating);
+        for (let i = 1; i <= 5; i++) {
+            const starSpan = document.createElement('span');
+            starSpan.className = 'star' + (i <= roundedRating ? ' filled' : '');
+            starSpan.textContent = '?';
+            starsEl.appendChild(starSpan);
         }
     }
 
-    if (deleteBtn && modalBackdrop) {
-        deleteBtn.addEventListener('click', () => {
-            modalBackdrop.classList.add('active');
+    const firstLetter = enterprise.StoreName ? enterprise.StoreName.charAt(0).toUpperCase() : 'E';
+    const colors = ['#4A6CF7', '#7B3FE4', '#d4a017', '#2e4dbf', '#e03131'];
+    const colorIndex = (enterprise.EnterpriseId || 1) % colors.length;
+    const bgColor = colors[colorIndex];
+
+    const avatarDiv = document.getElementById('profileAvatar');
+    if (avatarDiv) {
+        avatarDiv.innerHTML = `<div style="width: 72px; height: 72px; border-radius: 50%; background: ${bgColor}; display: flex; align-items: center; justify-content: center;">
+                                  <span style="color: white; font-size: 32px; font-weight: 600;">${escapeHtmlItem(firstLetter)}</span>
+                              </div>`;
+    }
+}
+
+function renderProductsItem(products) {
+    const grid = document.getElementById('productsGrid');
+    if (!grid) return;
+
+    if (!products || products.length === 0) {
+        grid.innerHTML = '<div class="empty-state">No products found for this enterprise</div>';
+        return;
+    }
+
+    grid.innerHTML = '';
+    products.forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        if (product.Status === 'pending') {
+            card.classList.add('pending');
+        }
+        card.dataset.id = product.ProductId;
+        card.dataset.name = (product.ProductName || '').toLowerCase();
+        card.addEventListener('click', () => selectProductItem(product.ProductId));
+
+        const statusBadge = product.Status === 'pending'
+            ? '<span class="status-badge pending">Pending Approval</span>'
+            : '<span class="status-badge active">Active</span>';
+
+        card.innerHTML = `
+            <div class="product-image-wrap">
+                <div class="product-placeholder">${escapeHtmlItem((product.ProductName || 'P').charAt(0))}</div>
+            </div>
+            <div class="product-info-wrap">
+                <div class="product-title">${escapeHtmlItem(product.ProductName || 'Unknown')}</div>
+                <div class="product-detail-line">
+                    <span class="detail-label">Price:</span> ?${parseFloat(product.Price || 0).toFixed(2)}
+                </div>
+                <div class="product-detail-line">
+                    <span class="detail-label">Description:</span> ${escapeHtmlItem(product.Description || 'No description')}
+                </div>
+                ${statusBadge}
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function selectProductItem(productId) {
+    selectedProductIdItem = productId;
+    const cards = document.querySelectorAll('.product-card');
+    cards.forEach(card => {
+        if (parseInt(card.dataset.id) === productId) {
+            card.classList.add('selected');
+        } else {
+            card.classList.remove('selected');
+        }
+    });
+}
+
+function setupEventListenersItem() {
+    const productSearch = document.getElementById('productSearch');
+    if (productSearch) {
+        productSearch.addEventListener('input', function () {
+            const query = this.value.toLowerCase().trim();
+            const filtered = allProductsItem.filter(p => (p.ProductName || '').toLowerCase().includes(query));
+            renderProductsItem(filtered);
         });
     }
 
-    const cancelBtn = document.querySelector('.modal-cancel');
-
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', closeModal);
-    }
-
-    if (modalBackdrop) {
-        modalBackdrop.addEventListener('click', e => {
-            if (e.target === modalBackdrop) {
-                closeModal();
+    const approveBtn = document.getElementById('approveItemBtn');
+    if (approveBtn) {
+        approveBtn.addEventListener('click', () => {
+            if (selectedProductIdItem) {
+                approveProductItem(selectedProductIdItem);
+            } else {
+                showToastItem('Please select a product first', 'error');
             }
         });
     }
 
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') {
-            closeModal();
-        }
+    const removeBtn = document.getElementById('removeItemBtn');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', () => {
+            if (selectedProductIdItem) {
+                if (confirm('Are you sure you want to remove this product?')) {
+                    removeProductItem(selectedProductIdItem);
+                }
+            } else {
+                showToastItem('Please select a product first', 'error');
+            }
+        });
+    }
+
+    // Delete enterprise modal
+    const deleteBtn = document.getElementById('deleteBtn');
+    const modalBackdrop = document.getElementById('deleteModal');
+    const cancelDelete = document.getElementById('cancelDelete');
+    const confirmDeleteBtn = document.getElementById('confirmDelete');
+
+    if (deleteBtn && modalBackdrop) {
+        deleteBtn.addEventListener('click', () => {
+            const name = document.getElementById('profileName').textContent;
+            const modalName = document.getElementById('modalEnterpriseName');
+            if (modalName) modalName.textContent = name;
+            modalBackdrop.classList.add('active');
+        });
+    }
+
+    if (cancelDelete) {
+        cancelDelete.addEventListener('click', () => {
+            if (modalBackdrop) modalBackdrop.classList.remove('active');
+        });
+    }
+
+    if (modalBackdrop) {
+        modalBackdrop.addEventListener('click', (e) => {
+            if (e.target === modalBackdrop) {
+                modalBackdrop.classList.remove('active');
+            }
+        });
+    }
+
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', () => {
+            fetch('/AdminPanel/DeleteEnterprise', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `enterpriseId=${enterpriseIdItem}`
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToastItem('Enterprise deleted successfully', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/AdminPanel/AdminLandingEntrep';
+                        }, 1500);
+                    } else {
+                        showToastItem('Failed to delete enterprise: ' + (data.message || 'Unknown error'), 'error');
+                        if (modalBackdrop) modalBackdrop.classList.remove('active');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToastItem('An error occurred', 'error');
+                    if (modalBackdrop) modalBackdrop.classList.remove('active');
+                });
+        });
+    }
+}
+
+function approveProductItem(productId) {
+    const formData = new URLSearchParams();
+    formData.append('productId', productId);
+
+    fetch('/AdminPanel/ApproveProduct', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToastItem('Product approved successfully', 'success');
+                loadProductsItem();
+                selectedProductIdItem = null;
+            } else {
+                showToastItem('Failed to approve product: ' + (data.message || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToastItem('An error occurred', 'error');
+        });
+}
+
+function removeProductItem(productId) {
+    const formData = new URLSearchParams();
+    formData.append('productId', productId);
+
+    fetch('/AdminPanel/RemoveProduct', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToastItem('Product removed successfully', 'success');
+                loadProductsItem();
+                selectedProductIdItem = null;
+            } else {
+                showToastItem('Failed to remove product: ' + (data.message || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToastItem('An error occurred', 'error');
+        });
+}
+
+function showToastItem(message, type) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+
+    toast.textContent = message;
+    toast.className = 'toast ' + type;
+    toast.style.display = 'block';
+
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 3000);
+}
+
+function escapeHtmlItem(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+/*View reports button toh man, hahaha paganahin nalang pag natapos na tayo */
+const viewReportsBtn = document.getElementById('viewReportsBtn');
+if (viewReportsBtn) {
+    viewReportsBtn.addEventListener('click', () => {
+        alert('Reports feature coming soon');
     });
-
-    const searchInput = document.getElementById('searchInput');
-
-    if (searchInput) {
-        searchInput.addEventListener('input', function () {
-            const query = this.value.toLowerCase().trim();
-            const products = document.querySelectorAll('.product-card');
-
-            products.forEach(card => {
-                const name = card.dataset.name.toLowerCase();
-
-                if (query === '') {
-                    card.style.display = '';
-                } else if (name.includes(query)) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        });
-    }
-
-    const productSearch = document.getElementById('productSearch');
-
-    if (productSearch) {
-        productSearch.addEventListener('input', function () {
-            const query = this.value.toLowerCase().trim();
-            const products = document.querySelectorAll('.product-card');
-
-            products.forEach(card => {
-                const name = card.dataset.name.toLowerCase();
-
-                if (query === '') {
-                    card.style.display = '';
-                } else if (name.includes(query)) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        });
-    }
-});
-
-function renderChart(tab) {
-    const canvas = document.getElementById('detailChart');
-    const title = document.getElementById('chartTitle');
-
-    if (!canvas || !title) return;
-
-    const dataset = CHART_DATA[tab];
-    title.textContent = dataset.title;
-
-    drawChart(canvas, dataset);
 }
 
-function openModal() {
-    const modal = document.getElementById('deleteModal');
-
-    if (modal) {
-        modal.classList.add('active');
-    }
-}
-
-function closeModal() {
-    const modal = document.getElementById('deleteModal');
-
-    if (modal) {
-        modal.classList.remove('active');
-    }
-}
-
-function confirmDelete() {
-    closeModal();
-    alert('Account deleted');
-}
-
-function approveItem() {
-    alert('Item approved');
-}
-
-function removeItem() {
-    alert('Item removed');
+/*Pre nag n-null sa akin yung docs pati yung qcu id pre  */
+const viewDocsBtn = document.getElementById('viewDocsBtn');
+if (viewDocsBtn) {
+    viewDocsBtn.addEventListener('click', () => {
+        alert('Documents feature coming soon');
+    });
 }

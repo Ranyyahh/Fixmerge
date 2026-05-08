@@ -760,3 +760,18 @@ body {
         display: none;
     }
 }
+
+/*for empties ito pre yung wala pang product na pianpa approve*/
+.loading-state, .empty-state {
+    background: #ffffff;
+    text-align: center;
+    padding: 60px 20px;
+    border-radius: 16px;
+    color: #9aa3bf;
+    grid-column: 1 / -1;
+    font-size: 1rem;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border: 1px solid #f0f0f0;
+}
+

@@ -1,10 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Web;
 using System.Web.Mvc;
+using Antlr.Runtime.Misc;
+using System.Web.Services.Description;
 using BizzyQCU.Models.Admin;
 using BizzyQCU.Models.Landingpage;
+using Google.Protobuf.WellKnownTypes;
+using Mysqlx.Crud;
+using Mysqlx.Prepare;
+using Org.BouncyCastle.Bcpg;
+using Org.BouncyCastle.Crypto;
+using static Mysqlx.Datatypes.Scalar.Types;
 
 namespace BizzyQCU.Controllers
 {
@@ -179,6 +188,9 @@ namespace BizzyQCU.Controllers
             return Json(new { success = result, message = result ? "Feedback deleted." : "Failed to delete feedback." });
         }
 
+
+        //Enterprise FETCHING ITO SA SIMULA THEN PAPASA NIYA ID SA NEXT PAGEEE
+
         [HttpGet]
         public JsonResult GetAllApprovedEnterprises()
         {
@@ -187,5 +199,130 @@ namespace BizzyQCU.Controllers
             var enterprises = adminDb.GetAllApprovedEnterprises();
             return Json(enterprises, JsonRequestBehavior.AllowGet);
         }
+
+
+        //Enterprise NEXT PAGE DETAILS ITO 
+        [HttpGet]
+        public JsonResult GetEnterpriseDetails(int enterpriseId)
+        {
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" }, JsonRequestBehavior.AllowGet);
+
+            try
+            {
+                var enterprise = adminDb.GetEnterpriseDetails(enterpriseId);
+                if (enterprise == null)
+                {
+                    return Json(new { success = false, message = "Enterprise not found" }, JsonRequestBehavior.AllowGet);
+                }
+                return Json(enterprise, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+
+                return Json(new { success = false, message = ex.Message, stack = ex.StackTrace }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+
+        //RECIPE NG SINIGANG LAGAY KO TALAGA RITO TAMO HAHAHAHAAHA. Kasama toh sa enterprise details
+        [HttpGet]
+        public JsonResult GetEnterpriseProducts(int enterpriseId)
+        {
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" }, JsonRequestBehavior.AllowGet);
+
+            var products = adminDb.GetProductsByEnterpriseId(enterpriseId);
+            return Json(products, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpPost]
+        public JsonResult DeleteEnterprise(int enterpriseId)
+        {
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
+
+            bool result = adminDb.DeleteEnterprise(enterpriseId);
+            return Json(new { success = result, message = result ? "Enterprise deleted successfully" : "Failed to delete enterprise" });
+        }
+
+      //FOR FUTURE PURPOSES ITO
+        [HttpGet]
+        public JsonResult GetSalesData(int enterpriseId, int days = 7)
+        {
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" }, JsonRequestBehavior.AllowGet);
+
+            var salesData = adminDb.GetSalesData(enterpriseId, days);
+            return Json(salesData, JsonRequestBehavior.AllowGet);
+        }
+
+        //RATINGS
+        [HttpGet]
+        public JsonResult GetRatingsData(int enterpriseId, int days = 7)
+        {
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" }, JsonRequestBehavior.AllowGet);
+
+            var ratingsData = adminDb.GetRatingsData(enterpriseId, days);
+            return Json(ratingsData, JsonRequestBehavior.AllowGet);
+        }
+
+        // ITO NA YUNG NEXT PAGEEEE
+        [HttpGet]
+        public JsonResult GetProductsForListing(int enterpriseId)
+        {
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" }, JsonRequestBehavior.AllowGet);
+
+            var products = adminDb.GetProductsForListing(enterpriseId);
+            return Json(products, JsonRequestBehavior.AllowGet);
+        }
+
+        //APROVAL
+        [HttpPost]
+        public JsonResult ApproveProduct(int productId)
+        {
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
+
+            bool result = adminDb.ApproveProduct(productId);
+            return Json(new { success = result, message = result ? "Product approved successfully" : "Failed to approve product" });
+        }
+
+        //REJECT KA NA TOL
+        [HttpPost]
+        public JsonResult RemoveProduct(int productId)
+        {
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
+
+            bool result = adminDb.RemoveProduct(productId);
+            return Json(new { success = result, message = result ? "Product removed successfully" : "Failed to remove product" });
+        }
     }
+
+
 }
+
+//🛒 Ingredients
+//Protein(choose one) : 1 lb(500g) Pork belly or spare ribs, Shrimp (prawns), or Fish steaks (like salmon or milkfish) .
+
+//Souring Agent : 1 packet of Sinigang (Tamarind) soup mix OR 2 cups fresh tamarind pulp .
+
+//Aromatics : 1 medium onion(quartered), 2 medium tomatoes(quartered), 2 - 3 slices of ginger.
+
+//Vegetables : 1 medium radish(sliced), 1 bunch water spinach (kangkong), 1 cup string beans, 1 eggplant (sliced), and 2 - 3 green chilies(optional) .
+
+//Seasoning: 2 tbsp Fish sauce (Patis), Salt, and pepper.
+
+//🍳 Cooking Instructions (Sauté-First Method for Pork)
+//Step 1: Prepare the Meat
+//Cut the pork into bite-sized pieces. In a pot, boil the pork for 5-7 minutes to remove scum. Drain, rinse the meat, and discard the water .
+
+//Step 2: Sauté Aromatics
+//In the same clean pot, sauté the onion, tomatoes, and ginger until soft .
+
+//Step 3: Simmer the Meat
+//Add the clean pork back to the pot. Cover with about 6 cups of fresh water. Bring to a boil, then lower the heat and simmer for about 45 minutes to 1 hour, until the pork is tender .
+
+//Step 4: Flavor the Broth
+//Once the meat is tender, add the tamarind mix (or fresh tamarind juice). Stir in the fish sauce .
+
+//Step 5: Add Vegetables
+//Add the radish and cook for 3 minutes. Then add the eggplant, string beans, and green chilies. Cook for another 5 minutes .
+
+//Step 6: Final Touches
+//Season with salt and pepper if needed. Add the tender water spinach leaves last and turn off the heat. The residual heat will wilt them perfectly

@@ -177,8 +177,10 @@
     </Compile>
     <Compile Include="Models\Admin\AdminDB.cs" />
     <Compile Include="Models\Admin\ApprovalRequest.cs" />
+    <Compile Include="Models\Admin\EnterpriseDetails.cs" />
     <Compile Include="Models\Admin\Feedback.cs" />
     <Compile Include="Models\Admin\ViewEnterprise.cs" />
+    <Compile Include="Models\Admin\ViewListing.cs" />
     <Compile Include="Models\Landingpage\Enterprises.cs" />
     <Compile Include="Models\Landingpage\SimpleDb.cs" />
     <Compile Include="Models\Landingpage\Students.cs" />
@@ -259,6 +261,9 @@
     <Content Include="Images\Logo.png" />
     <Content Include="Fonts\Proxima Nova Regular.ttf" />
     <Content Include="Fonts\Proxima Nova Semibold.ttf" />
+    <Content Include="Scripts\AdminEditEntrep.js" />
+    <Content Include="Scripts\AdminItemListing.js" />
+    <Content Include="Scripts\AdminLandingEntrep.js" />
     <Content Include="Scripts\AdminUser.js" />
     <Content Include="Scripts\Admin\Adminpanel.js" />
     <Content Include="Scripts\bootstrap.bundle.js" />

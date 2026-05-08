@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 
 namespace BizzyQCU.Models.Admin
 {
-    public class ViewEnterprise
+    public class EnterpriseDetails
     {
         public int EnterpriseId { get; set; }
         public int UserId { get; set; }
@@ -19,11 +17,17 @@ namespace BizzyQCU.Models.Admin
         public DateTime CreatedAt { get; set; }
         public string Username { get; set; }
         public string Email { get; set; }
+        public string ProfileImage { get; set; }  // For store logo
     }
 
-    public class ChartData
+    public class EnterpriseProduct
     {
-        public string Label { get; set; }
-        public decimal Value { get; set; }
+        public int ProductId { get; set; }
+        public int EnterpriseId { get; set; }
+        public string ProductName { get; set; }
+        public string Description { get; set; }
+        public decimal Price { get; set; }
+        public string ProductImage { get; set; }
+        public string Status { get; set; }
     }
 }

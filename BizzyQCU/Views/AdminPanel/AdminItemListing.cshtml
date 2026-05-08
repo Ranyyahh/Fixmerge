@@ -17,7 +17,7 @@
 
     <nav class="navbar">
         <div class="nav-left">
-            <button class="back-btn" onclick="history.back()">&#8249;</button>
+            <a href="@Url.Action("AdminLandingEntrep", "AdminPanel")" class="back-btn">&#8249;</a>
 
             <div class="nav-logo">
                 <div class="logo-icon"></div>
@@ -26,7 +26,7 @@
 
         <div class="search-wrap">
             <div class="search-box">
-                <input type="text" placeholder="Search an Enterprise" />
+                <input type="text" id="searchInput" placeholder="Search products..." />
             </div>
         </div>
     </nav>
@@ -36,48 +36,32 @@
 
             <div class="profile-card">
 
-                <div class="profile-avatar">
-                    <img src="~/Content/Images/avatar.svg" alt="Profile Avatar" />
+                <div class="profile-avatar" id="profileAvatar">
+                    <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#b0b8d4" stroke-width="1.2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
                 </div>
 
-                <div class="profile-name">
-                    Enterprise<br />
-                    Name
-                </div>
+                <div class="profile-name" id="profileName">Loading...</div>
 
                 <div class="profile-meta">
-                    <span class="profile-id">BQCU0110</span>
-                    <button class="delete-btn" onclick="openModal()">Delete Account</button>
+                    <span class="profile-id" id="profileId">-</span>
+                    <button class="delete-btn" id="deleteBtn">Delete Account</button>
                 </div>
 
-                <div class="profile-stars">
-                    <span class="star filled">★</span>
-                    <span class="star filled">★</span>
-                    <span class="star filled">★</span>
-                    <span class="star filled">★</span>
-                    <span class="star">★</span>
+                <div class="profile-stars" id="profileStars">
+                    <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
                 </div>
 
                 <div class="profile-info">
-                    <p>
-                        <span class="info-label">Email:</span>
-                        <span class="info-value">EnterpriseQCU@gmail.com</span>
-                    </p>
-
-                    <p>
-                        <span class="info-label">Status:</span>
-                        <span class="status-approved">Approved</span>
-                    </p>
+                    <p><span class="info-label">Email:</span> <span class="info-value" id="profileEmail">-</span></p>
+                    <p><span class="info-label">Status:</span> <span class="info-value" id="profileStatus">-</span></p>
                 </div>
 
                 <div class="profile-actions">
-                    <button class="action-btn">View Reports</button>
-
-                    <a href="@Url.Action("Index", "AdminItemListing")"
-                       class="action-btn"
-                       id="viewDocsBtn">
-                        View Documents
-                    </a>
+                    <button class="action-btn" id="viewReportsBtn">View Reports</button>
+                    <button class="action-btn" id="viewDocsBtn">View Documents</button>
                 </div>
 
             </div>
@@ -86,64 +70,18 @@
 
                 <div class="product-search-wrap">
                     <div class="product-search-box">
-                        <input type="text"
-                               placeholder="Product"
-                               id="productSearch"
-                               oninput="filterProducts()" />
-
+                        <input type="text" placeholder="Search products..." id="productSearch" />
                         <button class="product-search-btn">🔍</button>
                     </div>
                 </div>
 
                 <div class="products-grid" id="productsGrid">
-
-                    <div class="product-card" data-name="pasta verde">
-                        <div class="product-image-wrap"></div>
-
-                        <div class="product-info-wrap">
-                            <div class="product-title">Pasta Verde</div>
-                            <div class="product-detail-line">
-                                <span class="detail-label">Price:</span>300PHP
-                            </div>
-                            <div class="product-detail-line">
-                                <span class="detail-label">Description:</span>Pow Pow
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="product-card" data-name="donut">
-                        <div class="product-image-wrap"></div>
-
-                        <div class="product-info-wrap">
-                            <div class="product-title">Donut</div>
-                            <div class="product-detail-line">
-                                <span class="detail-label">Price:</span>20PHP
-                            </div>
-                            <div class="product-detail-line">
-                                <span class="detail-label">Description:</span>Kabombaclat
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="product-card" data-name="milk tea">
-                        <div class="product-image-wrap"></div>
-
-                        <div class="product-info-wrap">
-                            <div class="product-title">Milk Tea</div>
-                            <div class="product-detail-line">
-                                <span class="detail-label">Price:</span>120PHP
-                            </div>
-                            <div class="product-detail-line">
-                                <span class="detail-label">Description:</span>Wee Woo
-                            </div>
-                        </div>
-                    </div>
-
+                    <div class="loading-state">Loading products...</div>
                 </div>
 
                 <div class="bottom-actions">
-                    <button class="approve-btn" onclick="approveItem()">Approve Item</button>
-                    <button class="remove-btn" onclick="removeItem()">Remove Item</button>
+                    <button class="approve-btn" id="approveItemBtn">Approve Selected</button>
+                    <button class="remove-btn" id="removeItemBtn">Remove Selected</button>
                 </div>
 
             </div>
@@ -152,25 +90,24 @@
 
     <div class="modal-backdrop" id="deleteModal">
         <div class="modal">
-
             <div class="modal-title">Delete Account</div>
-
             <div class="modal-body">
-                Are you sure you want to delete
-                <strong>Enterprise Name</strong>?
+                Are you sure you want to delete <strong id="modalEnterpriseName">this enterprise</strong>?
                 This action cannot be undone.
             </div>
-
             <div class="modal-actions">
-                <button class="modal-btn modal-cancel" onclick="closeModal()">Cancel</button>
-                <button class="modal-btn modal-confirm" onclick="confirmDelete()">Delete</button>
+                <button class="modal-btn modal-cancel" id="cancelDelete">Cancel</button>
+                <button class="modal-btn modal-confirm" id="confirmDelete">Delete</button>
             </div>
-
         </div>
     </div>
 
-    <div class="toast" id="toast"></div>
+    <div class="toast" id="toast" style="display: none;"></div>
 
+    <script>
+        const listingUrl = '@Url.Action("AdminItemListing", "AdminPanel")';
+        const enterpriseId = '@ViewBag.EnterpriseId';
+    </script>
     <script src="~/Scripts/AdminItemListing.js"></script>
 
 </body>
