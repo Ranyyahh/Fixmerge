@@ -86,6 +86,7 @@ namespace BizzyQCU.Controllers
             string Username,
             string Email,
             string Password,
+            string Birthdate,
             string StudentNumber,
             string Section,
             string ContactNumber,
@@ -98,6 +99,7 @@ namespace BizzyQCU.Controllers
                 string username = Username;
                 string email = Email;
                 string password = Password;
+                string birthdate = Birthdate;
                 string studentNumber = StudentNumber;
                 string section = Section;
                 string contactNumber = ContactNumber;
@@ -126,6 +128,7 @@ namespace BizzyQCU.Controllers
                                 username = GetValue(data, "Username");
                                 email = GetValue(data, "Email");
                                 password = GetValue(data, "Password");
+                                birthdate = GetValue(data, "Birthdate");
                                 studentNumber = GetValue(data, "StudentNumber");
                                 section = GetValue(data, "Section");
                                 contactNumber = GetValue(data, "ContactNumber");
@@ -140,13 +143,13 @@ namespace BizzyQCU.Controllers
                     return Json(new { success = false, message = "Please fill all required fields correctly." });
                 }
 
-                if (db.IsUsernameRequestExists(username))
+                if (db.IsUsernameRequestExists(username, "student"))
                 {
                     return Json(new { success = false, message = "Username already submitted for approval." });
                 }
 
  
-                if (db.IsEmailRequestExists(email))
+                if (db.IsEmailRequestExists(email, "student"))
                 {
                     return Json(new { success = false, message = "Email already submitted for approval." });
                 }
@@ -161,7 +164,7 @@ namespace BizzyQCU.Controllers
                     }
                 }
 
-                bool result = db.SubmitStudentRequest(firstName, lastName, username, email, password, studentNumber, section, contactNumber, qcuIdBytes);
+                bool result = db.SubmitStudentRequest(firstName, lastName, username, email, password, birthdate, studentNumber, section, contactNumber, qcuIdBytes);
 
                 if (result)
                 {
@@ -176,41 +179,46 @@ namespace BizzyQCU.Controllers
         }
 
         [HttpPost]
-        public JsonResult RegisterEnterprise()
+        public JsonResult RegisterEnterprise(HttpPostedFileBase documents)
         {
             try
             {
-                string jsonString = "";
+                string storeName = Request.Form["StoreName"];
+                string enterpriseType = Request.Form["EnterpriseType"];
+                string username = Request.Form["Username"];
+                string email = Request.Form["Email"];
+                string password = Request.Form["Password"];
+                string contactNumber = Request.Form["ContactNumber"];
+                string gcashNumber = Request.Form["GcashNumber"];
 
-           
-                if (Request.Form.Count > 0)
-                {
-                    jsonString = Request.Form[0];
-                }
-                else if (Request.InputStream.Length > 0)
+                bool isJsonRequest = !string.IsNullOrWhiteSpace(Request.ContentType) &&
+                                     Request.ContentType.IndexOf("application/json", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                if (isJsonRequest &&
+                    string.IsNullOrWhiteSpace(storeName) &&
+                    string.IsNullOrWhiteSpace(enterpriseType) &&
+                    string.IsNullOrWhiteSpace(username) &&
+                    Request.InputStream != null &&
+                    Request.InputStream.Length > 0)
                 {
                     Request.InputStream.Position = 0;
                     using (var reader = new StreamReader(Request.InputStream))
                     {
-                        jsonString = reader.ReadToEnd();
+                        var jsonString = reader.ReadToEnd();
+                        if (!string.IsNullOrWhiteSpace(jsonString))
+                        {
+                            var serializer = new JavaScriptSerializer();
+                            var data = serializer.Deserialize<dynamic>(jsonString);
+                            storeName = GetValue(data, "StoreName");
+                            enterpriseType = GetValue(data, "EnterpriseType");
+                            username = GetValue(data, "Username");
+                            email = GetValue(data, "Email");
+                            password = GetValue(data, "Password");
+                            contactNumber = GetValue(data, "ContactNumber");
+                            gcashNumber = GetValue(data, "GcashNumber");
+                        }
                     }
                 }
-
-                if (string.IsNullOrEmpty(jsonString))
-                {
-                    return Json(new { success = false, message = "No data received." });
-                }
-
-                var serializer = new JavaScriptSerializer();
-                var data = serializer.Deserialize<dynamic>(jsonString);
-
-                string storeName = GetValue(data, "StoreName");
-                string enterpriseType = GetValue(data, "EnterpriseType");
-                string username = GetValue(data, "Username");
-                string email = GetValue(data, "Email");
-                string password = GetValue(data, "Password");
-                string contactNumber = GetValue(data, "ContactNumber");
-                string gcashNumber = GetValue(data, "GcashNumber");
 
           
                 if (string.IsNullOrEmpty(storeName) || string.IsNullOrEmpty(enterpriseType) ||
@@ -221,19 +229,28 @@ namespace BizzyQCU.Controllers
                 }
 
               
-                if (db.IsUsernameRequestExists(username))
+                if (db.IsUsernameRequestExists(username, "enterprise"))
                 {
                     return Json(new { success = false, message = "Username already submitted for approval." });
                 }
 
                
-                if (db.IsEmailRequestExists(email))
+                if (db.IsEmailRequestExists(email, "enterprise"))
                 {
                     return Json(new { success = false, message = "Email already submitted for approval." });
                 }
 
-                // isubmit nia ean sa approval_requests
-                bool result = db.SubmitEnterpriseRequest(storeName, enterpriseType, username, email, password, contactNumber, gcashNumber);
+                byte[] uploadedDocumentBytes = null;
+                var uploadedFile = documents ?? (Request.Files.Count > 0 ? Request.Files[0] : null);
+                if (uploadedFile != null && uploadedFile.ContentLength > 0)
+                {
+                    using (var br = new BinaryReader(uploadedFile.InputStream))
+                    {
+                        uploadedDocumentBytes = br.ReadBytes(uploadedFile.ContentLength);
+                    }
+                }
+
+                bool result = db.SubmitEnterpriseRequest(storeName, enterpriseType, username, email, password, contactNumber, gcashNumber, uploadedDocumentBytes);
 
                 if (result)
                 {

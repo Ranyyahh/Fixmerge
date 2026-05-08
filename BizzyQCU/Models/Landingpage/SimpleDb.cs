@@ -1,6 +1,7 @@
-﻿using MySql.Data.MySqlClient;
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using BizzyQCU.Models.Admin; 
 
 namespace BizzyQCU.Models.Landingpage
@@ -128,17 +129,30 @@ namespace BizzyQCU.Models.Landingpage
         }
 
         // ========== CHECK EXISTING REQUESTS (pending approval) ==========
-        public bool IsUsernameRequestExists(string username)
+        public bool IsUsernameRequestExists(string username, string role = null)
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(username))
+                {
+                    return false;
+                }
+
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = "SELECT COUNT(*) FROM approval_requests WHERE username = @username AND status = 'pending'";
+                    string sql = "SELECT COUNT(*) FROM approval_requests WHERE username = @username AND LOWER(status) = 'pending'";
+                    if (!string.IsNullOrWhiteSpace(role))
+                    {
+                        sql += " AND role = @role";
+                    }
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@username", username);
+                        if (!string.IsNullOrWhiteSpace(role))
+                        {
+                            cmd.Parameters.AddWithValue("@role", role);
+                        }
                         long count = (long)cmd.ExecuteScalar();
                         return count > 0;
                     }
@@ -151,17 +165,30 @@ namespace BizzyQCU.Models.Landingpage
             }
         }
 
-        public bool IsEmailRequestExists(string email)
+        public bool IsEmailRequestExists(string email, string role = null)
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    return false;
+                }
+
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = "SELECT COUNT(*) FROM approval_requests WHERE email = @email AND status = 'pending'";
+                    string sql = "SELECT COUNT(*) FROM approval_requests WHERE email = @email AND LOWER(status) = 'pending'";
+                    if (!string.IsNullOrWhiteSpace(role))
+                    {
+                        sql += " AND role = @role";
+                    }
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@email", email);
+                        if (!string.IsNullOrWhiteSpace(role))
+                        {
+                            cmd.Parameters.AddWithValue("@role", role);
+                        }
                         long count = (long)cmd.ExecuteScalar();
                         return count > 0;
                     }
@@ -252,6 +279,7 @@ namespace BizzyQCU.Models.Landingpage
 
         // ========== SUBMIT STUDENT REQUEST ==========
         public bool SubmitStudentRequest(string firstName, string lastName, string username, string email, string password,
+            string birthdate,
             string studentNumber, string section, string contactNumber, byte[] qcuIdBytes = null)
         {
             try
@@ -262,8 +290,8 @@ namespace BizzyQCU.Models.Landingpage
                     try
                     {
                         string sqlWithQcuId = @"INSERT INTO approval_requests 
-                                               (username, password, email, role, firstname, lastname, student_number, section, contact_number, qcu_id, status) 
-                                               VALUES (@username, @password, @email, 'student', @firstname, @lastname, @studentNumber, @section, @contact, @qcuId, 'pending')";
+                                               (username, password, email, role, firstname, lastname, birthdate, student_number, section, contact_number, qcu_id, status) 
+                                               VALUES (@username, @password, @email, 'student', @firstname, @lastname, @birthdate, @studentNumber, @section, @contact, @qcuId, 'pending')";
 
                         using (var cmd = new MySqlCommand(sqlWithQcuId, conn))
                         {
@@ -272,6 +300,14 @@ namespace BizzyQCU.Models.Landingpage
                             cmd.Parameters.AddWithValue("@email", email);
                             cmd.Parameters.AddWithValue("@firstname", firstName ?? "");
                             cmd.Parameters.AddWithValue("@lastname", lastName ?? "");
+                            if (DateTime.TryParseExact(birthdate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedBirthdate) || DateTime.TryParse(birthdate, out parsedBirthdate))
+                            {
+                                cmd.Parameters.AddWithValue("@birthdate", parsedBirthdate.Date);
+                            }
+                            else
+                            {
+                                cmd.Parameters.AddWithValue("@birthdate", DBNull.Value);
+                            }
                             cmd.Parameters.AddWithValue("@studentNumber", studentNumber ?? "");
                             cmd.Parameters.AddWithValue("@section", section ?? "");
                             cmd.Parameters.AddWithValue("@contact", contactNumber ?? "");
@@ -290,8 +326,8 @@ namespace BizzyQCU.Models.Landingpage
                     {
                         // Backward-compatibility fallback for databases that do not yet have approval_requests.qcu_id.
                         string sqlWithoutQcuId = @"INSERT INTO approval_requests 
-                                                  (username, password, email, role, firstname, lastname, student_number, section, contact_number, status) 
-                                                  VALUES (@username, @password, @email, 'student', @firstname, @lastname, @studentNumber, @section, @contact, 'pending')";
+                                                  (username, password, email, role, firstname, lastname, birthdate, student_number, section, contact_number, status) 
+                                                  VALUES (@username, @password, @email, 'student', @firstname, @lastname, @birthdate, @studentNumber, @section, @contact, 'pending')";
 
                         using (var fallbackCmd = new MySqlCommand(sqlWithoutQcuId, conn))
                         {
@@ -300,6 +336,14 @@ namespace BizzyQCU.Models.Landingpage
                             fallbackCmd.Parameters.AddWithValue("@email", email);
                             fallbackCmd.Parameters.AddWithValue("@firstname", firstName ?? "");
                             fallbackCmd.Parameters.AddWithValue("@lastname", lastName ?? "");
+                            if (DateTime.TryParseExact(birthdate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedFallbackBirthdate) || DateTime.TryParse(birthdate, out parsedFallbackBirthdate))
+                            {
+                                fallbackCmd.Parameters.AddWithValue("@birthdate", parsedFallbackBirthdate.Date);
+                            }
+                            else
+                            {
+                                fallbackCmd.Parameters.AddWithValue("@birthdate", DBNull.Value);
+                            }
                             fallbackCmd.Parameters.AddWithValue("@studentNumber", studentNumber ?? "");
                             fallbackCmd.Parameters.AddWithValue("@section", section ?? "");
                             fallbackCmd.Parameters.AddWithValue("@contact", contactNumber ?? "");
@@ -352,27 +396,56 @@ namespace BizzyQCU.Models.Landingpage
 
         // ========== SUBMIT ENTERPRISE REQUEST ==========
         public bool SubmitEnterpriseRequest(string storeName, string enterpriseType, string username, string email, string password,
-            string contactNumber, string gcashNumber)
+            string contactNumber, string gcashNumber, byte[] uploadedDocumentBytes = null)
         {
             try
             {
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = @"INSERT INTO approval_requests 
+                    try
+                    {
+                        string sqlWithDoc = @"INSERT INTO approval_requests 
+                                   (username, password, email, role, store_name, store_description, contact_number, gcash_number, uploaded_document, status) 
+                                   VALUES (@username, @password, @email, 'enterprise', @storeName, @storeDesc, @contact, @gcash, @uploadedDocument, 'pending')";
+
+                        using (var cmd = new MySqlCommand(sqlWithDoc, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@username", username);
+                            cmd.Parameters.AddWithValue("@password", password);
+                            cmd.Parameters.AddWithValue("@email", email);
+                            cmd.Parameters.AddWithValue("@storeName", storeName ?? "");
+                            cmd.Parameters.AddWithValue("@storeDesc", enterpriseType ?? "");
+                            cmd.Parameters.AddWithValue("@contact", contactNumber ?? "");
+                            cmd.Parameters.AddWithValue("@gcash", gcashNumber ?? "");
+                            if (uploadedDocumentBytes == null || uploadedDocumentBytes.Length == 0)
+                            {
+                                cmd.Parameters.Add("@uploadedDocument", MySqlDbType.Blob).Value = DBNull.Value;
+                            }
+                            else
+                            {
+                                cmd.Parameters.Add("@uploadedDocument", MySqlDbType.Blob).Value = uploadedDocumentBytes;
+                            }
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    catch (MySqlException ex) when (ex.Message.IndexOf("Unknown column 'uploaded_document'", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        string sqlWithoutDoc = @"INSERT INTO approval_requests 
                                    (username, password, email, role, store_name, store_description, contact_number, gcash_number, status) 
                                    VALUES (@username, @password, @email, 'enterprise', @storeName, @storeDesc, @contact, @gcash, 'pending')";
 
-                    using (var cmd = new MySqlCommand(sql, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@username", username);
-                        cmd.Parameters.AddWithValue("@password", password);
-                        cmd.Parameters.AddWithValue("@email", email);
-                        cmd.Parameters.AddWithValue("@storeName", storeName ?? "");
-                        cmd.Parameters.AddWithValue("@storeDesc", enterpriseType ?? "");
-                        cmd.Parameters.AddWithValue("@contact", contactNumber ?? "");
-                        cmd.Parameters.AddWithValue("@gcash", gcashNumber ?? "");
-                        cmd.ExecuteNonQuery();
+                        using (var fallbackCmd = new MySqlCommand(sqlWithoutDoc, conn))
+                        {
+                            fallbackCmd.Parameters.AddWithValue("@username", username);
+                            fallbackCmd.Parameters.AddWithValue("@password", password);
+                            fallbackCmd.Parameters.AddWithValue("@email", email);
+                            fallbackCmd.Parameters.AddWithValue("@storeName", storeName ?? "");
+                            fallbackCmd.Parameters.AddWithValue("@storeDesc", enterpriseType ?? "");
+                            fallbackCmd.Parameters.AddWithValue("@contact", contactNumber ?? "");
+                            fallbackCmd.Parameters.AddWithValue("@gcash", gcashNumber ?? "");
+                            fallbackCmd.ExecuteNonQuery();
+                        }
                     }
                     return true;
                 }
@@ -949,3 +1022,5 @@ namespace BizzyQCU.Models.Landingpage
            
         }
     }
+
+

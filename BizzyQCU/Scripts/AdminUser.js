@@ -59,26 +59,35 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 let allFeedbacks = [];
+const qcuIdStore = {};
+const enterpriseDocStore = {};
+let allStudents = [];
+let allEnterprises = [];
+let currentEditContext = null;
+let pendingEditSubmitEvent = null;
+let pendingFeedbackDeleteId = null;
 
 function loadAllStudentRequests() {
     fetch('/AdminPanel/GetAllStudentRequests')
         .then(response => response.json())
         .then(data => {
+            allStudents = Array.isArray(data) ? data : [];
             const tbody = document.getElementById('usersTableBody');
             tbody.innerHTML = '';
 
-            if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No student requests found</td></tr>';
+            if (!allStudents.length) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No student requests found</td></tr>';
                 return;
             }
 
-            data.forEach(student => {
+            allStudents.forEach(student => {
                 const row = tbody.insertRow();
                 const fullName = `${student.Firstname || ''} ${student.Lastname || ''}`.trim() || student.Username;
                 row.insertCell(0).innerHTML = fullName;
                 row.insertCell(1).innerHTML = student.Email;
                 row.insertCell(2).innerHTML = student.Section || 'N/A';
                 row.insertCell(3).innerHTML = student.StudentNumber || 'N/A';
+                row.insertCell(4).innerHTML = renderQcuIdCell(student.RequestId, student.QcuId);
 
                 let statusClass = '';
                 const statusText = student.Status || '';
@@ -91,44 +100,189 @@ function loadAllStudentRequests() {
                 } else if (statusLower === 'rejected') {
                     statusClass = 'status-rejected';
                 }
-                row.insertCell(4).innerHTML = `<span class="${statusClass}">${statusText}</span>`;
+                row.insertCell(5).innerHTML = `<span class="${statusClass}">${statusText}</span>`;
 
                 if (statusLower === 'pending') {
-                    row.insertCell(5).innerHTML = `
+                    row.insertCell(6).innerHTML = `
                         <div class="action-btns">
                             <button class="approve-btn" onclick="approveRequest(${student.RequestId})">Approve</button>
                             <button class="reject-btn" onclick="rejectRequest(${student.RequestId})">Reject</button>
                         </div>
                     `;
+                } else if (statusLower === 'approved') {
+                    row.insertCell(6).innerHTML = `
+                        <div class="action-btns">
+                            <button class="edit-btn" onclick="openEditStudentModal(${student.RequestId})">Edit</button>
+                        </div>
+                    `;
                 } else {
-                    row.insertCell(5).innerHTML = '<span>-</span>';
+                    row.insertCell(6).innerHTML = '<span>-</span>';
                 }
             });
         })
         .catch(error => {
             console.error('Error loading students:', error);
-            document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Error loading data</td></tr>';
+            document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">Error loading data</td></tr>';
         });
+}
+
+function renderQcuIdCell(requestId, rawData) {
+    if (!rawData) {
+        return '<span>N/A</span>';
+    }
+    qcuIdStore[requestId] = rawData;
+    return `<button type="button" class="qcu-id-btn" onclick="viewQcuId(${requestId})">View ID</button>`;
+}
+
+function viewQcuId(requestId) {
+    const modal = document.getElementById('qcuIdModal');
+    const img = document.getElementById('qcuIdPreviewImage');
+    const title = document.getElementById('previewModalTitle');
+    if (!modal || !img) {
+        return;
+    }
+
+    const rawData = qcuIdStore[requestId];
+    const imageSrc = buildQcuIdImageSrc(rawData);
+    if (!imageSrc) {
+        alert('Invalid QCU ID image data.');
+        return;
+    }
+
+    img.src = imageSrc;
+    if (title) {
+        title.textContent = 'QCU ID Preview';
+    }
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeQcuIdModal() {
+    const modal = document.getElementById('qcuIdModal');
+    const img = document.getElementById('qcuIdPreviewImage');
+    if (!modal || !img) {
+        return;
+    }
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    img.src = '';
+}
+
+function inferImageMimeType(base64Data) {
+    try {
+        const normalized = normalizeBase64(base64Data);
+        const signature = atob(normalized).slice(0, 12);
+        if (signature.startsWith('\x89PNG')) return 'image/png';
+        if (signature.startsWith('\xFF\xD8\xFF')) return 'image/jpeg';
+        if (signature.startsWith('GIF87a') || signature.startsWith('GIF89a')) return 'image/gif';
+        if (signature.startsWith('BM')) return 'image/bmp';
+        if (signature.startsWith('RIFF') && signature.slice(8, 12) === 'WEBP') return 'image/webp';
+    } catch (e) {
+        console.warn('Unable to infer mime type for QCU ID image.', e);
+    }
+    return 'image/jpeg';
+}
+
+function buildQcuIdImageSrc(rawValue) {
+    if (!rawValue) return null;
+
+    if (Array.isArray(rawValue) && rawValue.length > 0) {
+        const uint8 = new Uint8Array(rawValue);
+        const mimeType = inferImageMimeTypeFromBytes(uint8);
+        const blob = new Blob([uint8], { type: mimeType });
+        return URL.createObjectURL(blob);
+    }
+
+    if (typeof rawValue === 'object') {
+        // Handles serializers that send byte[] as objects, e.g. { "$values": [...] }.
+        const values = rawValue.$values || rawValue.values || rawValue.data;
+        if (Array.isArray(values) && values.length > 0) {
+            const uint8 = new Uint8Array(values);
+            const mimeType = inferImageMimeTypeFromBytes(uint8);
+            const blob = new Blob([uint8], { type: mimeType });
+            return URL.createObjectURL(blob);
+        }
+    }
+
+    const text = String(rawValue).trim();
+    if (!text) return null;
+
+    if (text.startsWith('data:image/')) {
+        return text;
+    }
+
+    if (text.startsWith('[') && text.endsWith(']')) {
+        try {
+            const bytes = JSON.parse(text);
+            if (Array.isArray(bytes) && bytes.length > 0) {
+                const uint8 = new Uint8Array(bytes);
+                const mimeType = inferImageMimeTypeFromBytes(uint8);
+                const blob = new Blob([uint8], { type: mimeType });
+                return URL.createObjectURL(blob);
+            }
+        } catch (e) {
+            console.warn('Invalid byte-array format for QCU ID image.', e);
+        }
+    }
+
+    const normalized = normalizeBase64(text);
+    if (!normalized) return null;
+    const mimeType = inferImageMimeType(normalized);
+    return `data:${mimeType};base64,${normalized}`;
+}
+
+function normalizeBase64(value) {
+    if (!value) return null;
+    let cleaned = String(value).trim();
+    cleaned = cleaned.replace(/^"|"$/g, '');
+    cleaned = cleaned.replace(/\s+/g, '');
+    cleaned = cleaned.replace(/-/g, '+').replace(/_/g, '/');
+
+    const remainder = cleaned.length % 4;
+    if (remainder !== 0) {
+        cleaned = cleaned.padEnd(cleaned.length + (4 - remainder), '=');
+    }
+
+    if (!/^[A-Za-z0-9+/=]+$/.test(cleaned)) {
+        return null;
+    }
+
+    return cleaned;
+}
+
+function inferImageMimeTypeFromBytes(bytes) {
+    if (!bytes || bytes.length < 4) return 'image/jpeg';
+    if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) return 'image/png';
+    if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) return 'image/jpeg';
+    if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) return 'image/gif';
+    if (bytes[0] === 0x42 && bytes[1] === 0x4D) return 'image/bmp';
+    if (
+        bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+        bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
+    ) return 'image/webp';
+    return 'image/jpeg';
 }
 
 function loadAllEnterpriseRequests() {
     fetch('/AdminPanel/GetAllEnterpriseRequests')
         .then(response => response.json())
         .then(data => {
+            allEnterprises = Array.isArray(data) ? data : [];
             const tbody = document.getElementById('enterprisesTableBody');
             tbody.innerHTML = '';
 
-            if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No enterprise requests found</td></tr>';
+            if (!allEnterprises.length) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No enterprise requests found</td></tr>';
                 return;
             }
 
-            data.forEach(enterprise => {
+            allEnterprises.forEach(enterprise => {
                 const row = tbody.insertRow();
                 row.insertCell(0).innerHTML = enterprise.StoreName || enterprise.Username;
                 row.insertCell(1).innerHTML = enterprise.Email;
                 row.insertCell(2).innerHTML = enterprise.StoreDescription || 'N/A';
                 row.insertCell(3).innerHTML = enterprise.ContactNumber || 'N/A';
+                row.insertCell(4).innerHTML = renderEnterpriseDocumentCell(enterprise.RequestId, enterprise.UploadedDocument);
 
                 let statusClass = '';
                 const statusText = enterprise.Status || '';
@@ -141,24 +295,61 @@ function loadAllEnterpriseRequests() {
                 } else if (statusLower === 'rejected') {
                     statusClass = 'status-rejected';
                 }
-                row.insertCell(4).innerHTML = `<span class="${statusClass}">${statusText}</span>`;
+                row.insertCell(5).innerHTML = `<span class="${statusClass}">${statusText}</span>`;
 
                 if (statusLower === 'pending') {
-                    row.insertCell(5).innerHTML = `
+                    row.insertCell(6).innerHTML = `
                         <div class="action-btns">
                             <button class="approve-btn" onclick="approveRequest(${enterprise.RequestId})">Approve</button>
                             <button class="reject-btn" onclick="rejectRequest(${enterprise.RequestId})">Reject</button>
                         </div>
                     `;
+                } else if (statusLower === 'approved') {
+                    row.insertCell(6).innerHTML = `
+                        <div class="action-btns">
+                            <button class="edit-btn" onclick="openEditEnterpriseModal(${enterprise.RequestId})">Edit</button>
+                        </div>
+                    `;
                 } else {
-                    row.insertCell(5).innerHTML = '<span>-</span>';
+                    row.insertCell(6).innerHTML = '<span>-</span>';
                 }
             });
         })
         .catch(error => {
             console.error('Error loading enterprises:', error);
-            document.getElementById('enterprisesTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Error loading data</td></tr>';
+            document.getElementById('enterprisesTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">Error loading data</td></tr>';
         });
+}
+
+function renderEnterpriseDocumentCell(requestId, rawData) {
+    if (!rawData) {
+        return '<span>N/A</span>';
+    }
+    enterpriseDocStore[requestId] = rawData;
+    return `<button type="button" class="qcu-id-btn" onclick="viewEnterpriseDocument(${requestId})">View Doc</button>`;
+}
+
+function viewEnterpriseDocument(requestId) {
+    const rawData = enterpriseDocStore[requestId];
+    const imageSrc = buildQcuIdImageSrc(rawData);
+    if (!imageSrc) {
+        alert('Invalid enterprise document data.');
+        return;
+    }
+
+    const modal = document.getElementById('qcuIdModal');
+    const img = document.getElementById('qcuIdPreviewImage');
+    const title = document.getElementById('previewModalTitle');
+    if (!modal || !img) {
+        return;
+    }
+
+    img.src = imageSrc;
+    if (title) {
+        title.textContent = 'Enterprise Document Preview';
+    }
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
 }
 
 function loadFeedbacks() {
@@ -222,7 +413,12 @@ function applyFeedbackFilters() {
         row.insertCell(1).innerHTML = feedback.ContactNumber || 'N/A';
         row.insertCell(2).innerHTML = feedback.Category || 'General';
         row.insertCell(3).innerHTML = feedback.Message || '';
-        row.insertCell(4).innerHTML = renderStars(feedback.Rating);
+        row.insertCell(4).innerHTML = `
+            <div class="rating-actions">
+                ${renderStars(feedback.Rating)}
+                <button type="button" class="delete-btn" onclick="openDeleteFeedbackConfirmModal(${feedback.FeedbackId})">Delete</button>
+            </div>
+        `;
     });
 }
 
@@ -309,4 +505,213 @@ function filterTable(tableId, searchTerm) {
         }
         rows[i].style.display = found ? '' : 'none';
     }
+}
+
+function openEditStudentModal(requestId) {
+    const student = allStudents.find(s => s.RequestId === requestId);
+    if (!student) return;
+
+    currentEditContext = { type: 'student', requestId: requestId };
+    document.getElementById('editModalTitle').textContent = 'Edit Approved Student';
+    const form = document.getElementById('editRequestForm');
+    form.innerHTML = `
+        <div class="edit-form-grid">
+            <div class="edit-form-group"><label>Username</label><input name="username" value="${escapeHtml(student.Username || '')}" required /></div>
+            <div class="edit-form-group"><label>Email</label><input name="email" type="email" value="${escapeHtml(student.Email || '')}" required /></div>
+            <div class="edit-form-group"><label>First Name</label><input name="firstname" value="${escapeHtml(student.Firstname || '')}" required /></div>
+            <div class="edit-form-group"><label>Last Name</label><input name="lastname" value="${escapeHtml(student.Lastname || '')}" required /></div>
+            <div class="edit-form-group"><label>Student Number</label><input name="studentNumber" value="${escapeHtml(student.StudentNumber || '')}" required /></div>
+            <div class="edit-form-group"><label>Section</label><input name="section" value="${escapeHtml(student.Section || '')}" required /></div>
+            <div class="edit-form-group full"><label>Contact Number</label><input name="contactNumber" value="${escapeHtml(student.ContactNumber || '')}" /></div>
+        </div>
+        <div class="edit-form-actions">
+            <button type="button" class="edit-cancel-btn" onclick="closeEditModal()">Cancel</button>
+            <button type="submit" class="edit-save-btn">Save Changes</button>
+        </div>
+    `;
+    document.getElementById('editRequestModal').classList.remove('hidden');
+}
+
+function openEditEnterpriseModal(requestId) {
+    const enterprise = allEnterprises.find(e => e.RequestId === requestId);
+    if (!enterprise) return;
+
+    currentEditContext = { type: 'enterprise', requestId: requestId };
+    document.getElementById('editModalTitle').textContent = 'Edit Approved Enterprise';
+    const form = document.getElementById('editRequestForm');
+    form.innerHTML = `
+        <div class="edit-form-grid">
+            <div class="edit-form-group"><label>Username</label><input name="username" value="${escapeHtml(enterprise.Username || '')}" required /></div>
+            <div class="edit-form-group"><label>Email</label><input name="email" type="email" value="${escapeHtml(enterprise.Email || '')}" required /></div>
+            <div class="edit-form-group"><label>Store Name</label><input name="storeName" value="${escapeHtml(enterprise.StoreName || '')}" required /></div>
+            <div class="edit-form-group"><label>Business Type</label><input name="businessType" value="${escapeHtml(enterprise.StoreDescription || '')}" required /></div>
+            <div class="edit-form-group"><label>Contact Number</label><input name="contactNumber" value="${escapeHtml(enterprise.ContactNumber || '')}" /></div>
+            <div class="edit-form-group"><label>GCash Number</label><input name="gcashNumber" value="${escapeHtml(enterprise.GcashNumber || '')}" /></div>
+        </div>
+        <div class="edit-form-actions">
+            <button type="button" class="edit-cancel-btn" onclick="closeEditModal()">Cancel</button>
+            <button type="submit" class="edit-save-btn">Save Changes</button>
+        </div>
+    `;
+    document.getElementById('editRequestModal').classList.remove('hidden');
+}
+
+function closeEditModal() {
+    const modal = document.getElementById('editRequestModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+    currentEditContext = null;
+    pendingEditSubmitEvent = null;
+}
+
+function submitEditForm(event) {
+    event.preventDefault();
+    if (!currentEditContext) return;
+
+    pendingEditSubmitEvent = event;
+    openSaveConfirmModal();
+}
+
+function openSaveConfirmModal() {
+    const modal = document.getElementById('saveConfirmModal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeSaveConfirmModal() {
+    const modal = document.getElementById('saveConfirmModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+function confirmAndSaveChanges() {
+    if (!pendingEditSubmitEvent || !currentEditContext) {
+        closeSaveConfirmModal();
+        return;
+    }
+    closeSaveConfirmModal();
+
+    const form = pendingEditSubmitEvent.target;
+    pendingEditSubmitEvent = null;
+    const payload = new URLSearchParams();
+    payload.append('requestId', currentEditContext.requestId);
+
+    let url = '';
+    if (currentEditContext.type === 'student') {
+        url = '/AdminPanel/UpdateStudentRequestDetails';
+        payload.append('username', form.username.value.trim());
+        payload.append('email', form.email.value.trim());
+        payload.append('firstname', form.firstname.value.trim());
+        payload.append('lastname', form.lastname.value.trim());
+        payload.append('studentNumber', form.studentNumber.value.trim());
+        payload.append('section', form.section.value.trim());
+        payload.append('contactNumber', form.contactNumber.value.trim());
+    } else {
+        url = '/AdminPanel/UpdateEnterpriseRequestDetails';
+        payload.append('username', form.username.value.trim());
+        payload.append('email', form.email.value.trim());
+        payload.append('storeName', form.storeName.value.trim());
+        payload.append('businessType', form.businessType.value.trim());
+        payload.append('contactNumber', form.contactNumber.value.trim());
+        payload.append('gcashNumber', form.gcashNumber.value.trim());
+    }
+
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: payload
+    })
+        .then(async response => {
+            const rawText = await response.text();
+            let parsed;
+            try {
+                parsed = rawText ? JSON.parse(rawText) : null;
+            } catch (e) {
+                parsed = null;
+            }
+
+            if (!response.ok) {
+                const serverMsg = parsed && parsed.message
+                    ? parsed.message
+                    : `Request failed (${response.status}).`;
+                throw new Error(serverMsg);
+            }
+
+            if (!parsed) {
+                throw new Error('Invalid server response while saving changes.');
+            }
+
+            return parsed;
+        })
+        .then(data => {
+            if (data.success) {
+                alert('Changes saved successfully.');
+                closeEditModal();
+                loadAllStudentRequests();
+                loadAllEnterpriseRequests();
+            } else {
+                alert(data.message || 'Failed to save changes.');
+            }
+        })
+        .catch(error => {
+            console.error('Edit save error:', error);
+            alert(error.message || 'An error occurred while saving changes.');
+        });
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function openDeleteFeedbackConfirmModal(feedbackId) {
+    pendingFeedbackDeleteId = feedbackId;
+    const modal = document.getElementById('deleteFeedbackConfirmModal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeDeleteFeedbackConfirmModal() {
+    const modal = document.getElementById('deleteFeedbackConfirmModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    pendingFeedbackDeleteId = null;
+}
+
+function confirmDeleteFeedback() {
+    if (!pendingFeedbackDeleteId) {
+        closeDeleteFeedbackConfirmModal();
+        return;
+    }
+
+    const payload = new URLSearchParams();
+    payload.append('feedbackId', pendingFeedbackDeleteId);
+
+    fetch('/AdminPanel/DeleteFeedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: payload
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                closeDeleteFeedbackConfirmModal();
+                loadFeedbacks();
+            } else {
+                alert(data.message || 'Failed to delete feedback.');
+            }
+        })
+        .catch(error => {
+            console.error('Delete feedback error:', error);
+            alert('An error occurred while deleting feedback.');
+        });
 }

@@ -1,4 +1,4 @@
-﻿using MySql.Data.MySqlClient;
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using BizzyQCU.Models.Admin;
@@ -53,17 +53,20 @@ namespace BizzyQCU.Models.Admin
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = @"SELECT request_id, username, email, role, firstname, lastname, 
-                                  student_number, section, contact_number, status, submitted_at 
-                           FROM approval_requests 
-                           WHERE role = 'student'
+                    string sql = @"SELECT ar.request_id, ar.username, ar.email, ar.role, ar.firstname, ar.lastname, 
+                                  ar.student_number, ar.section, ar.contact_number, COALESCE(s.qcu_id, ar.qcu_id) AS qcu_id, ar.status, ar.submitted_at
+                           FROM approval_requests ar
+                           LEFT JOIN users u ON u.username = ar.username
+                           LEFT JOIN students s ON s.user_id = u.user_id
+                           WHERE ar.role = 'student'
                            ORDER BY 
-                               CASE status 
+                               CASE LOWER(ar.status)
                                    WHEN 'pending' THEN 1 
                                    WHEN 'approved' THEN 2 
                                    WHEN 'rejected' THEN 3 
+                                   ELSE 4
                                END, 
-                               submitted_at DESC";
+                               ar.submitted_at DESC";
                     using (var cmd = new MySqlCommand(sql, conn))
                     using (var reader = cmd.ExecuteReader())
                     {
@@ -80,6 +83,7 @@ namespace BizzyQCU.Models.Admin
                                 StudentNumber = reader.IsDBNull(reader.GetOrdinal("student_number")) ? "" : reader.GetString("student_number"),
                                 Section = reader.IsDBNull(reader.GetOrdinal("section")) ? "" : reader.GetString("section"),
                                 ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
+                                QcuId = reader.IsDBNull(reader.GetOrdinal("qcu_id")) ? null : (byte[])reader["qcu_id"],
                                 Status = reader.GetString("status"),
                                 SubmittedAt = reader.GetDateTime("submitted_at")
                             });
@@ -103,17 +107,20 @@ namespace BizzyQCU.Models.Admin
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = @"SELECT request_id, username, email, role, store_name, store_description, 
-                                  contact_number, gcash_number, status, submitted_at 
-                           FROM approval_requests 
-                           WHERE role = 'enterprise'
+                    string sql = @"SELECT ar.request_id, ar.username, ar.email, ar.role, ar.store_name, ar.store_description, 
+                                  ar.contact_number, ar.gcash_number, COALESCE(ar.uploaded_document, e.uploaded_document) AS uploaded_document, ar.status, ar.submitted_at
+                           FROM approval_requests ar
+                           LEFT JOIN users u ON u.username = ar.username
+                           LEFT JOIN enterprises e ON e.user_id = u.user_id
+                           WHERE ar.role = 'enterprise'
                            ORDER BY 
-                               CASE status 
+                               CASE LOWER(ar.status) 
                                    WHEN 'pending' THEN 1 
                                    WHEN 'approved' THEN 2 
                                    WHEN 'rejected' THEN 3 
+                                   ELSE 4
                                END, 
-                               submitted_at DESC";
+                               ar.submitted_at DESC";
                     using (var cmd = new MySqlCommand(sql, conn))
                     using (var reader = cmd.ExecuteReader())
                     {
@@ -129,6 +136,7 @@ namespace BizzyQCU.Models.Admin
                                 StoreDescription = reader.IsDBNull(reader.GetOrdinal("store_description")) ? "" : reader.GetString("store_description"),
                                 ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
                                 GcashNumber = reader.IsDBNull(reader.GetOrdinal("gcash_number")) ? "" : reader.GetString("gcash_number"),
+                                UploadedDocument = reader.IsDBNull(reader.GetOrdinal("uploaded_document")) ? null : (byte[])reader["uploaded_document"],
                                 Status = reader.GetString("status"),
                                 SubmittedAt = reader.GetDateTime("submitted_at")
                             });
@@ -152,7 +160,7 @@ namespace BizzyQCU.Models.Admin
                 {
                     conn.Open();
                     string sql = @"SELECT request_id, username, email, role, firstname, lastname, 
-                                          student_number, section, contact_number, status, submitted_at 
+                                          student_number, section, contact_number, qcu_id, status, submitted_at 
                                    FROM approval_requests 
                                    WHERE role = 'student' AND status = 'Pending' 
                                    ORDER BY submitted_at DESC";
@@ -172,6 +180,7 @@ namespace BizzyQCU.Models.Admin
                                 StudentNumber = reader.IsDBNull(reader.GetOrdinal("student_number")) ? "" : reader.GetString("student_number"),
                                 Section = reader.IsDBNull(reader.GetOrdinal("section")) ? "" : reader.GetString("section"),
                                 ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
+                                QcuId = reader.IsDBNull(reader.GetOrdinal("qcu_id")) ? null : (byte[])reader["qcu_id"],
                                 Status = reader.GetString("status"),
                                 SubmittedAt = reader.GetDateTime("submitted_at")
                             });
@@ -331,6 +340,7 @@ namespace BizzyQCU.Models.Admin
                                             Role = reader.GetString("role"),
                                             Firstname = reader.IsDBNull(reader.GetOrdinal("firstname")) ? "" : reader.GetString("firstname"),
                                             Lastname = reader.IsDBNull(reader.GetOrdinal("lastname")) ? "" : reader.GetString("lastname"),
+                                            Birthdate = reader.IsDBNull(reader.GetOrdinal("birthdate")) ? (DateTime?)null : reader.GetDateTime("birthdate"),
                                             StudentNumber = reader.IsDBNull(reader.GetOrdinal("student_number")) ? "" : reader.GetString("student_number"),
                                             Section = reader.IsDBNull(reader.GetOrdinal("section")) ? "" : reader.GetString("section"),
                                             ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
@@ -382,13 +392,21 @@ namespace BizzyQCU.Models.Admin
                             // Step 5: Insert into role-specific table
                             if (request.Role == "student")
                             {
-                                string insertStudentSql = @"INSERT INTO students (user_id, firstname, lastname, student_number, section, contact_number, qcu_id) 
-                                                    VALUES (@userId, @firstname, @lastname, @studentNumber, @section, @contact, @qcuId)";
+                                string insertStudentSql = @"INSERT INTO students (user_id, firstname, lastname, birthdate, student_number, section, contact_number, qcu_id) 
+                                                    VALUES (@userId, @firstname, @lastname, @birthdate, @studentNumber, @section, @contact, @qcuId)";
                                 using (var cmd = new MySqlCommand(insertStudentSql, conn, transaction))
                                 {
                                     cmd.Parameters.AddWithValue("@userId", userId);
                                     cmd.Parameters.AddWithValue("@firstname", request.Firstname ?? "");
                                     cmd.Parameters.AddWithValue("@lastname", request.Lastname ?? "");
+                                    if (request.Birthdate.HasValue)
+                                    {
+                                        cmd.Parameters.AddWithValue("@birthdate", request.Birthdate.Value.Date);
+                                    }
+                                    else
+                                    {
+                                        cmd.Parameters.AddWithValue("@birthdate", DBNull.Value);
+                                    }
                                     cmd.Parameters.AddWithValue("@studentNumber", request.StudentNumber ?? "");
                                     cmd.Parameters.AddWithValue("@section", request.Section ?? "");
                                     cmd.Parameters.AddWithValue("@contact", request.ContactNumber ?? "");
@@ -555,5 +573,243 @@ namespace BizzyQCU.Models.Admin
 
             return feedbacks;
         }
+
+        public bool UpdateStudentRequestDetails(int requestId, string username, string email, string firstname, string lastname, string studentNumber, string section, string contactNumber)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    using (var tx = conn.BeginTransaction())
+                    {
+                        string requestSql = @"SELECT role, status, username FROM approval_requests 
+                                              WHERE request_id = @requestId FOR UPDATE";
+                        string role = null;
+                        string status = null;
+                        string oldUsername = null;
+                        using (var requestCmd = new MySqlCommand(requestSql, conn, tx))
+                        {
+                            requestCmd.Parameters.AddWithValue("@requestId", requestId);
+                            using (var reader = requestCmd.ExecuteReader())
+                            {
+                                if (!reader.Read())
+                                {
+                                    return false;
+                                }
+                                role = reader.GetString("role");
+                                status = reader.GetString("status");
+                                oldUsername = reader.GetString("username");
+                            }
+                        }
+
+                        if (!string.Equals(role, "student", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return false;
+                        }
+
+                        string updateRequestSql = @"UPDATE approval_requests
+                                                    SET username = @username,
+                                                        email = @email,
+                                                        firstname = @firstname,
+                                                        lastname = @lastname,
+                                                        student_number = @studentNumber,
+                                                        section = @section,
+                                                        contact_number = @contactNumber
+                                                    WHERE request_id = @requestId";
+                        using (var cmd = new MySqlCommand(updateRequestSql, conn, tx))
+                        {
+                            cmd.Parameters.AddWithValue("@requestId", requestId);
+                            cmd.Parameters.AddWithValue("@username", username ?? "");
+                            cmd.Parameters.AddWithValue("@email", email ?? "");
+                            cmd.Parameters.AddWithValue("@firstname", firstname ?? "");
+                            cmd.Parameters.AddWithValue("@lastname", lastname ?? "");
+                            cmd.Parameters.AddWithValue("@studentNumber", studentNumber ?? "");
+                            cmd.Parameters.AddWithValue("@section", section ?? "");
+                            cmd.Parameters.AddWithValue("@contactNumber", contactNumber ?? "");
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        if (string.Equals(status, "Approved", StringComparison.OrdinalIgnoreCase))
+                        {
+                            int userId = 0;
+                            using (var userIdCmd = new MySqlCommand("SELECT user_id FROM users WHERE username = @oldUsername LIMIT 1", conn, tx))
+                            {
+                                userIdCmd.Parameters.AddWithValue("@oldUsername", oldUsername);
+                                var userIdObj = userIdCmd.ExecuteScalar();
+                                if (userIdObj != null && userIdObj != DBNull.Value)
+                                {
+                                    userId = Convert.ToInt32(userIdObj);
+                                }
+                            }
+
+                            if (userId > 0)
+                            {
+                                using (var userCmd = new MySqlCommand("UPDATE users SET username = @username, email = @email WHERE user_id = @userId", conn, tx))
+                                {
+                                    userCmd.Parameters.AddWithValue("@username", username ?? "");
+                                    userCmd.Parameters.AddWithValue("@email", email ?? "");
+                                    userCmd.Parameters.AddWithValue("@userId", userId);
+                                    userCmd.ExecuteNonQuery();
+                                }
+
+                                using (var studentCmd = new MySqlCommand(@"UPDATE students 
+                                                                          SET firstname = @firstname,
+                                                                              lastname = @lastname,
+                                                                              student_number = @studentNumber,
+                                                                              section = @section,
+                                                                              contact_number = @contactNumber
+                                                                          WHERE user_id = @userId", conn, tx))
+                                {
+                                    studentCmd.Parameters.AddWithValue("@firstname", firstname ?? "");
+                                    studentCmd.Parameters.AddWithValue("@lastname", lastname ?? "");
+                                    studentCmd.Parameters.AddWithValue("@studentNumber", studentNumber ?? "");
+                                    studentCmd.Parameters.AddWithValue("@section", section ?? "");
+                                    studentCmd.Parameters.AddWithValue("@contactNumber", contactNumber ?? "");
+                                    studentCmd.Parameters.AddWithValue("@userId", userId);
+                                    studentCmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
+
+                        tx.Commit();
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("UpdateStudentRequestDetails error: " + ex.Message);
+                return false;
+            }
+        }
+
+        public bool UpdateEnterpriseRequestDetails(int requestId, string username, string email, string storeName, string businessType, string contactNumber, string gcashNumber)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    using (var tx = conn.BeginTransaction())
+                    {
+                        string requestSql = @"SELECT role, status, username FROM approval_requests 
+                                              WHERE request_id = @requestId FOR UPDATE";
+                        string role = null;
+                        string status = null;
+                        string oldUsername = null;
+                        using (var requestCmd = new MySqlCommand(requestSql, conn, tx))
+                        {
+                            requestCmd.Parameters.AddWithValue("@requestId", requestId);
+                            using (var reader = requestCmd.ExecuteReader())
+                            {
+                                if (!reader.Read())
+                                {
+                                    return false;
+                                }
+                                role = reader.GetString("role");
+                                status = reader.GetString("status");
+                                oldUsername = reader.GetString("username");
+                            }
+                        }
+
+                        if (!string.Equals(role, "enterprise", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return false;
+                        }
+
+                        string updateRequestSql = @"UPDATE approval_requests
+                                                    SET username = @username,
+                                                        email = @email,
+                                                        store_name = @storeName,
+                                                        store_description = @businessType,
+                                                        contact_number = @contactNumber,
+                                                        gcash_number = @gcashNumber
+                                                    WHERE request_id = @requestId";
+                        using (var cmd = new MySqlCommand(updateRequestSql, conn, tx))
+                        {
+                            cmd.Parameters.AddWithValue("@requestId", requestId);
+                            cmd.Parameters.AddWithValue("@username", username ?? "");
+                            cmd.Parameters.AddWithValue("@email", email ?? "");
+                            cmd.Parameters.AddWithValue("@storeName", storeName ?? "");
+                            cmd.Parameters.AddWithValue("@businessType", businessType ?? "");
+                            cmd.Parameters.AddWithValue("@contactNumber", contactNumber ?? "");
+                            cmd.Parameters.AddWithValue("@gcashNumber", gcashNumber ?? "");
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        if (string.Equals(status, "Approved", StringComparison.OrdinalIgnoreCase))
+                        {
+                            int userId = 0;
+                            using (var userIdCmd = new MySqlCommand("SELECT user_id FROM users WHERE username = @oldUsername LIMIT 1", conn, tx))
+                            {
+                                userIdCmd.Parameters.AddWithValue("@oldUsername", oldUsername);
+                                var userIdObj = userIdCmd.ExecuteScalar();
+                                if (userIdObj != null && userIdObj != DBNull.Value)
+                                {
+                                    userId = Convert.ToInt32(userIdObj);
+                                }
+                            }
+
+                            if (userId > 0)
+                            {
+                                using (var userCmd = new MySqlCommand("UPDATE users SET username = @username, email = @email WHERE user_id = @userId", conn, tx))
+                                {
+                                    userCmd.Parameters.AddWithValue("@username", username ?? "");
+                                    userCmd.Parameters.AddWithValue("@email", email ?? "");
+                                    userCmd.Parameters.AddWithValue("@userId", userId);
+                                    userCmd.ExecuteNonQuery();
+                                }
+
+                                using (var enterpriseCmd = new MySqlCommand(@"UPDATE enterprises 
+                                                                             SET store_name = @storeName,
+                                                                                 store_description = @businessType,
+                                                                                 contact_number = @contactNumber,
+                                                                                 gcash_number = @gcashNumber
+                                                                             WHERE user_id = @userId", conn, tx))
+                                {
+                                    enterpriseCmd.Parameters.AddWithValue("@storeName", storeName ?? "");
+                                    enterpriseCmd.Parameters.AddWithValue("@businessType", businessType ?? "");
+                                    enterpriseCmd.Parameters.AddWithValue("@contactNumber", contactNumber ?? "");
+                                    enterpriseCmd.Parameters.AddWithValue("@gcashNumber", gcashNumber ?? "");
+                                    enterpriseCmd.Parameters.AddWithValue("@userId", userId);
+                                    enterpriseCmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
+
+                        tx.Commit();
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("UpdateEnterpriseRequestDetails error: " + ex.Message);
+                return false;
+            }
+        }
+
+        public bool DeleteFeedback(int feedbackId)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    using (var cmd = new MySqlCommand("DELETE FROM feedbacks WHERE feedback_id = @feedbackId", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@feedbackId", feedbackId);
+                        return cmd.ExecuteNonQuery() > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("DeleteFeedback error: " + ex.Message);
+                return false;
+            }
+        }
     }
 }
+

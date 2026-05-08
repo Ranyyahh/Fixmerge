@@ -126,7 +126,9 @@ namespace BizzyQCU.Controllers
             if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" }, JsonRequestBehavior.AllowGet);
 
             var students = adminDb.GetAllStudentRequests();
-            return Json(students, JsonRequestBehavior.AllowGet);
+            var json = Json(students, JsonRequestBehavior.AllowGet);
+            json.MaxJsonLength = int.MaxValue;
+            return json;
         }
 
      
@@ -136,7 +138,9 @@ namespace BizzyQCU.Controllers
             if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" }, JsonRequestBehavior.AllowGet);
 
             var enterprises = adminDb.GetAllEnterpriseRequests();
-            return Json(enterprises, JsonRequestBehavior.AllowGet);
+            var json = Json(enterprises, JsonRequestBehavior.AllowGet);
+            json.MaxJsonLength = int.MaxValue;
+            return json;
         }
 
         [HttpGet]
@@ -146,6 +150,33 @@ namespace BizzyQCU.Controllers
 
             var feedbacks = adminDb.GetFeedbacks(rating);
             return Json(feedbacks, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpPost]
+        public JsonResult UpdateStudentRequestDetails(int requestId, string username, string email, string firstname, string lastname, string studentNumber, string section, string contactNumber)
+        {
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
+
+            bool result = adminDb.UpdateStudentRequestDetails(requestId, username, email, firstname, lastname, studentNumber, section, contactNumber);
+            return Json(new { success = result, message = result ? "Student details updated." : "Failed to update student details." });
+        }
+
+        [HttpPost]
+        public JsonResult UpdateEnterpriseRequestDetails(int requestId, string username, string email, string storeName, string businessType, string contactNumber, string gcashNumber)
+        {
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
+
+            bool result = adminDb.UpdateEnterpriseRequestDetails(requestId, username, email, storeName, businessType, contactNumber, gcashNumber);
+            return Json(new { success = result, message = result ? "Enterprise details updated." : "Failed to update enterprise details." });
+        }
+
+        [HttpPost]
+        public JsonResult DeleteFeedback(int feedbackId)
+        {
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
+
+            bool result = adminDb.DeleteFeedback(feedbackId);
+            return Json(new { success = result, message = result ? "Feedback deleted." : "Failed to delete feedback." });
         }
     }
 

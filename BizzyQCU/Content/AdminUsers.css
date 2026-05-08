@@ -597,3 +597,183 @@ body {
         padding-right: 12px;
     }
 }
+
+.qcu-id-btn {
+    background: #2f80ed;
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 30px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.qcu-id-btn:hover {
+    background: #1f6fd4;
+    transform: scale(1.03);
+}
+
+.qcu-id-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qcu-id-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+}
+
+.qcu-id-modal-content {
+    position: relative;
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px;
+    width: min(92vw, 620px);
+    max-height: 90vh;
+    overflow: auto;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.28);
+}
+
+.qcu-id-modal-content h3 {
+    color: var(--navy);
+    margin-bottom: 12px;
+}
+
+.qcu-id-modal-content img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    border: 1px solid #dde2f2;
+    background: #f5f6fa;
+}
+
+.qcu-id-modal-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    border: none;
+    background: transparent;
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    color: #6b7280;
+}
+
+.edit-btn {
+    background: #f4a51c;
+    color: #1a1f4e;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 30px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.edit-btn:hover {
+    background: #e49610;
+    transform: scale(1.03);
+}
+
+.edit-modal-content {
+    width: min(94vw, 560px);
+}
+
+.edit-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 12px;
+}
+
+.edit-form-grid .full {
+    grid-column: 1 / -1;
+}
+
+.edit-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.edit-form-group label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--navy);
+}
+
+.edit-form-group input {
+    border: 1px solid #d4d9ea;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: #233;
+}
+
+.edit-form-actions {
+    margin-top: 14px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.edit-cancel-btn {
+    background: #e5e7eb;
+    color: #111827;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.edit-save-btn {
+    background: #2f80ed;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.confirm-modal-content {
+    width: min(92vw, 460px);
+}
+
+.confirm-text {
+    color: #334155;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+}
+
+.rating-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.delete-btn {
+    background: #dc2626;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.delete-btn:hover {
+    background: #b91c1c;
+}
