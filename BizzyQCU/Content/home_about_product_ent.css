@@ -318,6 +318,8 @@ body.home-bg {
     align-items: center;
     justify-content: space-between;
     margin-top: 10px;
+    padding: 0;
+    width: 100%;
 }
 
 .product-price {
@@ -631,16 +633,6 @@ body.view-enterprise-bg {
         padding-right: 5px;
     }
 
- 
-
-
-    /
-
-
-
-
-
-    /* ---- Product List mobile ---- */
     body.product-page {
         overflow: hidden;
     }
