@@ -138,6 +138,15 @@ namespace BizzyQCU.Controllers
             var enterprises = adminDb.GetAllEnterpriseRequests();
             return Json(enterprises, JsonRequestBehavior.AllowGet);
         }
+
+        [HttpGet]
+        public JsonResult GetFeedbacks(int? rating = null)
+        {
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" }, JsonRequestBehavior.AllowGet);
+
+            var feedbacks = adminDb.GetFeedbacks(rating);
+            return Json(feedbacks, JsonRequestBehavior.AllowGet);
+        }
     }
 
 }

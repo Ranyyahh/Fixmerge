@@ -1,16 +1,21 @@
 window.onload = function () {
-    var photoInput = document.getElementById("photoInput");
-    var profileImage = document.getElementById("profileImage");
     var nameInput = document.getElementById("nameInput");
     var contactInput = document.getElementById("contactInput");
     var emailInput = document.getElementById("emailInput");
     var editBtn = document.getElementById("editInfoBtn");
-    var changePhotoBtn = document.getElementById("changePhotoBtn");
-    var cancelEditBtn = document.getElementById("cancelEditBtn");
     var profileStatus = document.getElementById("profileStatus");
+    var editProfileModal = document.getElementById("editProfileModal");
+    var modalNameInput = document.getElementById("modalNameInput");
+    var modalContactInput = document.getElementById("modalContactInput");
+    var modalEmailInput = document.getElementById("modalEmailInput");
+    var modalProfileImage = document.getElementById("modalProfileImage");
+    var changePhotoBtn = document.getElementById("changePhotoBtn");
+    var photoInput = document.getElementById("photoInput");
+    var closeModalBtn = document.getElementById("closeModalBtn");
+    var saveModalBtn = document.getElementById("saveModalBtn");
 
-    var isEditing = false;
     var hasPhotoChanged = false;
+    var modalPhotoDataUrl = "";
     var originalState = {
         name: "",
         contact: "",
@@ -27,15 +32,18 @@ window.onload = function () {
         originalState.name = nameInput.value || "";
         originalState.contact = contactInput.value || "";
         originalState.email = emailInput.value || "";
-        originalState.photo = profileImage.src || "";
+        var profileImage = document.getElementById("profileImage");
+        originalState.photo = profileImage ? (profileImage.src || "") : "";
     }
 
-    function restoreOriginalState() {
+    function restoreReadOnlyFields() {
         nameInput.value = originalState.name;
         contactInput.value = originalState.contact;
         emailInput.value = originalState.email;
-        profileImage.src = originalState.photo;
-        hasPhotoChanged = false;
+        var profileImage = document.getElementById("profileImage");
+        if (profileImage) {
+            profileImage.src = originalState.photo;
+        }
     }
 
     function loadProfile() {
@@ -55,34 +63,16 @@ window.onload = function () {
                 emailInput.value = response.data.email || "";
 
                 if (response.data.photoDataUrl) {
-                    profileImage.src = response.data.photoDataUrl;
+                    var profileImage = document.getElementById("profileImage");
+                    if (profileImage) {
+                        profileImage.src = response.data.photoDataUrl;
+                    }
                 }
 
                 captureOriginalState();
                 setStatus("", "");
             }
         });
-    }
-
-    function setReadonly(readonly) {
-        if (readonly) {
-            nameInput.setAttribute("readonly", "true");
-            contactInput.setAttribute("readonly", "true");
-            emailInput.setAttribute("readonly", "true");
-            editBtn.innerText = "Edit Profile";
-            changePhotoBtn.disabled = true;
-            cancelEditBtn.style.display = "none";
-            isEditing = false;
-            return;
-        }
-
-        nameInput.removeAttribute("readonly");
-        contactInput.removeAttribute("readonly");
-        emailInput.removeAttribute("readonly");
-        editBtn.innerText = "Save Changes";
-        changePhotoBtn.disabled = false;
-        cancelEditBtn.style.display = "inline-block";
-        isEditing = true;
     }
 
     function isValidEmail(email) {
@@ -93,10 +83,7 @@ window.onload = function () {
         return /^09\d{9}$/.test(contact);
     }
 
-    function validateInputs() {
-        var name = (nameInput.value || "").trim();
-        var contact = (contactInput.value || "").trim();
-        var email = (emailInput.value || "").trim();
+    function validateInputs(name, contact, email) {
 
         if (!name) {
             setStatus("Name is required.", "error");
@@ -118,21 +105,43 @@ window.onload = function () {
 
     function setSavingState(saving) {
         editBtn.disabled = saving;
-        cancelEditBtn.disabled = saving;
-        changePhotoBtn.disabled = saving || !isEditing;
-        editBtn.innerText = saving ? "Saving..." : (isEditing ? "Save Changes" : "Edit Profile");
+        saveModalBtn.disabled = saving;
+        closeModalBtn.disabled = saving;
+        saveModalBtn.innerText = saving ? "Saving..." : "Save Changes";
     }
 
-    function saveProfile() {
-        if (!validateInputs()) {
+    function openModal() {
+        modalNameInput.value = nameInput.value || "";
+        modalContactInput.value = contactInput.value || "";
+        modalEmailInput.value = emailInput.value || "";
+        modalPhotoDataUrl = originalState.photo || "";
+        hasPhotoChanged = false;
+        if (modalProfileImage) {
+            modalProfileImage.src = modalPhotoDataUrl;
+        }
+        editProfileModal.classList.add("show");
+        editProfileModal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal() {
+        editProfileModal.classList.remove("show");
+        editProfileModal.setAttribute("aria-hidden", "true");
+    }
+
+    function saveProfileFromModal() {
+        var updatedName = (modalNameInput.value || "").trim();
+        var updatedContact = (modalContactInput.value || "").trim();
+        var updatedEmail = (modalEmailInput.value || "").trim();
+
+        if (!validateInputs(updatedName, updatedContact, updatedEmail)) {
             return;
         }
 
         var payload = {
-            managerName: nameInput.value.trim(),
-            managerContactNumber: contactInput.value.trim(),
-            email: emailInput.value.trim(),
-            photoDataUrl: hasPhotoChanged ? profileImage.src : ""
+            managerName: updatedName,
+            managerContactNumber: updatedContact,
+            email: updatedEmail,
+            photoDataUrl: hasPhotoChanged ? modalPhotoDataUrl : ""
         };
 
         setSavingState(true);
@@ -151,9 +160,15 @@ window.onload = function () {
                     return;
                 }
 
+                nameInput.value = updatedName;
+                contactInput.value = updatedContact;
+                emailInput.value = updatedEmail;
+                var profileImage = document.getElementById("profileImage");
+                if (profileImage && hasPhotoChanged) {
+                    profileImage.src = modalPhotoDataUrl;
+                }
                 captureOriginalState();
-                setReadonly(true);
-                hasPhotoChanged = false;
+                closeModal();
                 setSavingState(false);
                 setStatus("Profile updated successfully.", "success");
             },
@@ -168,43 +183,50 @@ window.onload = function () {
         });
     }
 
+    editBtn.onclick = function () {
+        setStatus("", "");
+        openModal();
+    };
+
+    closeModalBtn.onclick = function () {
+        restoreReadOnlyFields();
+        closeModal();
+    };
+
+    saveModalBtn.onclick = function () {
+        saveProfileFromModal();
+    };
+
     changePhotoBtn.onclick = function () {
-        if (!isEditing) {
-            setStatus("Click Edit Profile first before changing photo.", "error");
-            return;
-        }
         photoInput.click();
     };
 
     photoInput.onchange = function () {
         var file = this.files[0];
-        if (!file) return;
-
-        var reader = new FileReader();
-        reader.onload = function (e) {
-            profileImage.src = e.target.result;
-            hasPhotoChanged = true;
-        };
-        reader.readAsDataURL(file);
-    };
-
-    editBtn.onclick = function () {
-        if (!isEditing) {
-            captureOriginalState();
-            setStatus("", "");
-            setReadonly(false);
+        if (!file) {
             return;
         }
 
-        saveProfile();
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            modalPhotoDataUrl = e.target.result;
+            hasPhotoChanged = true;
+            if (modalProfileImage) {
+                modalProfileImage.src = modalPhotoDataUrl;
+            }
+        };
+        reader.readAsDataURL(file);
+        photoInput.value = "";
     };
 
-    cancelEditBtn.onclick = function () {
-        restoreOriginalState();
-        setReadonly(true);
-        setStatus("Changes discarded.", "");
+    editProfileModal.onclick = function (event) {
+        if (event.target === editProfileModal) {
+            closeModal();
+        }
     };
 
-    setReadonly(true);
+    nameInput.setAttribute("readonly", "true");
+    contactInput.setAttribute("readonly", "true");
+    emailInput.setAttribute("readonly", "true");
     loadProfile();
 };

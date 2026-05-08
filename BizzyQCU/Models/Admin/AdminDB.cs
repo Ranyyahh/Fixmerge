@@ -334,6 +334,7 @@ namespace BizzyQCU.Models.Admin
                                             StudentNumber = reader.IsDBNull(reader.GetOrdinal("student_number")) ? "" : reader.GetString("student_number"),
                                             Section = reader.IsDBNull(reader.GetOrdinal("section")) ? "" : reader.GetString("section"),
                                             ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
+                                            QcuId = reader.IsDBNull(reader.GetOrdinal("qcu_id")) ? null : (byte[])reader["qcu_id"],
                                             StoreName = reader.IsDBNull(reader.GetOrdinal("store_name")) ? "" : reader.GetString("store_name"),
                                             StoreDescription = reader.IsDBNull(reader.GetOrdinal("store_description")) ? "" : reader.GetString("store_description"),
                                             GcashNumber = reader.IsDBNull(reader.GetOrdinal("gcash_number")) ? "" : reader.GetString("gcash_number")
@@ -381,8 +382,8 @@ namespace BizzyQCU.Models.Admin
                             // Step 5: Insert into role-specific table
                             if (request.Role == "student")
                             {
-                                string insertStudentSql = @"INSERT INTO students (user_id, firstname, lastname, student_number, section, contact_number) 
-                                                    VALUES (@userId, @firstname, @lastname, @studentNumber, @section, @contact)";
+                                string insertStudentSql = @"INSERT INTO students (user_id, firstname, lastname, student_number, section, contact_number, qcu_id) 
+                                                    VALUES (@userId, @firstname, @lastname, @studentNumber, @section, @contact, @qcuId)";
                                 using (var cmd = new MySqlCommand(insertStudentSql, conn, transaction))
                                 {
                                     cmd.Parameters.AddWithValue("@userId", userId);
@@ -391,6 +392,14 @@ namespace BizzyQCU.Models.Admin
                                     cmd.Parameters.AddWithValue("@studentNumber", request.StudentNumber ?? "");
                                     cmd.Parameters.AddWithValue("@section", request.Section ?? "");
                                     cmd.Parameters.AddWithValue("@contact", request.ContactNumber ?? "");
+                                    if (request.QcuId == null || request.QcuId.Length == 0)
+                                    {
+                                        cmd.Parameters.Add("@qcuId", MySqlDbType.Blob).Value = DBNull.Value;
+                                    }
+                                    else
+                                    {
+                                        cmd.Parameters.Add("@qcuId", MySqlDbType.Blob).Value = request.QcuId;
+                                    }
                                     int rowsAffected = cmd.ExecuteNonQuery();
                                     System.Diagnostics.Debug.WriteLine($"Inserted into students, rows affected: {rowsAffected}");
                                 }
@@ -490,6 +499,61 @@ namespace BizzyQCU.Models.Admin
                 System.Diagnostics.Debug.WriteLine("Stack trace: " + ex.StackTrace);
                 return false;
             }
+        }
+
+        public List<Feedback> GetFeedbacks(int? rating = null)
+        {
+            var feedbacks = new List<Feedback>();
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"SELECT feedback_id, user_id, user_type, email, contact_number, category, message, rating, status, created_at
+                                   FROM feedbacks";
+
+                    if (rating.HasValue)
+                    {
+                        sql += " WHERE rating = @rating";
+                    }
+
+                    sql += " ORDER BY feedback_id DESC";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        if (rating.HasValue)
+                        {
+                            cmd.Parameters.AddWithValue("@rating", rating.Value);
+                        }
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                feedbacks.Add(new Feedback
+                                {
+                                    FeedbackId = reader.GetInt32("feedback_id"),
+                                    UserId = reader.GetInt32("user_id"),
+                                    UserType = reader.GetString("user_type"),
+                                    Email = reader.GetString("email"),
+                                    ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
+                                    Category = reader.IsDBNull(reader.GetOrdinal("category")) ? "" : reader.GetString("category"),
+                                    Message = reader.GetString("message"),
+                                    Rating = reader.GetInt32("rating"),
+                                    Status = reader.GetString("status"),
+                                    CreatedAt = reader.IsDBNull(reader.GetOrdinal("created_at")) ? (DateTime?)null : reader.GetDateTime("created_at")
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetFeedbacks error: " + ex.Message);
+            }
+
+            return feedbacks;
         }
     }
 }

@@ -252,28 +252,59 @@ namespace BizzyQCU.Models.Landingpage
 
         // ========== SUBMIT STUDENT REQUEST ==========
         public bool SubmitStudentRequest(string firstName, string lastName, string username, string email, string password,
-            string studentNumber, string section, string contactNumber)
+            string studentNumber, string section, string contactNumber, byte[] qcuIdBytes = null)
         {
             try
             {
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = @"INSERT INTO approval_requests 
-                                   (username, password, email, role, firstname, lastname, student_number, section, contact_number, status) 
-                                   VALUES (@username, @password, @email, 'student', @firstname, @lastname, @studentNumber, @section, @contact, 'pending')";
-
-                    using (var cmd = new MySqlCommand(sql, conn))
+                    try
                     {
-                        cmd.Parameters.AddWithValue("@username", username);
-                        cmd.Parameters.AddWithValue("@password", password);
-                        cmd.Parameters.AddWithValue("@email", email);
-                        cmd.Parameters.AddWithValue("@firstname", firstName ?? "");
-                        cmd.Parameters.AddWithValue("@lastname", lastName ?? "");
-                        cmd.Parameters.AddWithValue("@studentNumber", studentNumber ?? "");
-                        cmd.Parameters.AddWithValue("@section", section ?? "");
-                        cmd.Parameters.AddWithValue("@contact", contactNumber ?? "");
-                        cmd.ExecuteNonQuery();
+                        string sqlWithQcuId = @"INSERT INTO approval_requests 
+                                               (username, password, email, role, firstname, lastname, student_number, section, contact_number, qcu_id, status) 
+                                               VALUES (@username, @password, @email, 'student', @firstname, @lastname, @studentNumber, @section, @contact, @qcuId, 'pending')";
+
+                        using (var cmd = new MySqlCommand(sqlWithQcuId, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@username", username);
+                            cmd.Parameters.AddWithValue("@password", password);
+                            cmd.Parameters.AddWithValue("@email", email);
+                            cmd.Parameters.AddWithValue("@firstname", firstName ?? "");
+                            cmd.Parameters.AddWithValue("@lastname", lastName ?? "");
+                            cmd.Parameters.AddWithValue("@studentNumber", studentNumber ?? "");
+                            cmd.Parameters.AddWithValue("@section", section ?? "");
+                            cmd.Parameters.AddWithValue("@contact", contactNumber ?? "");
+                            if (qcuIdBytes == null || qcuIdBytes.Length == 0)
+                            {
+                                cmd.Parameters.Add("@qcuId", MySqlDbType.Blob).Value = DBNull.Value;
+                            }
+                            else
+                            {
+                                cmd.Parameters.Add("@qcuId", MySqlDbType.Blob).Value = qcuIdBytes;
+                            }
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    catch (MySqlException ex) when (ex.Message.IndexOf("Unknown column 'qcu_id'", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        // Backward-compatibility fallback for databases that do not yet have approval_requests.qcu_id.
+                        string sqlWithoutQcuId = @"INSERT INTO approval_requests 
+                                                  (username, password, email, role, firstname, lastname, student_number, section, contact_number, status) 
+                                                  VALUES (@username, @password, @email, 'student', @firstname, @lastname, @studentNumber, @section, @contact, 'pending')";
+
+                        using (var fallbackCmd = new MySqlCommand(sqlWithoutQcuId, conn))
+                        {
+                            fallbackCmd.Parameters.AddWithValue("@username", username);
+                            fallbackCmd.Parameters.AddWithValue("@password", password);
+                            fallbackCmd.Parameters.AddWithValue("@email", email);
+                            fallbackCmd.Parameters.AddWithValue("@firstname", firstName ?? "");
+                            fallbackCmd.Parameters.AddWithValue("@lastname", lastName ?? "");
+                            fallbackCmd.Parameters.AddWithValue("@studentNumber", studentNumber ?? "");
+                            fallbackCmd.Parameters.AddWithValue("@section", section ?? "");
+                            fallbackCmd.Parameters.AddWithValue("@contact", contactNumber ?? "");
+                            fallbackCmd.ExecuteNonQuery();
+                        }
                     }
                     return true;
                 }

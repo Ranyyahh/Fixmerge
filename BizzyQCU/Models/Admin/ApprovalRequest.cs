@@ -47,6 +47,9 @@ namespace BizzyQCU.Models.Admin
         [StringLength(20)]
         public string ContactNumber { get; set; }
 
+        [Column("qcu_id")]
+        public byte[] QcuId { get; set; }
+
         // Enterprise fields
         [Column("store_name")]
         [StringLength(255)]

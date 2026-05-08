@@ -48,11 +48,11 @@ CREATE TABLE enterprise_managers(
     enterprise_id INT NOT NULL,
     manager_name VARCHAR(255),
     manager_student_id VARCHAR(50),
+    manager_section VARCHAR(20) NULL,
     manager_contact VARCHAR(20),
     manager_email VARCHAR(255),
     FOREIGN KEY (enterprise_id) REFERENCES enterprises (enterprise_id) ON DELETE CASCADE
 );
-
 
 CREATE TABLE product_categories (
     category_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -147,7 +147,8 @@ CREATE TABLE approval_requests (
     store_description TEXT,
     gcash_number VARCHAR(15),
     status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
-    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    qcu_id LONGBLOB NULL
 ); 
 
 CREATE TABLE feedbacks (

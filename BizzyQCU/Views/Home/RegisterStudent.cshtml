@@ -41,7 +41,7 @@
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="~/Scripts/jquery-3.7.0.min.js"></script>
 <script>
     function updateFileName() {
         var input = document.getElementById('qcidFile');
@@ -116,11 +116,27 @@
             return false;
         }
 
+        var uploadInput = document.getElementById('qcidFile');
+        var payload = new FormData();
+        payload.append('Firstname', formData.Firstname);
+        payload.append('Lastname', formData.Lastname);
+        payload.append('Username', formData.Username);
+        payload.append('Email', formData.Email);
+        payload.append('Password', formData.Password);
+        payload.append('Birthdate', formData.Birthdate || '');
+        payload.append('ContactNumber', formData.ContactNumber || '');
+        payload.append('Section', formData.Section || '');
+        payload.append('StudentNumber', formData.StudentNumber || '');
+        if (uploadInput && uploadInput.files && uploadInput.files.length > 0) {
+            payload.append('qcidFile', uploadInput.files[0]);
+        }
+
         $.ajax({
             url: '@Url.Action("RegisterStudent", "Account")',
             type: 'POST',
-            data: JSON.stringify(formData),
-            contentType: 'application/json',
+            data: payload,
+            processData: false,
+            contentType: false,
             success: function(response) {
                 if (response.success) {
                     showMessage(response.message, 'success');

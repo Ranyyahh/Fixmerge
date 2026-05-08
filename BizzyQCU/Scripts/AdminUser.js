@@ -1,19 +1,44 @@
-﻿document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
     loadAllStudentRequests();
     loadAllEnterpriseRequests();
+    loadFeedbacks();
 
-    document.getElementById('tabUsers').addEventListener('click', function () {
-        document.getElementById('tabUsers').classList.add('active');
-        document.getElementById('tabEnterprises').classList.remove('active');
-        document.getElementById('panelUsers').classList.remove('hidden');
-        document.getElementById('panelEnterprises').classList.add('hidden');
+    const tabUsers = document.getElementById('tabUsers');
+    const tabEnterprises = document.getElementById('tabEnterprises');
+    const tabFeedbacks = document.getElementById('tabFeedbacks');
+    const panelUsers = document.getElementById('panelUsers');
+    const panelEnterprises = document.getElementById('panelEnterprises');
+    const panelFeedbacks = document.getElementById('panelFeedbacks');
+    const feedbackFilterWrap = document.getElementById('feedbackFilterWrap');
+
+    tabUsers.addEventListener('click', function () {
+        tabUsers.classList.add('active');
+        tabEnterprises.classList.remove('active');
+        tabFeedbacks.classList.remove('active');
+        panelUsers.classList.remove('hidden');
+        panelEnterprises.classList.add('hidden');
+        panelFeedbacks.classList.add('hidden');
+        feedbackFilterWrap.classList.add('hidden');
     });
 
-    document.getElementById('tabEnterprises').addEventListener('click', function () {
-        document.getElementById('tabEnterprises').classList.add('active');
-        document.getElementById('tabUsers').classList.remove('active');
-        document.getElementById('panelEnterprises').classList.remove('hidden');
-        document.getElementById('panelUsers').classList.add('hidden');
+    tabEnterprises.addEventListener('click', function () {
+        tabEnterprises.classList.add('active');
+        tabUsers.classList.remove('active');
+        tabFeedbacks.classList.remove('active');
+        panelEnterprises.classList.remove('hidden');
+        panelUsers.classList.add('hidden');
+        panelFeedbacks.classList.add('hidden');
+        feedbackFilterWrap.classList.add('hidden');
+    });
+
+    tabFeedbacks.addEventListener('click', function () {
+        tabFeedbacks.classList.add('active');
+        tabUsers.classList.remove('active');
+        tabEnterprises.classList.remove('active');
+        panelFeedbacks.classList.remove('hidden');
+        panelUsers.classList.add('hidden');
+        panelEnterprises.classList.add('hidden');
+        feedbackFilterWrap.classList.remove('hidden');
     });
 
     document.getElementById('searchInput').addEventListener('keyup', function () {
@@ -22,18 +47,23 @@
 
         if (activeTab === 'tabUsers') {
             filterTable('usersTableBody', searchTerm);
-        } else {
+        } else if (activeTab === 'tabEnterprises') {
             filterTable('enterprisesTableBody', searchTerm);
+        } else {
+            filterTable('feedbacksTableBody', searchTerm);
         }
     });
+
+    document.getElementById('ratingFilter').addEventListener('change', applyFeedbackFilters);
+    document.getElementById('categoryFilter').addEventListener('change', applyFeedbackFilters);
 });
 
+let allFeedbacks = [];
 
 function loadAllStudentRequests() {
     fetch('/AdminPanel/GetAllStudentRequests')
         .then(response => response.json())
         .then(data => {
-            console.log('Student data:', data);
             const tbody = document.getElementById('usersTableBody');
             tbody.innerHTML = '';
 
@@ -71,7 +101,7 @@ function loadAllStudentRequests() {
                         </div>
                     `;
                 } else {
-                    row.insertCell(5).innerHTML = `<span>—</span>`;
+                    row.insertCell(5).innerHTML = '<span>-</span>';
                 }
             });
         })
@@ -85,7 +115,6 @@ function loadAllEnterpriseRequests() {
     fetch('/AdminPanel/GetAllEnterpriseRequests')
         .then(response => response.json())
         .then(data => {
-            console.log('Enterprise data:', data);
             const tbody = document.getElementById('enterprisesTableBody');
             tbody.innerHTML = '';
 
@@ -122,7 +151,7 @@ function loadAllEnterpriseRequests() {
                         </div>
                     `;
                 } else {
-                    row.insertCell(5).innerHTML = `<span>—</span>`;
+                    row.insertCell(5).innerHTML = '<span>-</span>';
                 }
             });
         })
@@ -132,6 +161,77 @@ function loadAllEnterpriseRequests() {
         });
 }
 
+function loadFeedbacks() {
+    const tbody = document.getElementById('feedbacksTableBody');
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>';
+
+    fetch('/AdminPanel/GetFeedbacks')
+        .then(response => response.json())
+        .then(data => {
+            allFeedbacks = Array.isArray(data) ? data : [];
+            populateCategoryFilter(allFeedbacks);
+            applyFeedbackFilters();
+        })
+        .catch(error => {
+            console.error('Error loading feedbacks:', error);
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:red;">Error loading feedbacks</td></tr>';
+        });
+}
+
+function populateCategoryFilter(feedbacks) {
+    const categoryFilter = document.getElementById('categoryFilter');
+    const selected = categoryFilter.value;
+    const categories = [...new Set(feedbacks.map(f => (f.Category || 'General').trim()).filter(Boolean))].sort();
+
+    categoryFilter.innerHTML = '<option value="">All Categories</option>';
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        categoryFilter.appendChild(option);
+    });
+
+    if (categories.includes(selected)) {
+        categoryFilter.value = selected;
+    }
+}
+
+function applyFeedbackFilters() {
+    const tbody = document.getElementById('feedbacksTableBody');
+    const ratingValue = document.getElementById('ratingFilter').value;
+    const categoryValue = document.getElementById('categoryFilter').value;
+    const ratingNumber = ratingValue ? parseInt(ratingValue, 10) : null;
+
+    const filtered = allFeedbacks.filter(feedback => {
+        const matchesRating = ratingNumber ? Number(feedback.Rating) === ratingNumber : true;
+        const currentCategory = (feedback.Category || 'General').trim();
+        const matchesCategory = categoryValue ? currentCategory === categoryValue : true;
+        return matchesRating && matchesCategory;
+    });
+
+    tbody.innerHTML = '';
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No feedback found</td></tr>';
+        return;
+    }
+
+    filtered.forEach(feedback => {
+        const row = tbody.insertRow();
+        row.insertCell(0).innerHTML = feedback.Email || 'N/A';
+        row.insertCell(1).innerHTML = feedback.ContactNumber || 'N/A';
+        row.insertCell(2).innerHTML = feedback.Category || 'General';
+        row.insertCell(3).innerHTML = feedback.Message || '';
+        row.insertCell(4).innerHTML = renderStars(feedback.Rating);
+    });
+}
+
+function renderStars(rating) {
+    const safeRating = Number.isInteger(rating) ? Math.max(1, Math.min(5, rating)) : 0;
+    const filled = '&#9733;'.repeat(safeRating);
+    const empty = '&#9734;'.repeat(5 - safeRating);
+    return `<span class="rating-stars">${filled}${empty}</span>`;
+}
 
 function approveRequest(requestId) {
     if (confirm('Approve this user?')) {
@@ -162,7 +262,6 @@ function approveRequest(requestId) {
     }
 }
 
-
 function rejectRequest(requestId) {
     if (confirm('Reject this user?')) {
         const formData = new URLSearchParams();
@@ -192,7 +291,6 @@ function rejectRequest(requestId) {
     }
 }
 
-
 function filterTable(tableId, searchTerm) {
     const table = document.getElementById(tableId);
     const rows = table.getElementsByTagName('tr');
@@ -202,7 +300,7 @@ function filterTable(tableId, searchTerm) {
         if (cells.length === 0) continue;
 
         let found = false;
-        for (let j = 0; j < cells.length - 1; j++) {
+        for (let j = 0; j < cells.length; j++) {
             const text = cells[j].textContent.toLowerCase();
             if (text.includes(searchTerm)) {
                 found = true;

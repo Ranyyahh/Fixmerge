@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Web;
 using System.Web.Mvc;
 using BizzyQCU.Models.Landingpage;
 using System.Web.Script.Serialization;
@@ -79,41 +80,59 @@ namespace BizzyQCU.Controllers
         }
 
         [HttpPost]
-        public JsonResult RegisterStudent()
+        public JsonResult RegisterStudent(
+            string Firstname,
+            string Lastname,
+            string Username,
+            string Email,
+            string Password,
+            string StudentNumber,
+            string Section,
+            string ContactNumber,
+            HttpPostedFileBase qcidFile)
         {
             try
             {
-                string jsonString = "";
+                string firstName = Firstname;
+                string lastName = Lastname;
+                string username = Username;
+                string email = Email;
+                string password = Password;
+                string studentNumber = StudentNumber;
+                string section = Section;
+                string contactNumber = ContactNumber;
 
-                if (Request.Form.Count > 0)
-                {
-                    jsonString = Request.Form[0];
-                }
-                else if (Request.InputStream.Length > 0)
+                // Compatibility fallback: accept JSON body only when it looks like JSON.
+                if (string.IsNullOrWhiteSpace(firstName) &&
+                    string.IsNullOrWhiteSpace(lastName) &&
+                    string.IsNullOrWhiteSpace(username) &&
+                    string.IsNullOrWhiteSpace(email) &&
+                    Request.InputStream != null &&
+                    Request.InputStream.Length > 0)
                 {
                     Request.InputStream.Position = 0;
                     using (var reader = new StreamReader(Request.InputStream))
                     {
-                        jsonString = reader.ReadToEnd();
+                        var body = reader.ReadToEnd();
+                        if (!string.IsNullOrWhiteSpace(body))
+                        {
+                            body = body.Trim();
+                            if (body.StartsWith("{") || body.StartsWith("["))
+                            {
+                                var serializer = new JavaScriptSerializer();
+                                var data = serializer.Deserialize<dynamic>(body);
+                                firstName = GetValue(data, "Firstname");
+                                lastName = GetValue(data, "Lastname");
+                                username = GetValue(data, "Username");
+                                email = GetValue(data, "Email");
+                                password = GetValue(data, "Password");
+                                studentNumber = GetValue(data, "StudentNumber");
+                                section = GetValue(data, "Section");
+                                contactNumber = GetValue(data, "ContactNumber");
+                            }
+                        }
                     }
                 }
-
-                if (string.IsNullOrEmpty(jsonString))
-                {
-                    return Json(new { success = false, message = "No data received." });
-                }
-
-                var serializer = new JavaScriptSerializer();
-                var data = serializer.Deserialize<dynamic>(jsonString);
-
-                string firstName = GetValue(data, "Firstname");
-                string lastName = GetValue(data, "Lastname");
-                string username = GetValue(data, "Username");
-                string email = GetValue(data, "Email");
-                string password = GetValue(data, "Password");
-                string studentNumber = GetValue(data, "StudentNumber");
-                string section = GetValue(data, "Section");
-                string contactNumber = GetValue(data, "ContactNumber");
 
                 if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName) ||
                     string.IsNullOrEmpty(username) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
@@ -133,7 +152,16 @@ namespace BizzyQCU.Controllers
                 }
 
        
-                bool result = db.SubmitStudentRequest(firstName, lastName, username, email, password, studentNumber, section, contactNumber);
+                byte[] qcuIdBytes = null;
+                if (qcidFile != null && qcidFile.ContentLength > 0)
+                {
+                    using (var br = new BinaryReader(qcidFile.InputStream))
+                    {
+                        qcuIdBytes = br.ReadBytes(qcidFile.ContentLength);
+                    }
+                }
+
+                bool result = db.SubmitStudentRequest(firstName, lastName, username, email, password, studentNumber, section, contactNumber, qcuIdBytes);
 
                 if (result)
                 {
