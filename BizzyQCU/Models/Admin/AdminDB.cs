@@ -810,6 +810,68 @@ namespace BizzyQCU.Models.Admin
                 return false;
             }
         }
+
+
+        public List<ViewEnterprise> GetAllApprovedEnterprises()
+        {
+            var enterprises = new List<ViewEnterprise>();
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    
+                    string enterpriseSql = "SELECT enterprise_id, user_id, store_name, rating_avg FROM enterprises WHERE status = 'approved'";
+
+                    using (var cmd = new MySqlCommand(enterpriseSql, conn))
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var ent = new ViewEnterprise
+                            {
+                                EnterpriseId = reader.GetInt32("enterprise_id"),
+                                UserId = reader.GetInt32("user_id"),
+                                StoreName = reader.GetString("store_name"),
+                                RatingAvg = reader.IsDBNull(reader.GetOrdinal("rating_avg")) ? 0 : reader.GetDecimal("rating_avg"),
+                                Username = "",
+                                Email = ""
+                            };
+                            enterprises.Add(ent);
+                        }
+                    }
+
+                    for (int i = 0; i < enterprises.Count; i++)
+                    {
+                        var ent = enterprises[i];
+                        string userSql = "SELECT username, email FROM users WHERE user_id = @userId";
+                        using (var userCmd = new MySqlCommand(userSql, conn))
+                        {
+                            userCmd.Parameters.AddWithValue("@userId", ent.UserId);
+                            using (var userReader = userCmd.ExecuteReader())
+                            {
+                                if (userReader.Read())
+                                {
+                                    ent.Username = userReader.GetString("username");
+                                    ent.Email = userReader.GetString("email");
+                                }
+                                else
+                                {
+                                    ent.Username = "Unknown User";
+                                    ent.Email = "unknown@email.com";
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetAllApprovedEnterprises error: " + ex.Message);
+            }
+            return enterprises;
+        }
     }
 }
 

@@ -178,6 +178,7 @@
     <Compile Include="Models\Admin\AdminDB.cs" />
     <Compile Include="Models\Admin\ApprovalRequest.cs" />
     <Compile Include="Models\Admin\Feedback.cs" />
+    <Compile Include="Models\Admin\ViewEnterprise.cs" />
     <Compile Include="Models\Landingpage\Enterprises.cs" />
     <Compile Include="Models\Landingpage\SimpleDb.cs" />
     <Compile Include="Models\Landingpage\Students.cs" />

@@ -230,7 +230,7 @@ html, body {w
 }
 
 .enterprise-card {
-    background: var(--card-bg);
+    background: #ffffff;
     border-radius: var(--radius-lg);
     padding: 32px 24px 28px;
     text-align: center;
@@ -353,6 +353,7 @@ html, body {w
     .star.filled {
         color: var(--gold);
     }
+
 
 .view-btn {
     display: inline-block;

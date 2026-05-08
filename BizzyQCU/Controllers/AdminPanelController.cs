@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
-using BizzyQCU.Models.Admin;  
-using BizzyQCU.Models.Landingpage;  
+using BizzyQCU.Models.Admin;
+using BizzyQCU.Models.Landingpage;
 
 namespace BizzyQCU.Controllers
 {
     public class AdminPanelController : Controller
     {
-        private readonly AdminDb adminDb = new AdminDb();  
-        private readonly SimpleDb db = new SimpleDb();     
+        private readonly AdminDb adminDb = new AdminDb();
+        private readonly SimpleDb db = new SimpleDb();
 
-      
+
         private bool IsAdmin()
         {
             return Session["UserId"] != null && Session["Role"]?.ToString() == "admin";
@@ -49,7 +49,7 @@ namespace BizzyQCU.Controllers
             return View();
         }
 
-  
+
         [HttpGet]
         public JsonResult GetAllUsers()
         {
@@ -59,7 +59,7 @@ namespace BizzyQCU.Controllers
             return Json(users, JsonRequestBehavior.AllowGet);
         }
 
-  
+
         [HttpGet]
         public JsonResult GetPendingStudents()
         {
@@ -69,7 +69,7 @@ namespace BizzyQCU.Controllers
             return Json(students, JsonRequestBehavior.AllowGet);
         }
 
-  
+
         [HttpGet]
         public JsonResult GetPendingEnterprises()
         {
@@ -79,7 +79,7 @@ namespace BizzyQCU.Controllers
             return Json(enterprises, JsonRequestBehavior.AllowGet);
         }
 
- 
+
         [HttpPost]
         public JsonResult UpdateUserApproval(int userId, bool isApproved)
         {
@@ -89,7 +89,7 @@ namespace BizzyQCU.Controllers
             return Json(new { success = result });
         }
 
-    
+
         [HttpPost]
         public JsonResult DeleteUser(int userId)
         {
@@ -99,7 +99,7 @@ namespace BizzyQCU.Controllers
             return Json(new { success = result });
         }
 
-      
+
         [HttpPost]
         public JsonResult ApproveRequest(int requestId)
         {
@@ -118,7 +118,7 @@ namespace BizzyQCU.Controllers
             bool result = adminDb.RejectRequest(requestId);
             return Json(new { success = result });
         }
-       
+
 
         [HttpGet]
         public JsonResult GetAllStudentRequests()
@@ -131,7 +131,7 @@ namespace BizzyQCU.Controllers
             return json;
         }
 
-     
+
         [HttpGet]
         public JsonResult GetAllEnterpriseRequests()
         {
@@ -178,6 +178,14 @@ namespace BizzyQCU.Controllers
             bool result = adminDb.DeleteFeedback(feedbackId);
             return Json(new { success = result, message = result ? "Feedback deleted." : "Failed to delete feedback." });
         }
-    }
 
+        [HttpGet]
+        public JsonResult GetAllApprovedEnterprises()
+        {
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" }, JsonRequestBehavior.AllowGet);
+
+            var enterprises = adminDb.GetAllApprovedEnterprises();
+            return Json(enterprises, JsonRequestBehavior.AllowGet);
+        }
+    }
 }
