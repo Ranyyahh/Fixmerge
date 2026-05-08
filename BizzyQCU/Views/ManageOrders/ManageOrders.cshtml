@@ -17,28 +17,9 @@
     <div class="scrollable-area">
         <div class="content-container">
             <h2 class="page-title">Active Orders</h2>
-
-            <!-- Sample Card -->
-            <div class="glass-card" onclick="viewOrder('9821', 'Jed Tangonan', '₱85.00', '1x Special Siomai Rice', 'Room IL603', 'Make it extra spicy!', 'Juvi Cayli', '10:55 AM')">
-                <div class="card-header">
-                    <div>
-                        <h4 class="cust-name">Jed Tangonan</h4>
-                        <span class="card-timestamp">Today • 10:55 AM</span>
-                    </div>
-                    <span class="badge-pill status-pending" id="pill-9821">Pending</span>
-                </div>
-                <p class="item-list">1x Special Siomai Rice</p>
-                <div class="card-footer">
-                    <span class="price-text">₱85.00</span>
-                    <div id="action-area-9821">
-                        <button class="btn-confirm" onclick="updateStatus(event, '9821', 'Preparing')">Confirm Order</button>
-                    </div>
-                </div>
-
-                <div class="status-dropdown" id="dropdown-9821">
-                    <button onclick="updateStatus(event, '9821', 'Out for Delivery')">🚚 Out for Delivery</button>
-                    <button onclick="updateStatus(event, '9821', 'Cancelled')">❌ Cancel Order</button>
-                </div>
+            <div id="ordersContainer">
+                <!-- Orders will be loaded here dynamically -->
+                <div class="loading-orders">Loading orders...</div>
             </div>
         </div>
     </div>
@@ -49,84 +30,5 @@
 </div>
 
 @section Scripts {
-    <script>
-        function updateStatus(event, id, newStatus) {
-            if (event) event.stopPropagation();
-            const pill = document.getElementById(`pill-${id}`);
-            const actionArea = document.getElementById(`action-area-${id}`);
-
-            if (newStatus === 'Preparing') {
-                pill.className = 'badge-pill status-preparing';
-                pill.innerText = 'Preparing';
-                actionArea.innerHTML = `<button class="btn-status" onclick="toggleDropdown(event, '${id}')">Change Status ▾</button>`;
-            } else if (newStatus === 'Out for Delivery') {
-                pill.className = 'badge-pill status-delivery';
-                pill.innerText = 'Out for Delivery';
-                actionArea.innerHTML = `<span class="status-delivery-text">🚚 IN TRANSIT</span>`;
-            }
-            document.querySelectorAll('.status-dropdown').forEach(d => d.style.display = 'none');
-        }
-
-        function toggleDropdown(event, id) {
-            event.stopPropagation();
-            const dropdown = document.getElementById(`dropdown-${id}`);
-            const isVisible = dropdown.style.display === 'flex';
-            document.querySelectorAll('.status-dropdown').forEach(d => d.style.display = 'none');
-            dropdown.style.display = isVisible ? 'none' : 'flex';
-        }
-
-        function viewOrder(id, name, total, items, loc, note, courier, time) {
-            const content = `
-                    <div class="details-container">
-                        <h1 class="order-id-header">Order #QCU-${id}</h1>
-                        <p class="order-subtitle">${name} • ${time}</p>
-
-                        <div class="detail-group">
-                            <div class="detail-row">
-                                <span class="detail-label">Location</span>
-                                <span class="detail-value">${loc}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Items</span>
-                                <span class="detail-value-alt">${items}</span>
-                            </div>
-                        </div>
-
-                        ${note && note !== 'None' ? `
-                            <div class="note-box">
-                                <p class="note-text">"${note}"</p>
-                            </div>
-                        ` : ''}
-
-                        <div class="total-section">
-                            <span class="total-label">Total</span>
-                            <span class="total-amount">${total}</span>
-                        </div>
-
-                        <p class="courier-label">ASSIGNED COURIER</p>
-                        <div class="courier-card">
-                            <div class="courier-info">
-                                <div class="courier-avatar">${courier.charAt(0)}</div>
-                                <div>
-                                    <p class="courier-name">${courier}</p>
-                                    <p class="courier-type">Campus Rider</p>
-                                </div>
-                            </div>
-                            <button class="btn-message-emoji" onclick="alert('Messaging ${courier}...')">💬</button>
-                        </div>
-                    </div>
-                `;
-
-            if (window.innerWidth > 1100) {
-                document.getElementById('detailsPanel').innerHTML = content;
-            } else {
-                document.getElementById('modal-content').innerHTML = content;
-                document.getElementById('mobile-modal').style.display = 'flex';
-            }
-        }
-
-        window.onclick = function () {
-            document.querySelectorAll('.status-dropdown').forEach(d => d.style.display = 'none');
-        }
-    </script>
+    <script src="~/Scripts/ManageOrders.js"></script>
 }
