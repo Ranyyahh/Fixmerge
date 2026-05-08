@@ -32,7 +32,7 @@
             <div class="upload-wrapper">
                 <span class="upload-link" onclick="document.getElementById('documents').click()">📎 Upload Documents</span>
                 <span id="fileNames" class="file-name">No files chosen</span>
-                <input type="file" id="documents" multiple style="display:none" onchange="updateFileNames()">
+                <input type="file" id="documents" name="documents" multiple style="display:none" onchange="updateFileNames()">
             </div>
             <button type="submit" class="auth-btn">REGISTER</button>
         </form>
@@ -94,11 +94,26 @@
             return false;
         }
 
+        var payload = new FormData();
+        payload.append('StoreName', formData.StoreName);
+        payload.append('EnterpriseType', formData.EnterpriseType);
+        payload.append('Username', formData.Username);
+        payload.append('Email', formData.Email);
+        payload.append('Password', formData.Password);
+        payload.append('ContactNumber', formData.ContactNumber);
+        payload.append('GcashNumber', formData.GcashNumber);
+
+        var fileInput = document.getElementById('documents');
+        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+            payload.append('documents', fileInput.files[0]);
+        }
+
         $.ajax({
             url: '@Url.Action("RegisterEnterprise", "Account")',
             type: 'POST',
-            data: JSON.stringify(formData),
-            contentType: 'application/json',
+            data: payload,
+            processData: false,
+            contentType: false,
             success: function(response) {
                 if (response.success) {
                     showMessage(response.message, 'success');

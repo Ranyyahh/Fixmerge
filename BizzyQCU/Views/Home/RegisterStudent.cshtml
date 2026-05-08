@@ -147,8 +147,23 @@
                     showMessage(response.message, 'error');
                 }
             },
-            error: function() {
-                showMessage('An error occurred. Please try again.', 'error');
+            error: function(xhr) {
+                var serverMessage = 'An error occurred. Please try again.';
+                if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+                    serverMessage = xhr.responseJSON.message;
+                } else if (xhr && xhr.responseText) {
+                    try {
+                        var parsed = JSON.parse(xhr.responseText);
+                        if (parsed && parsed.message) {
+                            serverMessage = parsed.message;
+                        } else {
+                            serverMessage = 'Request failed (' + xhr.status + ').';
+                        }
+                    } catch (e) {
+                        serverMessage = 'Request failed (' + xhr.status + ').';
+                    }
+                }
+                showMessage(serverMessage, 'error');
             }
         });
 

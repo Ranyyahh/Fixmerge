@@ -35,6 +35,9 @@ namespace BizzyQCU.Models.Admin
         [StringLength(100)]
         public string Lastname { get; set; }
 
+        [Column("birthdate")]
+        public DateTime? Birthdate { get; set; }
+
         [Column("student_number")]
         [StringLength(50)]
         public string StudentNumber { get; set; }
@@ -61,6 +64,9 @@ namespace BizzyQCU.Models.Admin
         [Column("gcash_number")]
         [StringLength(15)]
         public string GcashNumber { get; set; }
+
+        [Column("uploaded_document")]
+        public byte[] UploadedDocument { get; set; }
 
         [Column("status")]
         public string Status { get; set; }
