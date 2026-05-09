@@ -40,7 +40,6 @@ namespace BizzyQCU.Controllers
 
         public ActionResult Homepage()
         {
-     
             if (Session["UserId"] != null)
             {
                 string role = Session["Role"]?.ToString();
@@ -48,9 +47,13 @@ namespace BizzyQCU.Controllers
                 {
                     return RedirectToAction("EnterpriseDashboard", "EnterpriseDashboard");
                 }
-                else
+                else if (role == "student")
                 {
                     return RedirectToAction("ProductList", "ProductList");
+                }
+                else if (role == "admin")
+                {
+                    return RedirectToAction("AdminDashboard", "AdminDashboard");
                 }
             }
 

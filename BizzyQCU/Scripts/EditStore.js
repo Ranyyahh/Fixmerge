@@ -1,0 +1,37 @@
+﻿// EditStore.js
+
+// Delete product function
+function deleteProduct(productId) {
+    if (confirm('Are you sure you want to delete this product?')) {
+        fetch('/EditStore/DeleteProduct', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ productId: productId })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to delete product');
+            });
+    }
+}
+
+// Edit product function
+function editProduct(productId) {
+    window.location.href = '/EditProduct/EditProduct/' + productId;
+}
+
+// Add product button
+document.querySelector('.edit-store-ad-box')?.addEventListener('click', function () {
+    window.location.href = '/AddProduct/AddProduct';
+});

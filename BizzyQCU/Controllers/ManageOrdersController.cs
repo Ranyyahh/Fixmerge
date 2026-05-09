@@ -1,7 +1,8 @@
-﻿using System;
+﻿using BizzyQCU.Models.Landingpage;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
-using BizzyQCU.Models.Landingpage;
 
 namespace BizzyQCU.Controllers
 {
@@ -43,14 +44,25 @@ namespace BizzyQCU.Controllers
                     return Json(new { success = false, message = "Enterprise not found" }, JsonRequestBehavior.AllowGet);
                 }
 
+                // DEBUG: I-print ang enterprise ID
+                System.Diagnostics.Debug.WriteLine("=== DEBUG ===");
+                System.Diagnostics.Debug.WriteLine("User ID: " + userId);
+                System.Diagnostics.Debug.WriteLine("Enterprise ID: " + enterprise.EnterpriseId);
+                System.Diagnostics.Debug.WriteLine("Store Name: " + enterprise.StoreName);
+
                 var orders = db.GetPendingOrders(enterprise.EnterpriseId);
+
+                System.Diagnostics.Debug.WriteLine("Orders count: " + orders.Count);
+
                 return Json(new { success = true, orders = orders }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine("Error: " + ex.Message);
                 return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
+
 
         [HttpPost]
         public JsonResult UpdateOrderStatus(int orderId, string status)
@@ -97,7 +109,14 @@ namespace BizzyQCU.Controllers
                     return Json(new { success = false, message = "Enterprise not found" }, JsonRequestBehavior.AllowGet);
                 }
 
+                // TANGGALIN ANG TEST DATA! ITO ANG GAMITIN:
                 var order = db.GetOrderDetails(orderId, enterprise.EnterpriseId);
+
+                if (order == null)
+                {
+                    return Json(new { success = false, message = "Order not found" }, JsonRequestBehavior.AllowGet);
+                }
+
                 return Json(new { success = true, order = order }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)

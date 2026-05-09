@@ -160,6 +160,7 @@
     <Compile Include="Controllers\AddProductController.cs" />
     <Compile Include="Controllers\BaseController.cs" />
     <Compile Include="Controllers\CheckoutController.cs" />
+    <Compile Include="Controllers\EditProductController.cs" />
     <Compile Include="Controllers\EditStoreController.cs" />
     <Compile Include="Controllers\EnterpriseDashboardController.cs" />
     <Compile Include="Controllers\ManageOrdersController.cs" />
@@ -261,6 +262,7 @@
     <Content Include="Images\Logo.png" />
     <Content Include="Fonts\Proxima Nova Regular.ttf" />
     <Content Include="Fonts\Proxima Nova Semibold.ttf" />
+    <Content Include="Scripts\AddProduct.js" />
     <Content Include="Scripts\AdminEditEntrep.js" />
     <Content Include="Scripts\AdminItemListing.js" />
     <Content Include="Scripts\AdminLandingEntrep.js" />
@@ -273,6 +275,8 @@
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="Scripts\Checkout.js" />
+    <Content Include="Scripts\EditProduct.js" />
+    <Content Include="Scripts\EditStore.js" />
     <Content Include="Scripts\EnterpriseDashboard.js" />
     <Content Include="Scripts\Enterprise-Ad-Modal.js" />
     <Content Include="Scripts\jquery-3.7.0.js" />
@@ -330,6 +334,7 @@
     <Content Include="Views\ProductChild\ProductChild.cshtml" />
     <Content Include="Views\AddProduct\Addproduct.cshtml" />
     <Content Include="Views\EditStore\EditStore.cshtml" />
+    <Content Include="Views\EditProduct\EditProduct.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Account\" />

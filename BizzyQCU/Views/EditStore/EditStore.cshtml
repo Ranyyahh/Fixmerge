@@ -24,105 +24,86 @@
         </div>
 
         <div class="edit-store-products">
-            <h2>Products</h2>
+            <h2>Products (@ViewBag.TotalProducts total)</h2>
 
             <div class="product-grid-container edit-store-grid" id="productGrid">
-                <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" onclick="window.location.href = '@Url.Action("AddProduct", "AddProduct")'">
-                    <div class="product-img-placeholder">
-                        <img src="~/Content/Images/pl_bento.png" />
-                    </div>
-                    <div class="product-card-info">
-                        <span class="product-store">Store Name</span>
-                        <span class="product-name">Bento Meal</span>
-                        <span class="product-desc">Rice, viand, and side. Fresh Daily.</span>
-                        <div class="product-footer">
-                            <span class="product-price">&#8369;75</span>
-                            <button class="add-btn">+</button>
+                @if (ViewBag.Products != null && ViewBag.Products.Count > 0)
+                {
+                    foreach (var product in ViewBag.Products)
+                    {
+                        <div class="product-card" data-product-id="@product.ProductId">
+                            <div class="product-img-placeholder">
+                                @if (product.HasImage)
+                                {
+                                    <img src="@Url.Action("GetProductImage", "EditStore", new { productId = product.ProductId })"
+                                         alt="@product.ProductName"
+                                         style="width: 100%; height: 100%; object-fit: cover;"
+                                         onerror="this.style.display='none'; this.nextSibling.style.display='flex';" />
+                                    <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background: #e5e7eb;">
+                                        <span style="font-size: 40px;">??</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #e5e7eb;">
+                                        <span style="font-size: 40px;">??</span>
+                                    </div>
+                                }
+                            </div>
+                            <div class="product-card-info">
+                                <span class="product-store">@ViewBag.EnterpriseName</span>
+                                <span class="product-name">@product.ProductName</span>
+                                <span class="product-desc">@(product.Description.Length > 50 ? product.Description.Substring(0, 47) + "..." : product.Description)</span>
+                                <div class="product-footer">
+                                    <span class="product-price">PHP @product.Price.ToString("N2")</span>
+                                    <div class="product-actions">
+                                        <button class="edit-product-btn" onclick="editProduct(@product.ProductId)">Edit</button>
+                                        <button class="delete-product-btn" onclick="deleteProduct(@product.ProductId)">Delete</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                    }
+                }
+                else
+                {
+                    <div class="no-products">
+                        <p>No products yet. Click Add Product to create your first product!</p>
+                        <button class="add-product-btn" onclick="window.location.href='@Url.Action("AddProduct", "AddProduct")'">+ Add Product</button>
                     </div>
-                </div>
-
-                <div class="product-card" data-category="food" data-popularity="low" data-price="lowprice" onclick="window.location.href = '@Url.Action("AddProduct", "AddProduct")'">
-                    <div class="product-img-placeholder">
-                        <img src="~/Content/Images/spasta.png" />
-                    </div>
-                    <div class="product-card-info">
-                        <span class="product-store">Store Name</span>
-                        <span class="product-name">Pasta Verde</span>
-                        <span class="product-desc">Organic pasta made by natural ingredients.</span>
-                        <div class="product-footer">
-                            <span class="product-price">&#8369;80</span>
-                            <button class="add-btn">+</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" onclick="window.location.href = '@Url.Action("AddProduct", "AddProduct")'">
-                    <div class="product-img-placeholder">
-                        <img src="~/Content/Images/pl_cf.jpg" />
-                    </div>
-                    <div class="product-card-info">
-                        <span class="product-store">Store Name</span>
-                        <span class="product-name">Iced Coffee</span>
-                        <span class="product-desc">Locally brewed cold coffee blend.</span>
-                        <div class="product-footer">
-                            <span class="product-price">&#8369;40</span>
-                            <button class="add-btn">+</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" onclick="window.location.href = '@Url.Action("AddProduct", "AddProduct")'">
-                    <div class="product-img-placeholder">
-                        <img src="~/Content/Images/pl_slg.jpg" />
-                    </div>
-                    <div class="product-card-info">
-                        <span class="product-store">Store Name</span>
-                        <span class="product-name">Silog Combo</span>
-                        <span class="product-desc">Sinangag, itlog, and your choice of ulam.</span>
-                        <div class="product-footer">
-                            <span class="product-price">&#8369;85</span>
-                            <button class="add-btn">+</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="product-card" data-category="food" data-popularity="high" data-price="lowprice" onclick="window.location.href = '@Url.Action("AddProduct", "AddProduct")'">
-                    <div class="product-img-placeholder">
-                        <img src="~/Content/Images/siomai.jpg" />
-                    </div>
-                    <div class="product-card-info">
-                        <span class="product-store">Store Name</span>
-                        <span class="product-name">Siomai Rice</span>
-                        <span class="product-desc">Steamed siomai served with garlic rice.</span>
-                        <div class="product-footer">
-                            <span class="product-price">&#8369;55</span>
-                            <button class="add-btn">+</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="product-card" data-category="merch" data-popularity="low" data-price="highprice" onclick="window.location.href = '@Url.Action("AddProduct", "AddProduct")'">
-                    <div class="product-img-placeholder">
-                        <img src="~/Content/Images/toteb.jpeg" />
-                    </div>
-                    <div class="product-card-info">
-                        <span class="product-store">Store Name</span>
-                        <span class="product-name">QCU Tote Bag</span>
-                        <span class="product-desc">Canvas tote with QCU logo print.</span>
-                        <div class="product-footer">
-                            <span class="product-price">&#8369;150</span>
-                            <button class="add-btn">+</button>
-                        </div>
-                    </div>
-                </div>
+                }
             </div>
 
-            <p class="no-results" id="noResults" style="display:none;">No products found.</p>
+            @if (ViewBag.TotalPages > 1)
+            {
+                <div class="pagination">
+                    @if (ViewBag.CurrentPage > 1)
+                    {
+                        <a href="@Url.Action("EditStore", new { page = ViewBag.CurrentPage - 1 })" class="page-btn prev">&laquo; Previous</a>
+                    }
+
+                    @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                    {
+                        if (i == ViewBag.CurrentPage)
+                        {
+                            <span class="page-btn current">@i</span>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("EditStore", new { page = i })" class="page-btn">@i</a>
+                        }
+                    }
+
+                    @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+                    {
+                        <a href="@Url.Action("EditStore", new { page = ViewBag.CurrentPage + 1 })" class="page-btn next">Next &raquo;</a>
+                    }
+                </div>
+            }
         </div>
     </section>
 </div>
 
 @section Scripts {
-    <script src="~/Scripts/ProductPageLogic.js"></script>
+    <script src="~/Scripts/EditStore.js"></script>
 }

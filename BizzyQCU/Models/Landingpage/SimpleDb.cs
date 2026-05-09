@@ -103,6 +103,28 @@ namespace BizzyQCU.Models.Landingpage
         public decimal Subtotal => Quantity * UnitPrice;
     }
 
+    // ========== PRODUCT MODELS ==========
+    public class ProductImage
+    {
+        public int ProductId { get; set; }
+        public byte[] ImageData { get; set; }
+    }
+
+    public class Product
+    {
+        public int ProductId { get; set; }
+        public string ProductName { get; set; }
+        public string Description { get; set; }
+        public decimal Price { get; set; }
+        public int PreparationTime { get; set; }
+        public string Status { get; set; }
+        public bool HasImage { get; set; }
+        public int? CategoryId { get; set; }
+        public bool IsApproved { get; set; }
+        public DateTime SubmittedAt { get; set; }
+        public string StoreName { get; set; }
+    }
+
     // ========== SIMPLEDB CLASS ==========
     public class SimpleDb
     {
@@ -162,6 +184,287 @@ namespace BizzyQCU.Models.Landingpage
             return null;
         }
 
+        // ========== ADD PRODUCT WITH APPROVAL ==========
+        public bool AddProductWithApproval(int enterpriseId, string productName, string description, decimal price, int? categoryId, int preparationTime, byte[] productImage)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"INSERT INTO products (enterprise_id, category_id, product_name, description, price, preparation_time, product_image, status, is_approved, submitted_at, created_at) 
+                                   VALUES (@enterpriseId, @categoryId, @productName, @description, @price, @preparationTime, @productImage, 'active', 0, NOW(), NOW())";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                        cmd.Parameters.AddWithValue("@categoryId", categoryId.HasValue ? (object)categoryId.Value : DBNull.Value);
+                        cmd.Parameters.AddWithValue("@productName", productName);
+                        cmd.Parameters.AddWithValue("@description", description ?? "");
+                        cmd.Parameters.AddWithValue("@price", price);
+                        cmd.Parameters.AddWithValue("@preparationTime", preparationTime);
+                        cmd.Parameters.Add("@productImage", MySqlDbType.LongBlob).Value = productImage ?? (object)DBNull.Value;
+
+                        return cmd.ExecuteNonQuery() > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("AddProductWithApproval error: " + ex.Message);
+                return false;
+            }
+        }
+
+        // ========== GET PRODUCT BY ID ==========
+        public Product GetProductById(int productId, int enterpriseId)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"SELECT product_id, product_name, description, price, preparation_time, status, category_id,
+                                          CASE WHEN product_image IS NOT NULL THEN 1 ELSE 0 END AS has_image
+                                   FROM products 
+                                   WHERE product_id = @productId AND enterprise_id = @enterpriseId";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@productId", productId);
+                        cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                return new Product
+                                {
+                                    ProductId = reader.GetInt32("product_id"),
+                                    ProductName = reader.GetString("product_name"),
+                                    Description = reader.IsDBNull(reader.GetOrdinal("description")) ? "" : reader.GetString("description"),
+                                    Price = reader.GetDecimal("price"),
+                                    PreparationTime = reader.IsDBNull(reader.GetOrdinal("preparation_time")) ? 0 : reader.GetInt32("preparation_time"),
+                                    Status = reader.GetString("status"),
+                                    HasImage = reader.GetInt32("has_image") == 1,
+                                    CategoryId = reader.IsDBNull(reader.GetOrdinal("category_id")) ? (int?)null : reader.GetInt32("category_id")
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetProductById error: " + ex.Message);
+            }
+            return null;
+        }
+
+        // ========== GET CATEGORY NAME BY ID ==========
+        public string GetCategoryNameById(int? categoryId)
+        {
+            if (!categoryId.HasValue) return "";
+
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = "SELECT category_name FROM product_categories WHERE category_id = @categoryId";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@categoryId", categoryId.Value);
+                        var result = cmd.ExecuteScalar();
+                        return result != null ? result.ToString() : "";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetCategoryNameById error: " + ex.Message);
+                return "";
+            }
+        }
+
+        // ========== UPDATE PRODUCT ==========
+        public bool UpdateProduct(int productId, int enterpriseId, string productName, string description, decimal price, int? categoryId, int preparationTime, byte[] productImage)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    string sql;
+                    if (productImage != null && productImage.Length > 0)
+                    {
+                        sql = @"UPDATE products SET product_name = @productName, description = @description, price = @price, 
+                                category_id = @categoryId, preparation_time = @preparationTime, product_image = @productImage 
+                                WHERE product_id = @productId AND enterprise_id = @enterpriseId";
+                    }
+                    else
+                    {
+                        sql = @"UPDATE products SET product_name = @productName, description = @description, price = @price, 
+                                category_id = @categoryId, preparation_time = @preparationTime 
+                                WHERE product_id = @productId AND enterprise_id = @enterpriseId";
+                    }
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@productName", productName);
+                        cmd.Parameters.AddWithValue("@description", description ?? "");
+                        cmd.Parameters.AddWithValue("@price", price);
+                        cmd.Parameters.AddWithValue("@categoryId", categoryId.HasValue ? (object)categoryId.Value : DBNull.Value);
+                        cmd.Parameters.AddWithValue("@preparationTime", preparationTime);
+                        cmd.Parameters.AddWithValue("@productId", productId);
+                        cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+
+                        if (productImage != null && productImage.Length > 0)
+                        {
+                            cmd.Parameters.Add("@productImage", MySqlDbType.LongBlob).Value = productImage;
+                        }
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("UpdateProduct error: " + ex.Message);
+                return false;
+            }
+        }
+
+        // ========== GET PRODUCT IMAGE ==========
+        public byte[] GetProductImage(int productId)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = "SELECT product_image FROM products WHERE product_id = @productId";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@productId", productId);
+                        var result = cmd.ExecuteScalar();
+                        if (result != null && result != DBNull.Value)
+                        {
+                            return (byte[])result;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetProductImage error: " + ex.Message);
+            }
+            return null;
+        }
+
+        // ========== GET PRODUCTS BY ENTERPRISE ID (APPROVED ONLY) ==========
+        public List<Product> GetProductsByEnterpriseId(int enterpriseId)
+        {
+            var products = new List<Product>();
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"SELECT product_id, product_name, description, price, preparation_time, status, 
+                                          CASE WHEN product_image IS NOT NULL THEN 1 ELSE 0 END AS has_image
+                                   FROM products 
+                                   WHERE enterprise_id = @enterpriseId AND status = 'active' AND is_approved = 1
+                                   ORDER BY product_id DESC";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                products.Add(new Product
+                                {
+                                    ProductId = reader.GetInt32("product_id"),
+                                    ProductName = reader.GetString("product_name"),
+                                    Description = reader.IsDBNull(reader.GetOrdinal("description")) ? "" : reader.GetString("description"),
+                                    Price = reader.GetDecimal("price"),
+                                    PreparationTime = reader.IsDBNull(reader.GetOrdinal("preparation_time")) ? 0 : reader.GetInt32("preparation_time"),
+                                    Status = reader.GetString("status"),
+                                    HasImage = reader.GetInt32("has_image") == 1
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetProductsByEnterpriseId error: " + ex.Message);
+            }
+            return products;
+        }
+
+        // ========== DELETE PRODUCT ==========
+        public bool DeleteProduct(int productId, int enterpriseId)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = "DELETE FROM products WHERE product_id = @productId AND enterprise_id = @enterpriseId";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@productId", productId);
+                        cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("DeleteProduct error: " + ex.Message);
+                return false;
+            }
+        }
+
+        // ========== GET OR CREATE CATEGORY ==========
+        public int? GetOrCreateCategory(string categoryName)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string checkSql = "SELECT category_id FROM product_categories WHERE LOWER(category_name) = LOWER(@categoryName)";
+                    using (var cmd = new MySqlCommand(checkSql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@categoryName", categoryName);
+                        object result = cmd.ExecuteScalar();
+                        if (result != null && result != DBNull.Value)
+                        {
+                            return Convert.ToInt32(result);
+                        }
+                    }
+
+                    string insertSql = "INSERT INTO product_categories (category_name) VALUES (@categoryName); SELECT LAST_INSERT_ID();";
+                    using (var cmd = new MySqlCommand(insertSql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@categoryName", categoryName);
+                        int newId = Convert.ToInt32(cmd.ExecuteScalar());
+                        return newId;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetOrCreateCategory error: " + ex.Message);
+                return null;
+            }
+        }
+
         // ========== GET PENDING ORDERS ==========
         public List<PendingOrder> GetPendingOrders(int enterpriseId)
         {
@@ -171,26 +474,7 @@ namespace BizzyQCU.Models.Landingpage
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = @"
-                SELECT 
-                    o.order_id,
-                    CONCAT(COALESCE(s.firstname, ''), ' ', COALESCE(s.lastname, '')) AS customer_name,
-                    o.total_amount,
-                    o.order_date,
-                    o.delivery_option,
-                    o.order_note,
-                    o.status,
-                    DATE_FORMAT(o.order_date, '%h:%i %p') AS order_time,
-                    DATE_FORMAT(o.order_date, '%M %d, %Y') AS order_date_formatted,
-                    COALESCE((SELECT GROUP_CONCAT(CONCAT(oi.quantity, 'x ', p.product_name) SEPARATOR ', ') 
-                     FROM order_items oi 
-                     INNER JOIN products p ON p.product_id = oi.product_id 
-                     WHERE oi.order_id = o.order_id), '') AS items
-                FROM orders o
-                INNER JOIN students s ON s.student_id = o.student_id
-                WHERE o.enterprise_id = @enterpriseId 
-                    AND o.status = 'preparing'
-                ORDER BY o.order_date DESC";
+                    string sql = "SELECT order_id, total_amount, status FROM orders WHERE enterprise_id = @enterpriseId AND status = 'preparing'";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
@@ -199,19 +483,12 @@ namespace BizzyQCU.Models.Landingpage
                         {
                             while (reader.Read())
                             {
-                                orders.Add(new PendingOrder
-                                {
-                                    OrderId = reader.GetInt32("order_id"),
-                                    CustomerName = reader.GetString("customer_name"),
-                                    TotalAmount = reader.GetDecimal("total_amount"),
-                                    OrderDate = reader.GetDateTime("order_date"),
-                                    DeliveryOption = reader.IsDBNull(reader.GetOrdinal("delivery_option")) ? "pickup" : reader.GetString("delivery_option"),
-                                    OrderNote = reader.IsDBNull(reader.GetOrdinal("order_note")) ? "" : reader.GetString("order_note"),
-                                    Status = reader.GetString("status"),
-                                    OrderTime = reader.GetString("order_time"),
-                                    OrderDateFormatted = reader.GetString("order_date_formatted"),
-                                    Items = reader.IsDBNull(reader.GetOrdinal("items")) ? "" : reader.GetString("items")
-                                });
+                                var order = new PendingOrder();
+                                order.OrderId = reader.GetInt32("order_id");
+                                order.TotalAmount = reader.GetDecimal("total_amount");
+                                order.Status = reader.GetString("status");
+                                order.CustomerName = "Customer";
+                                orders.Add(order);
                             }
                         }
                     }
@@ -223,6 +500,7 @@ namespace BizzyQCU.Models.Landingpage
             }
             return orders;
         }
+
 
         // ========== UPDATE ORDER STATUS ==========
         public bool UpdateOrderStatus(int orderId, string status, int enterpriseId)
@@ -251,58 +529,53 @@ namespace BizzyQCU.Models.Landingpage
         }
 
         // ========== GET ORDER DETAILS ==========
+        // ========== GET ORDER DETAILS ==========
         public OrderDetails GetOrderDetails(int orderId, int enterpriseId)
         {
+            OrderDetails order = null;
             try
             {
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
                     string sql = @"
-                        SELECT 
-                            o.order_id,
-                            CONCAT(COALESCE(s.firstname, ''), ' ', COALESCE(s.lastname, '')) AS customer_name,
-                            s.contact_number AS customer_phone,
-                            o.total_amount,
-                            o.order_date,
-                            o.delivery_option,
-                            o.order_note,
-                            o.status,
-                            o.payment_method,
-                            DATE_FORMAT(o.order_date, '%h:%i %p') AS order_time,
-                            DATE_FORMAT(o.order_date, '%M %d, %Y') AS order_date_formatted,
-                            o.customer_location,
-                            o.delivery_fee
-                        FROM orders o
-                        INNER JOIN students s ON s.student_id = o.student_id
-                        WHERE o.order_id = @orderId AND o.enterprise_id = @enterpriseId";
+                SELECT 
+                    o.order_id,
+                    CONCAT(s.firstname, ' ', s.lastname) AS customer_name,
+                    s.contact_number AS customer_phone,
+                    o.total_amount,
+                    o.delivery_option,
+                    o.order_note,
+                    o.status,
+                    o.payment_method,
+                    DATE_FORMAT(o.order_date, '%h:%i %p') AS order_time,
+                    DATE_FORMAT(o.order_date, '%M %d, %Y') AS order_date_formatted,
+                    o.customer_location
+                FROM orders o
+                INNER JOIN students s ON s.student_id = o.student_id
+                WHERE o.order_id = @orderId";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@orderId", orderId);
-                        cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
                         using (var reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
                             {
-                                var items = GetOrderItems(orderId);
-                                return new OrderDetails
-                                {
-                                    OrderId = reader.GetInt32("order_id"),
-                                    CustomerName = reader.GetString("customer_name"),
-                                    CustomerPhone = reader.IsDBNull(reader.GetOrdinal("customer_phone")) ? "" : reader.GetString("customer_phone"),
-                                    TotalAmount = reader.GetDecimal("total_amount"),
-                                    OrderDate = reader.GetDateTime("order_date"),
-                                    DeliveryOption = reader.IsDBNull(reader.GetOrdinal("delivery_option")) ? "pickup" : reader.GetString("delivery_option"),
-                                    OrderNote = reader.IsDBNull(reader.GetOrdinal("order_note")) ? "" : reader.GetString("order_note"),
-                                    Status = reader.GetString("status"),
-                                    PaymentMethod = reader.IsDBNull(reader.GetOrdinal("payment_method")) ? "" : reader.GetString("payment_method"),
-                                    OrderTime = reader.GetString("order_time"),
-                                    OrderDateFormatted = reader.GetString("order_date_formatted"),
-                                    CustomerLocation = reader.IsDBNull(reader.GetOrdinal("customer_location")) ? "" : reader.GetString("customer_location"),
-                                    DeliveryFee = reader.IsDBNull(reader.GetOrdinal("delivery_fee")) ? 0 : reader.GetDecimal("delivery_fee"),
-                                    Items = items
-                                };
+                                order = new OrderDetails();
+                                order.OrderId = reader.GetInt32("order_id");
+                                order.CustomerName = reader.GetString("customer_name");
+                                order.CustomerPhone = reader.GetString("customer_phone");
+                                order.TotalAmount = reader.GetDecimal("total_amount");
+                                order.DeliveryOption = reader.GetString("delivery_option");
+                                order.OrderNote = reader.GetString("order_note");
+                                order.Status = reader.GetString("status");
+                                order.PaymentMethod = reader.GetString("payment_method");
+                                order.OrderTime = reader.GetString("order_time");
+                                order.OrderDateFormatted = reader.GetString("order_date_formatted");
+                                order.CustomerLocation = reader.GetString("customer_location");
+                                order.DeliveryFee = 0;  // I-set sa 0 palagi
+                                order.Items = GetOrderItems(orderId);
                             }
                         }
                     }
@@ -311,11 +584,11 @@ namespace BizzyQCU.Models.Landingpage
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("GetOrderDetails error: " + ex.Message);
-                return null;
             }
-            return null;
+            return order;
         }
 
+        // ========== GET ORDER ITEMS ==========
         // ========== GET ORDER ITEMS ==========
         private List<OrderItem> GetOrderItems(int orderId)
         {
@@ -326,13 +599,13 @@ namespace BizzyQCU.Models.Landingpage
                 {
                     conn.Open();
                     string sql = @"
-                        SELECT 
-                            p.product_name,
-                            oi.quantity,
-                            oi.unit_price
-                        FROM order_items oi
-                        INNER JOIN products p ON p.product_id = oi.product_id
-                        WHERE oi.order_id = @orderId";
+                SELECT 
+                    COALESCE(p.product_name, 'Unknown Product') AS product_name,
+                    oi.quantity,
+                    oi.unit_price
+                FROM order_items oi
+                LEFT JOIN products p ON p.product_id = oi.product_id
+                WHERE oi.order_id = @orderId";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
@@ -341,12 +614,11 @@ namespace BizzyQCU.Models.Landingpage
                         {
                             while (reader.Read())
                             {
-                                items.Add(new OrderItem
-                                {
-                                    ProductName = reader.GetString("product_name"),
-                                    Quantity = reader.GetInt32("quantity"),
-                                    UnitPrice = reader.GetDecimal("unit_price")
-                                });
+                                OrderItem item = new OrderItem();
+                                item.ProductName = reader.GetString("product_name");
+                                item.Quantity = reader.GetInt32("quantity");
+                                item.UnitPrice = reader.GetDecimal("unit_price");
+                                items.Add(item);
                             }
                         }
                     }
@@ -358,6 +630,7 @@ namespace BizzyQCU.Models.Landingpage
             }
             return items;
         }
+
 
         // ========== DASHBOARD STATS METHODS ==========
         public decimal GetTotalSalesToday(int enterpriseId)
@@ -411,7 +684,7 @@ namespace BizzyQCU.Models.Landingpage
                 {
                     conn.Open();
                     string sql = @"SELECT COUNT(*) FROM orders WHERE enterprise_id = @enterpriseId 
-                                   AND delivery_option != 'pickup' AND status IN ('preparing', 'pending')";
+                                   AND delivery_option != 'pickup' AND status = 'preparing'";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
@@ -432,7 +705,7 @@ namespace BizzyQCU.Models.Landingpage
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = @"SELECT COUNT(*) FROM orders WHERE enterprise_id = @enterpriseId AND DATE(order_date) = CURDATE() AND status = 'pending'";
+                    string sql = @"SELECT COUNT(*) FROM orders WHERE enterprise_id = @enterpriseId AND DATE(order_date) = CURDATE() AND status = 'preparing'";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
@@ -565,6 +838,11 @@ namespace BizzyQCU.Models.Landingpage
             int startMonth = currentMonth - 5;
             if (startMonth < 1) startMonth = 1;
             var last6Months = allMonths.Where(m => m.Value >= startMonth && m.Value <= currentMonth).OrderBy(m => m.Value).ToList();
+            if (last6Months.Count < 6 && startMonth > 1)
+            {
+                startMonth = Math.Max(1, startMonth - (6 - last6Months.Count));
+                last6Months = allMonths.Where(m => m.Value >= startMonth && m.Value <= currentMonth).OrderBy(m => m.Value).ToList();
+            }
             foreach (var month in last6Months)
             {
                 var existing = data.FirstOrDefault(x => x.MonthName == month.Key);
@@ -608,7 +886,7 @@ namespace BizzyQCU.Models.Landingpage
                 {
                     conn.Open();
                     string sql = @"INSERT INTO feedbacks (user_id, user_type, email, contact_number, category, message, rating, status, created_at) 
-                           VALUES (@userId, @userType, @email, @contact, @category, @message, @rating, 'pending', NOW())";
+                                   VALUES (@userId, @userType, @email, @contact, @category, @message, @rating, 'pending', NOW())";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@userId", userId);

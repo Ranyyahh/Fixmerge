@@ -15,9 +15,44 @@
 <body>
     @{
         var sessionRole = Session["Role"] == null ? string.Empty : Session["Role"].ToString();
-        var accountUrl = string.Equals(sessionRole, "enterprise", StringComparison.OrdinalIgnoreCase)
-            ? Url.Action("Index", "Profile")
-            : Url.Action("UserProfile", "Profile");
+
+        // URL para sa account base sa role - dapat sa PROFILE
+        var accountUrl = "";
+        if (sessionRole == "enterprise")
+        {
+            accountUrl = Url.Action("EnterpriseProfile", "Profile");
+        }
+        else if (sessionRole == "student")
+        {
+            accountUrl = Url.Action("UserProfile", "Profile");
+        }
+        else if (sessionRole == "admin")
+        {
+            accountUrl = Url.Action("AdminProfile", "Admin");
+        }
+        else
+        {
+            accountUrl = Url.Action("Login", "Home");
+        }
+
+        // Home URL base sa role
+        var homeUrl = "";
+        if (sessionRole == "enterprise")
+        {
+            homeUrl = Url.Action("EnterpriseDashboard", "EnterpriseDashboard");
+        }
+        else if (sessionRole == "student")
+        {
+            homeUrl = Url.Action("ProductList", "ProductList");
+        }
+        else if (sessionRole == "admin")
+        {
+            homeUrl = Url.Action("AdminDashboard", "AdminDashboard");
+        }
+        else
+        {
+            homeUrl = Url.Action("Homepage", "Home");
+        }
     }
 
     <div class="navbar">
@@ -27,16 +62,39 @@
         </a>
 
         <div class="logo">
-            <a href="/"><img src="~/Images/Logo.png" alt="logo" /></a>
+            <a href="@homeUrl"><img src="~/Images/Logo.png" alt="logo" /></a>
         </div>
 
         <div class="divider"></div>
 
         <div class="nav-links" id="mainNav">
-            <a href="@Url.Action("Homepage", "Home")">HOME</a>
-            <a href="@Url.Action("ProductList", "ProductList")">PRODUCTS</a>
-            <a href="@Url.Action("EnterpriseList", "EnterpriseList")">ENTERPRISES</a>
-            <a href="@Url.Action("About", "Home")">ABOUT US</a>
+            @if (sessionRole == "enterprise")
+            {
+                <a href="@Url.Action("EnterpriseDashboard", "EnterpriseDashboard")">DASHBOARD</a>
+                <a href="@Url.Action("AddProduct", "AddProduct")">ADD PRODUCT</a>
+                <a href="@Url.Action("ManageOrders", "ManageOrders")">MANAGE ORDERS</a>
+                <a href="@Url.Action("EditStore", "EditStore")">EDIT STORE</a>
+            }
+            else if (sessionRole == "student")
+            {
+                <a href="@Url.Action("ProductList", "ProductList")">PRODUCTS</a>
+                <a href="@Url.Action("ViewEnterprise", "ViewEnterprise")">ENTERPRISES</a>
+                <a href="@Url.Action("Tracking", "Home")">TRACK ORDER</a>
+                <a href="@Url.Action("About", "Home")">ABOUT US</a>
+            }
+            else if (sessionRole == "admin")
+            {
+                <a href="@Url.Action("AdminDashboard", "AdminDashboard")">DASHBOARD</a>
+                <a href="@Url.Action("PendingApprovals", "Admin")">PENDING APPROVALS</a>
+                <a href="@Url.Action("ManageUsers", "Admin")">MANAGE USERS</a>
+            }
+            else
+            {
+                <a href="@Url.Action("Homepage", "Home")">HOME</a>
+                <a href="@Url.Action("ProductList", "ProductList")">PRODUCTS</a>
+                <a href="@Url.Action("ViewEnterprise", "ViewEnterprise")">ENTERPRISES</a>
+                <a href="@Url.Action("About", "Home")">ABOUT US</a>
+            }
 
             <a href="@accountUrl" class="account-mobile">
                 ACCOUNT
@@ -44,9 +102,12 @@
         </div>
 
         <div class="right-icons">
-            <div class="cart-icon">
-                <a href="#"><img src="~/Images/cart-icon.png" alt="Cart"  onclick="window.location.href = '@Url.Action("tracking", "Home")'"/></a>
-            </div>
+            @if (sessionRole != "enterprise" && sessionRole != "admin")
+            {
+                <div class="cart-icon">
+                    <a href="#"><img src="~/Images/cart-icon.png" alt="Cart" onclick="window.location.href = '@Url.Action("Tracking", "Home")'" /></a>
+                </div>
+            }
             <div class="account-icon account-desktop">
                 <a href="@accountUrl">
                     <img src="~/Images/account-icon.png" alt="Account" />

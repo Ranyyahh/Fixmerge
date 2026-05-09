@@ -1,4 +1,4 @@
-﻿// ManageOrders.js - Updated Working Version
+﻿// ManageOrders.js - FULL API VERSION (WORKING)
 
 document.addEventListener('DOMContentLoaded', function () {
     loadPendingOrders();
@@ -42,20 +42,19 @@ function renderOrderCards(orders) {
     let cardsHtml = '';
 
     orders.forEach(order => {
-        // Support both camelCase and PascalCase property names
-        const orderId = order.orderId || order.OrderId || order.id;
-        const customerName = order.customerName || order.CustomerName || 'Unknown Customer';
-        const totalAmount = order.totalAmount || order.TotalAmount || 0;
-        const orderTime = order.orderTime || order.OrderTime || '';
-        const orderDateFormatted = order.orderDateFormatted || order.OrderDateFormatted || '';
-        const deliveryOption = order.deliveryOption || order.DeliveryOption || 'pickup';
-        const orderStatus = order.status || order.Status || 'preparing';
+        const orderId = order.OrderId || order.orderId;
+        const customerName = order.CustomerName || order.customerName || 'Unknown Customer';
+        const totalAmount = order.TotalAmount || order.totalAmount || 0;
+        const orderTime = order.OrderTime || order.orderTime || '';
+        const orderDateFormatted = order.OrderDateFormatted || order.orderDateFormatted || '';
+        const deliveryOption = order.DeliveryOption || order.deliveryOption || 'pickup';
+        const orderStatus = order.Status || order.status || 'preparing';
 
         const statusClass = orderStatus === 'preparing' ? 'status-preparing' : 'status-pending';
         const statusText = orderStatus === 'preparing' ? 'Preparing' : 'Pending';
 
         cardsHtml += `
-            <div class="glass-card" data-order-id="${orderId}" onclick="viewOrder(${orderId})">
+            <div class="glass-card" onclick="viewOrder(${orderId})">
                 <div class="card-header">
                     <div>
                         <h4 class="cust-name">${escapeHtml(customerName)}</h4>
@@ -134,32 +133,29 @@ function toggleDropdown(event, orderId) {
 }
 
 async function viewOrder(orderId) {
-    if (!orderId) {
+    const id = Number(orderId);
+
+    if (!id || isNaN(id)) {
         showNotification('Invalid order ID', 'error');
         return;
     }
 
     try {
-        const response = await fetch(`/ManageOrders/GetOrderDetails?orderId=${orderId}`);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
+        const response = await fetch(`/ManageOrders/GetOrderDetails?orderId=${id}`);
         const data = await response.json();
 
         if (data.success && data.order) {
             const order = data.order;
 
             let itemsHtml = '';
-            if (order.items && order.items.length > 0) {
+            if (order.Items && order.Items.length > 0) {
                 itemsHtml = '<div class="items-list">';
-                order.items.forEach(item => {
+                order.Items.forEach(item => {
                     itemsHtml += `
                         <div class="item-row">
-                            <span class="item-qty">${item.quantity}x</span>
-                            <span class="item-name">${escapeHtml(item.productName)}</span>
-                            <span class="item-price">₱ ${Number(item.unitPrice).toFixed(2)}</span>
+                            <span class="item-qty">${item.Quantity}x</span>
+                            <span class="item-name">${escapeHtml(item.ProductName)}</span>
+                            <span class="item-price">₱ ${Number(item.UnitPrice).toFixed(2)}</span>
                         </div>
                     `;
                 });
@@ -170,55 +166,51 @@ async function viewOrder(orderId) {
 
             const content = `
                 <div class="details-container">
-                    <h1 class="order-id-header">Order #QCU-${order.orderId}</h1>
-                    <p class="order-subtitle">${escapeHtml(order.customerName)} • ${order.orderTime || ''}</p>
+                    <button class="close-details" onclick="closeDetails()">✕</button>
+                    <h1 class="order-id-header">Order #QCU-${order.OrderId}</h1>
+                    <p class="order-subtitle">${escapeHtml(order.CustomerName)} • ${order.OrderTime || ''}</p>
 
                     <div class="detail-group">
                         <div class="detail-row">
                             <span class="detail-label">📍 Location</span>
-                            <span class="detail-value">${order.deliveryOption === 'pickup' ? 'Store Pickup' : escapeHtml(order.customerLocation || 'Campus Delivery')}</span>
+                            <span class="detail-value">${order.DeliveryOption === 'pickup' ? 'Store Pickup' : escapeHtml(order.CustomerLocation || 'Campus Delivery')}</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">💳 Payment</span>
-                            <span class="detail-value">${order.paymentMethod ? order.paymentMethod.toUpperCase() : 'Cash'}</span>
+                            <span class="detail-value">${order.PaymentMethod ? order.PaymentMethod.toUpperCase() : 'Cash'}</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">📦 Status</span>
-                            <span class="detail-value status-${order.status}">${order.status ? order.status.toUpperCase() : 'PENDING'}</span>
+                            <span class="detail-value status-${order.Status}">${order.Status ? order.Status.toUpperCase() : 'PENDING'}</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">🛒 Items</span>
                         </div>
                         ${itemsHtml}
-                        ${order.deliveryFee > 0 ? `
-                        <div class="detail-row">
-                            <span class="detail-label">🚚 Delivery Fee</span>
-                            <span class="detail-value">₱ ${Number(order.deliveryFee).toFixed(2)}</span>
-                        </div>
-                        ` : ''}
+                       <!-- No delivery fee - school campus only -->
                     </div>
 
-                    ${order.orderNote ? `
+                    ${order.OrderNote ? `
                         <div class="note-box">
-                            <p class="note-text">"${escapeHtml(order.orderNote)}"</p>
+                            <p class="note-text">"${escapeHtml(order.OrderNote)}"</p>
                         </div>
                     ` : ''}
 
                     <div class="total-section">
                         <span class="total-label">Total Amount</span>
-                        <span class="total-amount">₱ ${Number(order.totalAmount).toFixed(2)}</span>
+                        <span class="total-amount">₱ ${Number(order.TotalAmount).toFixed(2)}</span>
                     </div>
 
                     <p class="courier-label">👤 CUSTOMER DETAILS</p>
                     <div class="courier-card">
                         <div class="courier-info">
-                            <div class="courier-avatar">${escapeHtml(order.customerName).charAt(0)}</div>
+                            <div class="courier-avatar">${escapeHtml(order.CustomerName).charAt(0)}</div>
                             <div>
-                                <p class="courier-name">${escapeHtml(order.customerName)}</p>
-                                <p class="courier-type">${order.customerPhone || 'No phone number'}</p>
+                                <p class="courier-name">${escapeHtml(order.CustomerName)}</p>
+                                <p class="courier-type">${order.CustomerPhone || 'No phone number'}</p>
                             </div>
                         </div>
-                        ${order.customerPhone ? `<button class="btn-message-emoji" onclick="window.location.href='tel:${order.customerPhone}'">📞 Call</button>` : ''}
+                        ${order.CustomerPhone ? `<button class="btn-message-emoji" onclick="window.location.href='tel:${order.CustomerPhone}'">📞 Call</button>` : ''}
                     </div>
                 </div>
             `;
