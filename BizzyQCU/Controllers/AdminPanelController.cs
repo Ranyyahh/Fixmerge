@@ -223,6 +223,21 @@ namespace BizzyQCU.Controllers
             }
         }
 
+        [HttpGet]
+        public JsonResult GetEnterpriseDocument(int enterpriseId)
+        {
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" }, JsonRequestBehavior.AllowGet);
+
+            var bytes = adminDb.GetEnterpriseDocumentByEnterpriseId(enterpriseId);
+            if (bytes == null || bytes.Length == 0)
+            {
+                return Json(new { success = false, message = "No document found." }, JsonRequestBehavior.AllowGet);
+            }
+
+            var base64 = Convert.ToBase64String(bytes);
+            return Json(new { success = true, data = base64 }, JsonRequestBehavior.AllowGet);
+        }
+
 
         //RECIPE NG SINIGANG LAGAY KO TALAGA RITO TAMO HAHAHAHAAHA. Kasama toh sa enterprise details
         [HttpGet]
@@ -290,7 +305,7 @@ namespace BizzyQCU.Controllers
             if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
 
             bool result = adminDb.RemoveProduct(productId);
-            return Json(new { success = result, message = result ? "Product removed successfully" : "Failed to remove product" });
+            return Json(new { success = result, message = result ? "Product rejected successfully" : "Failed to reject product" });
         }
     }
 

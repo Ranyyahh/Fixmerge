@@ -1,7 +1,7 @@
-﻿@{
+@{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-@model User_Profile_Seller_Juvi.Controllers.AccountSettingsPageViewModel
+@model BizzyQCU.Controllers.AccountSettingsPageViewModel
 @{
     var showProfileSaveActions = ViewBag.ShowProfileSaveActions == null || (bool)ViewBag.ShowProfileSaveActions;
     var showProfileEditTools = ViewBag.ShowProfileEditTools == true;
@@ -39,7 +39,7 @@
                             }
                             else
                             {
-                                <span>🏢</span>
+                                <span>??</span>
                             }
                         </div>
                         <input type="file" id="profileUpload" name="profileFile" accept="image/*" style="display: none;" />
@@ -120,9 +120,8 @@
 
                     <!-- Upload QR and Edit Info Buttons -->
                     <div class="upload-qr-area">
-                        <button type="button" class="upload-qr-btn" onclick="document.getElementById('qrUpload').click()">📷 Upload QR</button>
+                        <button type="button" class="upload-qr-btn" onclick="document.getElementById('qrUpload').click()">?? Upload QR</button>
                         <input type="file" id="qrUpload" name="qrFile" accept="image/*" style="display: none;" />
-                        <button type="submit" class="edit-info-btn">Save Info</button>
                     </div>
                 </div> <!-- END OF RIGHT CARD -->
             </div> <!-- END OF TWO COLUMNS -->

@@ -1,4 +1,4 @@
-﻿@model User_Profile_Seller_Juvi.Controllers.TransactionsPageViewModel
+@model BizzyQCU.Controllers.TransactionsPageViewModel
 @{
     ViewBag.Title = "Transactions";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -31,7 +31,7 @@
 
     <div class="transactions-panel">
         <div class="transactions-table-tab">
-            📋 Transaction History
+            ?? Transaction History
         </div>
 
         <div class="transactions-table-wrap">
@@ -59,7 +59,7 @@
                                 <td data-label="User"><span class="transaction-user">@record.UserName</span></td>
                                 <td data-label="Product"><span class="transaction-product">@record.Product</span></td>
                                 <td data-label="Date"><span class="transaction-date">@record.Date.ToString("MM/dd/yyyy")</span></td>
-                                <td data-label="Total"><span class="transaction-total">₱ @record.Total.ToString("0.00")</span></td>
+                                <td data-label="Total"><span class="transaction-total">? @record.Total.ToString("0.00")</span></td>
                             </tr>
                         }
                     }

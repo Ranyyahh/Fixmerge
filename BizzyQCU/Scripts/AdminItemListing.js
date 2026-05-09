@@ -7,6 +7,7 @@ const urlParamsItem = new URLSearchParams(window.location.search);
 const enterpriseIdItem = urlParamsItem.get('enterpriseId');
 let allProductsItem = [];
 let selectedProductIdItem = null;
+let approveUiOnOk = null;
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log('Enterprise ID from URL:', enterpriseIdItem);
@@ -117,6 +118,7 @@ function renderProductsItem(products) {
     }
 
     grid.innerHTML = '';
+    selectedProductIdItem = null;
     products.forEach(product => {
         const card = document.createElement('div');
         card.className = 'product-card';
@@ -127,13 +129,26 @@ function renderProductsItem(products) {
         card.dataset.name = (product.ProductName || '').toLowerCase();
         card.addEventListener('click', () => selectProductItem(product.ProductId));
 
-        const statusBadge = product.Status === 'pending'
-            ? '<span class="status-badge pending">Pending Approval</span>'
-            : '<span class="status-badge active">Active</span>';
+        const normalizedStatus = (product.Status || '').toLowerCase();
+        const approvalState = Number(product.ApprovalState ?? 0);
+        let statusBadge = '<span class="status-badge unknown">Unknown</span>';
+        if (approvalState === -1) {
+            statusBadge = '<span class="status-badge rejected">Rejected</span>';
+        } else if (approvalState === 0) {
+            statusBadge = '<span class="status-badge pending">Pending Approval</span>';
+        } else if (approvalState === 1 && (normalizedStatus === 'active' || normalizedStatus === 'approved')) {
+            statusBadge = '<span class="status-badge active">Active</span>';
+        } else if (normalizedStatus === 'inactive') {
+            statusBadge = '<span class="status-badge inactive">Inactive</span>';
+        }
+
+        const productImageMarkup = product.ProductImage
+            ? `<img class="product-img" src="${product.ProductImage}" alt="${escapeHtmlItem(product.ProductName || 'Product')}" />`
+            : `<div class="product-placeholder">${escapeHtmlItem((product.ProductName || 'P').charAt(0))}</div>`;
 
         card.innerHTML = `
             <div class="product-image-wrap">
-                <div class="product-placeholder">${escapeHtmlItem((product.ProductName || 'P').charAt(0))}</div>
+                ${productImageMarkup}
             </div>
             <div class="product-info-wrap">
                 <div class="product-title">${escapeHtmlItem(product.ProductName || 'Unknown')}</div>
@@ -148,6 +163,11 @@ function renderProductsItem(products) {
         `;
         grid.appendChild(card);
     });
+
+    // Auto-select first product so Approve/Remove works immediately.
+    if (products.length > 0 && products[0].ProductId) {
+        selectProductItem(products[0].ProductId);
+    }
 }
 
 function selectProductItem(productId) {
@@ -175,8 +195,31 @@ function setupEventListenersItem() {
     const approveBtn = document.getElementById('approveItemBtn');
     if (approveBtn) {
         approveBtn.addEventListener('click', () => {
-            if (selectedProductIdItem) {
-                approveProductItem(selectedProductIdItem);
+            const effectiveProductId = selectedProductIdItem || getFirstVisibleProductId();
+            if (effectiveProductId) {
+                const selected = getProductById(effectiveProductId);
+                if (!selected) {
+                    showToastItem('Product not found.', 'error');
+                    return;
+                }
+
+                const normalizedStatus = (selected.Status || '').toLowerCase();
+                const approvalState = Number(selected.ApprovalState ?? 0);
+                if (approvalState === 1 && (normalizedStatus === 'active' || normalizedStatus === 'approved')) {
+                    showApproveUi(
+                        'Already Approved',
+                        `"${selected.ProductName || 'This product'}" is already approved.`,
+                        false
+                    );
+                    return;
+                }
+
+                showApproveUi(
+                    'Confirm Approval',
+                    `Are you sure you want to approve "${selected.ProductName || 'this product'}"?`,
+                    true,
+                    () => approveProductItem(effectiveProductId)
+                );
             } else {
                 showToastItem('Please select a product first', 'error');
             }
@@ -186,9 +229,10 @@ function setupEventListenersItem() {
     const removeBtn = document.getElementById('removeItemBtn');
     if (removeBtn) {
         removeBtn.addEventListener('click', () => {
-            if (selectedProductIdItem) {
-                if (confirm('Are you sure you want to remove this product?')) {
-                    removeProductItem(selectedProductIdItem);
+            const effectiveProductId = selectedProductIdItem || getFirstVisibleProductId();
+            if (effectiveProductId) {
+                if (confirm('Are you sure you want to reject this product?')) {
+                    removeProductItem(effectiveProductId);
                 }
             } else {
                 showToastItem('Please select a product first', 'error');
@@ -290,11 +334,11 @@ function removeProductItem(productId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showToastItem('Product removed successfully', 'success');
+                showToastItem('Product rejected successfully', 'success');
                 loadProductsItem();
                 selectedProductIdItem = null;
             } else {
-                showToastItem('Failed to remove product: ' + (data.message || 'Unknown error'), 'error');
+                showToastItem('Failed to reject product: ' + (data.message || 'Unknown error'), 'error');
             }
         })
         .catch(error => {
@@ -339,4 +383,75 @@ if (viewDocsBtn) {
     viewDocsBtn.addEventListener('click', () => {
         alert('Documents feature coming soon');
     });
+}
+
+function getProductById(productId) {
+    for (let i = 0; i < allProductsItem.length; i++) {
+        if (parseInt(allProductsItem[i].ProductId, 10) === parseInt(productId, 10)) {
+            return allProductsItem[i];
+        }
+    }
+    return null;
+}
+
+function showApproveUi(title, message, showCancel, onOk) {
+    const modal = document.getElementById('approveUiModal');
+    const titleEl = document.getElementById('approveUiTitle');
+    const messageEl = document.getElementById('approveUiMessage');
+    const cancelBtn = document.getElementById('approveUiCancelBtn');
+    const okBtn = document.getElementById('approveUiOkBtn');
+    if (!modal || !titleEl || !messageEl || !cancelBtn || !okBtn) return;
+
+    titleEl.textContent = title || 'Notice';
+    messageEl.textContent = message || '';
+    cancelBtn.style.display = showCancel ? 'inline-block' : 'none';
+    okBtn.textContent = showCancel ? 'Yes, Approve' : 'OK';
+    approveUiOnOk = typeof onOk === 'function' ? onOk : null;
+
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeApproveUi() {
+    const modal = document.getElementById('approveUiModal');
+    if (!modal) return;
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+    approveUiOnOk = null;
+}
+
+const approveUiCancelBtn = document.getElementById('approveUiCancelBtn');
+if (approveUiCancelBtn) {
+    approveUiCancelBtn.addEventListener('click', closeApproveUi);
+}
+
+const approveUiOkBtn = document.getElementById('approveUiOkBtn');
+if (approveUiOkBtn) {
+    approveUiOkBtn.addEventListener('click', () => {
+        const action = approveUiOnOk;
+        closeApproveUi();
+        if (typeof action === 'function') {
+            action();
+        }
+    });
+}
+
+const approveUiModal = document.getElementById('approveUiModal');
+if (approveUiModal) {
+    approveUiModal.addEventListener('click', (e) => {
+        if (e.target === approveUiModal) {
+            closeApproveUi();
+        }
+    });
+}
+
+function getFirstVisibleProductId() {
+    const cards = document.querySelectorAll('.product-card');
+    for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
+        if (card.style.display === 'none') continue;
+        const id = parseInt(card.dataset.id, 10);
+        if (!isNaN(id)) return id;
+    }
+    return null;
 }

@@ -1,4 +1,4 @@
-﻿@model User_Profile_Seller_Juvi.Controllers.AccountSettingsPageViewModel
+@model BizzyQCU.Controllers.AccountSettingsPageViewModel
 
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -12,11 +12,11 @@
         {
             @Html.AntiForgeryToken()
 
-            <!-- ✅ REQUIRED HIDDEN FIELDS -->
+            <!-- ? REQUIRED HIDDEN FIELDS -->
             @Html.HiddenFor(m => m.Profile.PhotoDataUrl, new { id = "PhotoDataUrl" })
             @Html.HiddenFor(m => m.Profile.QrDataUrl, new { id = "QrDataUrl" })
 
-            <!-- ✅ FILE INPUTS -->
+            <!-- ? FILE INPUTS -->
             <input id="photoInput" type="file" accept="image/*" hidden />
             <input id="qrInput" type="file" accept="image/*" hidden />
 
@@ -31,7 +31,7 @@
             </div>
         }
 
-        <!-- ✅ PASSWORD MODAL -->
+        <!-- ? PASSWORD MODAL -->
         @Html.Partial("ChangePasswordModal", Model)
 
     </div>

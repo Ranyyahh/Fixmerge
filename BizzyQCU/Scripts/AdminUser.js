@@ -61,6 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
 let allFeedbacks = [];
 const qcuIdStore = {};
 const enterpriseDocStore = {};
+let currentPreviewObjectUrl = null;
 let allStudents = [];
 let allEnterprises = [];
 let currentEditContext = null;
@@ -137,19 +138,20 @@ function renderQcuIdCell(requestId, rawData) {
 function viewQcuId(requestId) {
     const modal = document.getElementById('qcuIdModal');
     const img = document.getElementById('qcuIdPreviewImage');
+    const pdf = document.getElementById('qcuIdPreviewPdf');
     const title = document.getElementById('previewModalTitle');
-    if (!modal || !img) {
+    if (!modal || !img || !pdf) {
         return;
     }
 
     const rawData = qcuIdStore[requestId];
-    const imageSrc = buildQcuIdImageSrc(rawData);
-    if (!imageSrc) {
-        alert('Invalid QCU ID image data.');
+    const preview = buildPreviewSource(rawData);
+    if (!preview || !preview.src) {
+        alert('Invalid QCU ID file data.');
         return;
     }
 
-    img.src = imageSrc;
+    setPreviewSource(img, pdf, preview);
     if (title) {
         title.textContent = 'QCU ID Preview';
     }
@@ -160,12 +162,20 @@ function viewQcuId(requestId) {
 function closeQcuIdModal() {
     const modal = document.getElementById('qcuIdModal');
     const img = document.getElementById('qcuIdPreviewImage');
-    if (!modal || !img) {
+    const pdf = document.getElementById('qcuIdPreviewPdf');
+    if (!modal || !img || !pdf) {
         return;
     }
     modal.classList.add('hidden');
     modal.setAttribute('aria-hidden', 'true');
     img.src = '';
+    img.style.display = 'none';
+    pdf.src = '';
+    pdf.style.display = 'none';
+    if (currentPreviewObjectUrl) {
+        URL.revokeObjectURL(currentPreviewObjectUrl);
+        currentPreviewObjectUrl = null;
+    }
 }
 
 function inferImageMimeType(base64Data) {
@@ -263,6 +273,97 @@ function inferImageMimeTypeFromBytes(bytes) {
     return 'image/jpeg';
 }
 
+function inferFileMimeTypeFromBytes(bytes) {
+    if (!bytes || bytes.length < 4) return 'application/octet-stream';
+    if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) return 'application/pdf';
+    return inferImageMimeTypeFromBytes(bytes);
+}
+
+function setPreviewSource(imgEl, pdfEl, preview) {
+    if (currentPreviewObjectUrl) {
+        URL.revokeObjectURL(currentPreviewObjectUrl);
+        currentPreviewObjectUrl = null;
+    }
+
+    if (preview.kind === 'pdf') {
+        imgEl.src = '';
+        imgEl.style.display = 'none';
+        pdfEl.src = preview.src;
+        pdfEl.style.display = 'block';
+    } else {
+        pdfEl.src = '';
+        pdfEl.style.display = 'none';
+        imgEl.src = preview.src;
+        imgEl.style.display = 'block';
+    }
+
+    if (preview.isObjectUrl) {
+        currentPreviewObjectUrl = preview.src;
+    }
+}
+
+function buildPreviewSource(rawValue) {
+    if (!rawValue) return null;
+
+    if (Array.isArray(rawValue) && rawValue.length > 0) {
+        const uint8 = new Uint8Array(rawValue);
+        const mimeType = inferFileMimeTypeFromBytes(uint8);
+        const blob = new Blob([uint8], { type: mimeType });
+        const src = URL.createObjectURL(blob);
+        return { src, kind: mimeType === 'application/pdf' ? 'pdf' : 'image', isObjectUrl: true };
+    }
+
+    if (typeof rawValue === 'object') {
+        const values = rawValue.$values || rawValue.values || rawValue.data;
+        if (Array.isArray(values) && values.length > 0) {
+            const uint8 = new Uint8Array(values);
+            const mimeType = inferFileMimeTypeFromBytes(uint8);
+            const blob = new Blob([uint8], { type: mimeType });
+            const src = URL.createObjectURL(blob);
+            return { src, kind: mimeType === 'application/pdf' ? 'pdf' : 'image', isObjectUrl: true };
+        }
+    }
+
+    const text = String(rawValue).trim();
+    if (!text) return null;
+
+    if (text.startsWith('data:application/pdf')) {
+        return { src: text, kind: 'pdf', isObjectUrl: false };
+    }
+    if (text.startsWith('data:image/')) {
+        return { src: text, kind: 'image', isObjectUrl: false };
+    }
+
+    if (text.startsWith('[') && text.endsWith(']')) {
+        try {
+            const bytes = JSON.parse(text);
+            if (Array.isArray(bytes) && bytes.length > 0) {
+                const uint8 = new Uint8Array(bytes);
+                const mimeType = inferFileMimeTypeFromBytes(uint8);
+                const blob = new Blob([uint8], { type: mimeType });
+                const src = URL.createObjectURL(blob);
+                return { src, kind: mimeType === 'application/pdf' ? 'pdf' : 'image', isObjectUrl: true };
+            }
+        } catch (e) {
+            console.warn('Invalid file byte-array format.', e);
+        }
+    }
+
+    const normalized = normalizeBase64(text);
+    if (!normalized) return null;
+
+    try {
+        const signature = atob(normalized).slice(0, 4);
+        if (signature === '%PDF') {
+            return { src: `data:application/pdf;base64,${normalized}`, kind: 'pdf', isObjectUrl: false };
+        }
+    } catch (e) {
+    }
+
+    const mimeType = inferImageMimeType(normalized);
+    return { src: `data:${mimeType};base64,${normalized}`, kind: 'image', isObjectUrl: false };
+}
+
 function loadAllEnterpriseRequests() {
     fetch('/AdminPanel/GetAllEnterpriseRequests')
         .then(response => response.json())
@@ -331,20 +432,21 @@ function renderEnterpriseDocumentCell(requestId, rawData) {
 
 function viewEnterpriseDocument(requestId) {
     const rawData = enterpriseDocStore[requestId];
-    const imageSrc = buildQcuIdImageSrc(rawData);
-    if (!imageSrc) {
+    const preview = buildPreviewSource(rawData);
+    if (!preview || !preview.src) {
         alert('Invalid enterprise document data.');
         return;
     }
 
     const modal = document.getElementById('qcuIdModal');
     const img = document.getElementById('qcuIdPreviewImage');
+    const pdf = document.getElementById('qcuIdPreviewPdf');
     const title = document.getElementById('previewModalTitle');
-    if (!modal || !img) {
+    if (!modal || !img || !pdf) {
         return;
     }
 
-    img.src = imageSrc;
+    setPreviewSource(img, pdf, preview);
     if (title) {
         title.textContent = 'Enterprise Document Preview';
     }

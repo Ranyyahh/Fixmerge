@@ -347,7 +347,8 @@ namespace BizzyQCU.Models.Admin
                                             QcuId = reader.IsDBNull(reader.GetOrdinal("qcu_id")) ? null : (byte[])reader["qcu_id"],
                                             StoreName = reader.IsDBNull(reader.GetOrdinal("store_name")) ? "" : reader.GetString("store_name"),
                                             StoreDescription = reader.IsDBNull(reader.GetOrdinal("store_description")) ? "" : reader.GetString("store_description"),
-                                            GcashNumber = reader.IsDBNull(reader.GetOrdinal("gcash_number")) ? "" : reader.GetString("gcash_number")
+                                            GcashNumber = reader.IsDBNull(reader.GetOrdinal("gcash_number")) ? "" : reader.GetString("gcash_number"),
+                                            UploadedDocument = reader.IsDBNull(reader.GetOrdinal("uploaded_document")) ? null : (byte[])reader["uploaded_document"]
                                         };
                                     }
                                 }
@@ -424,17 +425,59 @@ namespace BizzyQCU.Models.Admin
                             }
                             else if (request.Role == "enterprise")
                             {
-                                string insertEnterpriseSql = @"INSERT INTO enterprises (user_id, store_name, store_description, contact_number, gcash_number, status) 
-                                                       VALUES (@userId, @storeName, @storeDesc, @contact, @gcash, 'approved')";
-                                using (var cmd = new MySqlCommand(insertEnterpriseSql, conn, transaction))
+                                bool inserted = false;
+                                try
                                 {
-                                    cmd.Parameters.AddWithValue("@userId", userId);
-                                    cmd.Parameters.AddWithValue("@storeName", request.StoreName ?? "");
-                                    cmd.Parameters.AddWithValue("@storeDesc", request.StoreDescription ?? "");
-                                    cmd.Parameters.AddWithValue("@contact", request.ContactNumber ?? "");
-                                    cmd.Parameters.AddWithValue("@gcash", request.GcashNumber ?? "");
-                                    int rowsAffected = cmd.ExecuteNonQuery();
-                                    System.Diagnostics.Debug.WriteLine($"Inserted into enterprises, rows affected: {rowsAffected}");
+                                    string insertEnterpriseWithDocSql = @"INSERT INTO enterprises (user_id, store_name, store_description, contact_number, gcash_number, uploaded_document, status) 
+                                                               VALUES (@userId, @storeName, @storeDesc, @contact, @gcash, @uploadedDocument, 'approved')";
+                                    using (var cmd = new MySqlCommand(insertEnterpriseWithDocSql, conn, transaction))
+                                    {
+                                        cmd.Parameters.AddWithValue("@userId", userId);
+                                        cmd.Parameters.AddWithValue("@storeName", request.StoreName ?? "");
+                                        cmd.Parameters.AddWithValue("@storeDesc", request.StoreDescription ?? "");
+                                        cmd.Parameters.AddWithValue("@contact", request.ContactNumber ?? "");
+                                        cmd.Parameters.AddWithValue("@gcash", request.GcashNumber ?? "");
+                                        if (request.UploadedDocument == null || request.UploadedDocument.Length == 0)
+                                        {
+                                            cmd.Parameters.Add("@uploadedDocument", MySqlDbType.Blob).Value = DBNull.Value;
+                                        }
+                                        else
+                                        {
+                                            cmd.Parameters.Add("@uploadedDocument", MySqlDbType.Blob).Value = request.UploadedDocument;
+                                        }
+                                        int rowsAffected = cmd.ExecuteNonQuery();
+                                        inserted = rowsAffected > 0;
+                                        System.Diagnostics.Debug.WriteLine($"Inserted into enterprises (with document), rows affected: {rowsAffected}");
+                                    }
+                                }
+                                catch (MySqlException ex)
+                                {
+                                    // Backward compatibility for databases that do not yet have enterprises.uploaded_document
+                                    if (ex.Message.IndexOf("uploaded_document", StringComparison.OrdinalIgnoreCase) >= 0)
+                                    {
+                                        string insertEnterpriseLegacySql = @"INSERT INTO enterprises (user_id, store_name, store_description, contact_number, gcash_number, status) 
+                                                                 VALUES (@userId, @storeName, @storeDesc, @contact, @gcash, 'approved')";
+                                        using (var cmd = new MySqlCommand(insertEnterpriseLegacySql, conn, transaction))
+                                        {
+                                            cmd.Parameters.AddWithValue("@userId", userId);
+                                            cmd.Parameters.AddWithValue("@storeName", request.StoreName ?? "");
+                                            cmd.Parameters.AddWithValue("@storeDesc", request.StoreDescription ?? "");
+                                            cmd.Parameters.AddWithValue("@contact", request.ContactNumber ?? "");
+                                            cmd.Parameters.AddWithValue("@gcash", request.GcashNumber ?? "");
+                                            int rowsAffected = cmd.ExecuteNonQuery();
+                                            inserted = rowsAffected > 0;
+                                            System.Diagnostics.Debug.WriteLine($"Inserted into enterprises (legacy), rows affected: {rowsAffected}");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        throw;
+                                    }
+                                }
+
+                                if (!inserted)
+                                {
+                                    throw new Exception("Failed to insert enterprise during approval.");
                                 }
                             }
 
@@ -923,6 +966,50 @@ namespace BizzyQCU.Models.Admin
             return enterprise;
         }
 
+        public byte[] GetEnterpriseDocumentByEnterpriseId(int enterpriseId)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"
+                        SELECT COALESCE(
+                            e.uploaded_document,
+                            (
+                                SELECT ar.uploaded_document
+                                FROM approval_requests ar
+                                INNER JOIN users u2 ON u2.username = ar.username
+                                WHERE ar.role = 'enterprise'
+                                  AND u2.user_id = e.user_id
+                                  AND ar.uploaded_document IS NOT NULL
+                                ORDER BY ar.request_id DESC
+                                LIMIT 1
+                            )
+                        ) AS enterprise_document
+                        FROM enterprises e
+                        WHERE e.enterprise_id = @enterpriseId
+                        LIMIT 1";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                        var result = cmd.ExecuteScalar();
+                        if (result == null || result == DBNull.Value)
+                        {
+                            return null;
+                        }
+                        return (byte[])result;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetEnterpriseDocumentByEnterpriseId error: " + ex.Message);
+                return null;
+            }
+        }
+
         // ========== GET PRODUCTS BY ENTERPRISE ID ==========
         public List<EnterpriseProduct> GetProductsByEnterpriseId(int enterpriseId)
         {
@@ -952,7 +1039,9 @@ namespace BizzyQCU.Models.Admin
                                     ProductName = reader.GetString("product_name"),
                                     Description = reader.IsDBNull(reader.GetOrdinal("description")) ? "" : reader.GetString("description"),
                                     Price = reader.GetDecimal("price"),
-                                    ProductImage = "", // Handle image conversion if needed
+                                    ProductImage = reader.IsDBNull(reader.GetOrdinal("product_image"))
+                                        ? ""
+                                        : BuildImageDataUri((byte[])reader["product_image"]),
                                     Status = reader.GetString("status")
                                 });
                             }
@@ -1129,7 +1218,7 @@ namespace BizzyQCU.Models.Admin
                 {
                     conn.Open();
                     string sql = @"SELECT p.product_id, p.enterprise_id, p.product_name, p.description, 
-                                          p.price, p.product_image, p.status, p.created_at,
+                                          p.price, p.product_image, p.status, p.is_approved, p.created_at,
                                           e.store_name, u.email, e.rating_avg, e.status as enterprise_status
                                    FROM products p
                                    INNER JOIN enterprises e ON p.enterprise_id = e.enterprise_id
@@ -1151,8 +1240,11 @@ namespace BizzyQCU.Models.Admin
                                     ProductName = reader.GetString("product_name"),
                                     Description = reader.IsDBNull(reader.GetOrdinal("description")) ? "" : reader.GetString("description"),
                                     Price = reader.GetDecimal("price"),
-                                    ProductImage = "", // Handle image if needed
+                                    ProductImage = reader.IsDBNull(reader.GetOrdinal("product_image"))
+                                        ? ""
+                                        : BuildImageDataUri((byte[])reader["product_image"]),
                                     Status = reader.GetString("status"),
+                                    ApprovalState = reader.IsDBNull(reader.GetOrdinal("is_approved")) ? 0 : reader.GetInt32("is_approved"),
                                     CreatedAt = reader.GetDateTime("created_at"),
                                     StoreName = reader.GetString("store_name"),
                                     Email = reader.GetString("email"),
@@ -1179,19 +1271,96 @@ namespace BizzyQCU.Models.Admin
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = "UPDATE products SET status = 'active' WHERE product_id = @productId";
+                    string sql = "UPDATE products SET status = 'active', is_approved = 1 WHERE product_id = @productId";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@productId", productId);
-                        return cmd.ExecuteNonQuery() > 0;
+                        var affected = cmd.ExecuteNonQuery();
+                        if (affected > 0)
+                        {
+                            return true;
+                        }
+
+                        // If no row changed, treat as success when already approved/active.
+                        string checkSql = "SELECT status, is_approved FROM products WHERE product_id = @productId LIMIT 1";
+                        using (var checkCmd = new MySqlCommand(checkSql, conn))
+                        {
+                            checkCmd.Parameters.AddWithValue("@productId", productId);
+                            using (var reader = checkCmd.ExecuteReader())
+                            {
+                                if (!reader.Read()) return false;
+                                var status = reader.IsDBNull(reader.GetOrdinal("status")) ? "" : reader.GetString("status");
+                                var approved = reader.IsDBNull(reader.GetOrdinal("is_approved")) ? 0 : reader.GetInt32("is_approved");
+                                return string.Equals(status, "active", StringComparison.OrdinalIgnoreCase) && approved == 1;
+                            }
+                        }
                     }
                 }
+            }
+            catch (MySqlException ex)
+            {
+                // Backward compatibility for DBs without is_approved column
+                if (ex.Message.IndexOf("is_approved", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    try
+                    {
+                        using (var conn = new MySqlConnection(connectionString))
+                        {
+                            conn.Open();
+                            string legacySql = "UPDATE products SET status = 'active' WHERE product_id = @productId";
+                            using (var cmd = new MySqlCommand(legacySql, conn))
+                            {
+                                cmd.Parameters.AddWithValue("@productId", productId);
+                                var affected = cmd.ExecuteNonQuery();
+                                if (affected > 0)
+                                {
+                                    return true;
+                                }
+
+                                string checkSql = "SELECT status FROM products WHERE product_id = @productId LIMIT 1";
+                                using (var checkCmd = new MySqlCommand(checkSql, conn))
+                                {
+                                    checkCmd.Parameters.AddWithValue("@productId", productId);
+                                    var result = checkCmd.ExecuteScalar();
+                                    return result != null && string.Equals(result.ToString(), "active", StringComparison.OrdinalIgnoreCase);
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception innerEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine("ApproveProduct legacy fallback error: " + innerEx.Message);
+                        return false;
+                    }
+                }
+
+                System.Diagnostics.Debug.WriteLine("ApproveProduct MySQL error: " + ex.Message);
+                return false;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("ApproveProduct error: " + ex.Message);
                 return false;
             }
+        }
+
+        private string BuildImageDataUri(byte[] bytes)
+        {
+            if (bytes == null || bytes.Length == 0) return "";
+
+            string mime = "image/jpeg";
+            if (bytes.Length >= 4)
+            {
+                if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47) mime = "image/png";
+                else if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) mime = "image/jpeg";
+                else if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46) mime = "image/gif";
+                else if (bytes[0] == 0x42 && bytes[1] == 0x4D) mime = "image/bmp";
+                else if (bytes.Length > 11 &&
+                    bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46 &&
+                    bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50) mime = "image/webp";
+            }
+
+            return "data:" + mime + ";base64," + Convert.ToBase64String(bytes);
         }
 
         // ========== REMOVE PRODUCT ==========
@@ -1202,13 +1371,58 @@ namespace BizzyQCU.Models.Admin
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = "DELETE FROM products WHERE product_id = @productId";
+                    string sql = "UPDATE products SET status = 'inactive', is_approved = -1 WHERE product_id = @productId";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@productId", productId);
-                        return cmd.ExecuteNonQuery() > 0;
+                        var affected = cmd.ExecuteNonQuery();
+                        if (affected > 0)
+                        {
+                            return true;
+                        }
+
+                        string checkSql = "SELECT status, is_approved FROM products WHERE product_id = @productId LIMIT 1";
+                        using (var checkCmd = new MySqlCommand(checkSql, conn))
+                        {
+                            checkCmd.Parameters.AddWithValue("@productId", productId);
+                            using (var reader = checkCmd.ExecuteReader())
+                            {
+                                if (!reader.Read()) return false;
+                                var status = reader.IsDBNull(reader.GetOrdinal("status")) ? "" : reader.GetString("status");
+                                var approval = reader.IsDBNull(reader.GetOrdinal("is_approved")) ? 0 : reader.GetInt32("is_approved");
+                                return string.Equals(status, "inactive", StringComparison.OrdinalIgnoreCase) && approval == -1;
+                            }
+                        }
                     }
                 }
+            }
+            catch (MySqlException ex)
+            {
+                // Backward compatibility for DBs without is_approved column
+                if (ex.Message.IndexOf("is_approved", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    try
+                    {
+                        using (var conn = new MySqlConnection(connectionString))
+                        {
+                            conn.Open();
+                            string legacySql = "UPDATE products SET status = 'inactive' WHERE product_id = @productId";
+                            using (var cmd = new MySqlCommand(legacySql, conn))
+                            {
+                                cmd.Parameters.AddWithValue("@productId", productId);
+                                return cmd.ExecuteNonQuery() > 0;
+                            }
+                        }
+                    }
+                    catch (Exception innerEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine("RemoveProduct legacy fallback error: " + innerEx.Message);
+                        return false;
+                    }
+                }
+
+                System.Diagnostics.Debug.WriteLine("RemoveProduct MySQL error: " + ex.Message);
+                return false;
             }
             catch (Exception ex)
             {

@@ -12,6 +12,7 @@ namespace BizzyQCU.Models.Admin
         public decimal Price { get; set; }
         public string ProductImage { get; set; }
         public string Status { get; set; }
+        public int ApprovalState { get; set; }
         public DateTime CreatedAt { get; set; }
 
         public string StoreName { get; set; }

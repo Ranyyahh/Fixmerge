@@ -193,7 +193,7 @@ namespace BizzyQCU.Models.Landingpage
                 {
                     conn.Open();
                     string sql = @"INSERT INTO products (enterprise_id, category_id, product_name, description, price, preparation_time, product_image, status, is_approved, submitted_at, created_at) 
-                                   VALUES (@enterpriseId, @categoryId, @productName, @description, @price, @preparationTime, @productImage, 'active', 0, NOW(), NOW())";
+                                   VALUES (@enterpriseId, @categoryId, @productName, @description, @price, @preparationTime, @productImage, 'inactive', 0, NOW(), NOW())";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
@@ -1143,8 +1143,8 @@ namespace BizzyQCU.Models.Landingpage
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = @"INSERT INTO approval_requests (username, password, email, role, firstname, lastname, birthdate, student_number, section, contact_number, status) 
-                                   VALUES (@username, @password, @email, 'student', @firstname, @lastname, @birthdate, @studentNumber, @section, @contact, 'pending')";
+                    string sql = @"INSERT INTO approval_requests (username, password, email, role, firstname, lastname, birthdate, student_number, section, contact_number, qcu_id, status) 
+                                   VALUES (@username, @password, @email, 'student', @firstname, @lastname, @birthdate, @studentNumber, @section, @contact, @qcuId, 'pending')";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@username", username);
@@ -1156,6 +1156,14 @@ namespace BizzyQCU.Models.Landingpage
                         cmd.Parameters.AddWithValue("@studentNumber", studentNumber ?? "");
                         cmd.Parameters.AddWithValue("@section", section ?? "");
                         cmd.Parameters.AddWithValue("@contact", contactNumber ?? "");
+                        if (qcuIdBytes == null || qcuIdBytes.Length == 0)
+                        {
+                            cmd.Parameters.Add("@qcuId", MySqlDbType.Blob).Value = DBNull.Value;
+                        }
+                        else
+                        {
+                            cmd.Parameters.Add("@qcuId", MySqlDbType.Blob).Value = qcuIdBytes;
+                        }
                         cmd.ExecuteNonQuery();
                     }
                     return true;
@@ -1171,8 +1179,8 @@ namespace BizzyQCU.Models.Landingpage
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = @"INSERT INTO approval_requests (username, password, email, role, store_name, store_description, contact_number, gcash_number, status) 
-                                   VALUES (@username, @password, @email, 'enterprise', @storeName, @storeDesc, @contact, @gcash, 'pending')";
+                    string sql = @"INSERT INTO approval_requests (username, password, email, role, store_name, store_description, contact_number, gcash_number, uploaded_document, status) 
+                                   VALUES (@username, @password, @email, 'enterprise', @storeName, @storeDesc, @contact, @gcash, @uploadedDocument, 'pending')";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@username", username);
@@ -1182,6 +1190,14 @@ namespace BizzyQCU.Models.Landingpage
                         cmd.Parameters.AddWithValue("@storeDesc", enterpriseType ?? "");
                         cmd.Parameters.AddWithValue("@contact", contactNumber ?? "");
                         cmd.Parameters.AddWithValue("@gcash", gcashNumber ?? "");
+                        if (uploadedDocumentBytes == null || uploadedDocumentBytes.Length == 0)
+                        {
+                            cmd.Parameters.Add("@uploadedDocument", MySqlDbType.Blob).Value = DBNull.Value;
+                        }
+                        else
+                        {
+                            cmd.Parameters.Add("@uploadedDocument", MySqlDbType.Blob).Value = uploadedDocumentBytes;
+                        }
                         cmd.ExecuteNonQuery();
                     }
                     return true;
@@ -1283,14 +1299,88 @@ namespace BizzyQCU.Models.Landingpage
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = @"UPDATE enterprises SET store_name = @storeName, enterprise_type = @enterpriseType, gcash_number = @gcashNumber WHERE user_id = @userId";
-                    using (var cmd = new MySqlCommand(sql, conn))
+                    using (var tx = conn.BeginTransaction())
                     {
-                        cmd.Parameters.AddWithValue("@storeName", storeName ?? "");
-                        cmd.Parameters.AddWithValue("@enterpriseType", enterpriseType ?? "");
-                        cmd.Parameters.AddWithValue("@gcashNumber", gcashNumber ?? "");
-                        cmd.Parameters.AddWithValue("@userId", userId);
-                        cmd.ExecuteNonQuery();
+                        int enterpriseId = 0;
+                        string enterpriseIdSql = "SELECT enterprise_id FROM enterprises WHERE user_id = @userId LIMIT 1";
+                        using (var idCmd = new MySqlCommand(enterpriseIdSql, conn, tx))
+                        {
+                            idCmd.Parameters.AddWithValue("@userId", userId);
+                            var idResult = idCmd.ExecuteScalar();
+                            if (idResult == null || idResult == DBNull.Value)
+                            {
+                                tx.Rollback();
+                                return false;
+                            }
+                            enterpriseId = Convert.ToInt32(idResult);
+                        }
+
+                        string enterpriseSql = @"UPDATE enterprises
+                                                 SET store_name = @storeName,
+                                                     enterprise_type = @enterpriseType,
+                                                     gcash_number = @gcashNumber
+                                                 WHERE user_id = @userId";
+                        using (var enterpriseCmd = new MySqlCommand(enterpriseSql, conn, tx))
+                        {
+                            enterpriseCmd.Parameters.AddWithValue("@storeName", storeName ?? "");
+                            enterpriseCmd.Parameters.AddWithValue("@enterpriseType", enterpriseType ?? "");
+                            enterpriseCmd.Parameters.AddWithValue("@gcashNumber", gcashNumber ?? "");
+                            enterpriseCmd.Parameters.AddWithValue("@userId", userId);
+                            enterpriseCmd.ExecuteNonQuery();
+                        }
+
+                        string userSql = @"UPDATE users SET email = @email WHERE user_id = @userId";
+                        using (var userCmd = new MySqlCommand(userSql, conn, tx))
+                        {
+                            userCmd.Parameters.AddWithValue("@email", email ?? "");
+                            userCmd.Parameters.AddWithValue("@userId", userId);
+                            userCmd.ExecuteNonQuery();
+                        }
+
+                        string managerCountSql = "SELECT COUNT(*) FROM enterprise_managers WHERE enterprise_id = @enterpriseId";
+                        long managerCount;
+                        using (var countCmd = new MySqlCommand(managerCountSql, conn, tx))
+                        {
+                            countCmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                            managerCount = (long)countCmd.ExecuteScalar();
+                        }
+
+                        if (managerCount > 0)
+                        {
+                            string updateManagerSql = @"UPDATE enterprise_managers
+                                                        SET manager_name = @managerName,
+                                                            manager_student_id = @managerStudentId,
+                                                            manager_contact = @managerContact,
+                                                            manager_section = @managerSection
+                                                        WHERE enterprise_id = @enterpriseId";
+                            using (var updateManagerCmd = new MySqlCommand(updateManagerSql, conn, tx))
+                            {
+                                updateManagerCmd.Parameters.AddWithValue("@managerName", managerName ?? "");
+                                updateManagerCmd.Parameters.AddWithValue("@managerStudentId", managerStudentId ?? "");
+                                updateManagerCmd.Parameters.AddWithValue("@managerContact", managerContact ?? "");
+                                updateManagerCmd.Parameters.AddWithValue("@managerSection", section ?? "");
+                                updateManagerCmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                                updateManagerCmd.ExecuteNonQuery();
+                            }
+                        }
+                        else
+                        {
+                            string insertManagerSql = @"INSERT INTO enterprise_managers
+                                                        (enterprise_id, manager_name, manager_student_id, manager_contact, manager_section)
+                                                        VALUES
+                                                        (@enterpriseId, @managerName, @managerStudentId, @managerContact, @managerSection)";
+                            using (var insertManagerCmd = new MySqlCommand(insertManagerSql, conn, tx))
+                            {
+                                insertManagerCmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                                insertManagerCmd.Parameters.AddWithValue("@managerName", managerName ?? "");
+                                insertManagerCmd.Parameters.AddWithValue("@managerStudentId", managerStudentId ?? "");
+                                insertManagerCmd.Parameters.AddWithValue("@managerContact", managerContact ?? "");
+                                insertManagerCmd.Parameters.AddWithValue("@managerSection", section ?? "");
+                                insertManagerCmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        tx.Commit();
                     }
                     return true;
                 }

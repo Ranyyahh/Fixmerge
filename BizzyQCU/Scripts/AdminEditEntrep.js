@@ -9,6 +9,7 @@ const enterpriseId = urlParams.get('enterpriseId');
 let currentProductId = null;
 let activeTab = 'sales';
 let allProducts = [];
+let currentDocPreviewUrl = null;
 
 // Load enterprise details on page load
 document.addEventListener('DOMContentLoaded', function () {
@@ -161,9 +162,17 @@ function populateProduct(product) {
     currentProductId = product.ProductId;
     const productNameEl = document.getElementById('productName');
     const productPriceEl = document.getElementById('productPrice');
+    const productImgEl = document.getElementById('productImg');
 
     if (productNameEl) productNameEl.textContent = product.ProductName || 'No product';
     if (productPriceEl) productPriceEl.textContent = '₱' + (product.Price || 0).toFixed(2);
+    if (productImgEl) {
+        if (product.ProductImage) {
+            productImgEl.src = product.ProductImage;
+        } else {
+            productImgEl.src = '/Content/Images/ProductPlaceholder.png';
+        }
+    }
 }
 
 function showError(message) {
@@ -407,6 +416,136 @@ if (viewListingBtn) {
     viewListingBtn.addEventListener('click', () => {
         window.location.href = `/AdminPanel/AdminItemListing?enterpriseId=${enterpriseId}`;
     });
+}
+
+const viewDocsBtn = document.getElementById('viewDocsBtn');
+const docPreviewModal = document.getElementById('docPreviewModal');
+const docPreviewBackdrop = document.getElementById('docPreviewBackdrop');
+const closeDocPreviewBtn = document.getElementById('closeDocPreviewBtn');
+const docPreviewImage = document.getElementById('docPreviewImage');
+const docPreviewPdf = document.getElementById('docPreviewPdf');
+
+if (viewDocsBtn) {
+    viewDocsBtn.addEventListener('click', () => {
+        if (!enterpriseId) {
+            alert('No enterprise selected.');
+            return;
+        }
+
+        fetch(`/AdminPanel/GetEnterpriseDocument?enterpriseId=${enterpriseId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data || !data.success || !data.data) {
+                    alert((data && data.message) ? data.message : 'No document found.');
+                    return;
+                }
+
+                const preview = buildEnterpriseDocPreview(data.data);
+                if (!preview) {
+                    alert('Unable to preview document.');
+                    return;
+                }
+                openDocPreview(preview);
+            })
+            .catch(error => {
+                console.error('Error loading enterprise document:', error);
+                alert('Failed to load document.');
+            });
+    });
+}
+
+if (docPreviewBackdrop) {
+    docPreviewBackdrop.addEventListener('click', closeDocPreview);
+}
+
+if (closeDocPreviewBtn) {
+    closeDocPreviewBtn.addEventListener('click', closeDocPreview);
+}
+
+function openDocPreview(preview) {
+    if (!docPreviewModal || !docPreviewImage || !docPreviewPdf) return;
+
+    if (currentDocPreviewUrl) {
+        URL.revokeObjectURL(currentDocPreviewUrl);
+        currentDocPreviewUrl = null;
+    }
+
+    if (preview.type === 'pdf') {
+        docPreviewImage.style.display = 'none';
+        docPreviewImage.src = '';
+        docPreviewPdf.style.display = 'block';
+        docPreviewPdf.src = preview.src;
+    } else {
+        docPreviewPdf.style.display = 'none';
+        docPreviewPdf.src = '';
+        docPreviewImage.style.display = 'block';
+        docPreviewImage.src = preview.src;
+    }
+
+    if (preview.isObjectUrl) {
+        currentDocPreviewUrl = preview.src;
+    }
+
+    docPreviewModal.style.display = 'block';
+}
+
+function closeDocPreview() {
+    if (!docPreviewModal || !docPreviewImage || !docPreviewPdf) return;
+
+    docPreviewModal.style.display = 'none';
+    docPreviewImage.src = '';
+    docPreviewImage.style.display = 'none';
+    docPreviewPdf.src = '';
+    docPreviewPdf.style.display = 'none';
+
+    if (currentDocPreviewUrl) {
+        URL.revokeObjectURL(currentDocPreviewUrl);
+        currentDocPreviewUrl = null;
+    }
+}
+
+function buildEnterpriseDocPreview(base64Value) {
+    const normalized = normalizeDocBase64(base64Value);
+    if (!normalized) return null;
+
+    let bytes;
+    try {
+        const binary = atob(normalized);
+        bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    } catch (e) {
+        return null;
+    }
+
+    const mime = inferDocMime(bytes);
+    if (mime === 'application/pdf') {
+        return { type: 'pdf', src: `data:application/pdf;base64,${normalized}`, isObjectUrl: false };
+    }
+
+    const blob = new Blob([bytes], { type: mime });
+    const src = URL.createObjectURL(blob);
+    return { type: 'image', src: src, isObjectUrl: true };
+}
+
+function normalizeDocBase64(value) {
+    if (!value) return null;
+    let cleaned = String(value).trim();
+    cleaned = cleaned.replace(/^"|"$/g, '');
+    cleaned = cleaned.replace(/\s+/g, '');
+    cleaned = cleaned.replace(/-/g, '+').replace(/_/g, '/');
+    const remainder = cleaned.length % 4;
+    if (remainder !== 0) cleaned = cleaned.padEnd(cleaned.length + (4 - remainder), '=');
+    return cleaned;
+}
+
+function inferDocMime(bytes) {
+    if (!bytes || bytes.length < 4) return 'image/jpeg';
+    if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) return 'application/pdf';
+    if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) return 'image/png';
+    if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) return 'image/jpeg';
+    if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) return 'image/gif';
+    if (bytes[0] === 0x42 && bytes[1] === 0x4D) return 'image/bmp';
+    return 'image/jpeg';
 }
 
 // Tab switching for chart

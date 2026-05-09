@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Web;
 using System.Web.Mvc;
 using BizzyQCU.Models.Landingpage;
 
-namespace User_Profile_Seller_Juvi.Controllers
+namespace BizzyQCU.Controllers
 {
     // ==================== MODELS ====================
     [Serializable]
@@ -68,22 +68,18 @@ namespace User_Profile_Seller_Juvi.Controllers
         [EmailAddress(ErrorMessage = "Enter a valid email address.")]
         public string Email { get; set; }
 
-        [Required(ErrorMessage = "Manager name is required.")]
         [Display(Name = "Manager Name")]
         public string ManagerName { get; set; }
 
-        [Required(ErrorMessage = "Student ID is required.")]
         [Display(Name = "Student ID")]
-        [RegularExpression(@"^\d{2}-\d{4}$", ErrorMessage = "Use the format 00-0000.")]
+        [RegularExpression(@"^$|^\d{2}-\d{4}$", ErrorMessage = "Use the format 00-0000.")]
         public string StudentId { get; set; }
 
-        [Required(ErrorMessage = "Section is required.")]
         [Display(Name = "Section")]
         public string Section { get; set; }
 
-        [Required(ErrorMessage = "Manager Gcash number is required.")]
         [Display(Name = "Manager Gcash No.")]
-        [RegularExpression(@"^09\d{9}$", ErrorMessage = "Enter an 11-digit Gcash number starting with 09.")]
+        [RegularExpression(@"^$|^09\d{9}$", ErrorMessage = "Enter an 11-digit Gcash number starting with 09.")]
         public string ManagerContactNumber { get; set; }
     }
 
@@ -516,6 +512,7 @@ namespace User_Profile_Seller_Juvi.Controllers
             }
 
             string logoPath = null;
+            string qrPath = null;
             if (profileFile != null && profileFile.ContentLength > 0)
             {
                 var uploadsFolder = Server.MapPath("~/Content/Uploads");
@@ -535,6 +532,19 @@ namespace User_Profile_Seller_Juvi.Controllers
             byte[] qrBytes = null;
             if (qrFile != null && qrFile.ContentLength > 0)
             {
+                var uploadsFolder = Server.MapPath("~/Content/Uploads");
+                if (!System.IO.Directory.Exists(uploadsFolder))
+                {
+                    System.IO.Directory.CreateDirectory(uploadsFolder);
+                }
+
+                var qrExtension = System.IO.Path.GetExtension(qrFile.FileName);
+                var qrSafeExt = string.IsNullOrWhiteSpace(qrExtension) ? ".png" : qrExtension;
+                var qrFileName = $"enterprise_{userId}_qr{qrSafeExt}";
+                var qrFullPath = System.IO.Path.Combine(uploadsFolder, qrFileName);
+                qrFile.SaveAs(qrFullPath);
+                qrPath = "/Content/Uploads/" + qrFileName;
+
                 using (var br = new System.IO.BinaryReader(qrFile.InputStream))
                 {
                     qrBytes = br.ReadBytes(qrFile.ContentLength);
@@ -560,8 +570,18 @@ namespace User_Profile_Seller_Juvi.Controllers
                 return View("EnterpriseProfile", BuildAccountSettingsViewModel(model, new ChangePasswordViewModel()));
             }
 
+            // Keep uploaded assets visible even if DB columns for these are not populated.
+            if (!string.IsNullOrWhiteSpace(logoPath))
+            {
+                Session["EnterpriseLogoPath"] = logoPath;
+            }
+            if (!string.IsNullOrWhiteSpace(qrPath))
+            {
+                Session["EnterpriseQrPath"] = qrPath;
+            }
+
             TempData["FlashMessage"] = "Enterprise profile saved.";
-            return RedirectToAction("EnterpriseProfile");
+            return RedirectToAction("Index");
         }
 
         private void PrepareProfilePage(string settingsAction, string navSection)
@@ -605,9 +625,13 @@ namespace User_Profile_Seller_Juvi.Controllers
             var enterpriseType = enterpriseData == null ? string.Empty : (enterpriseData.EnterpriseType ?? string.Empty);
             var enterpriseGcash = enterpriseData == null ? string.Empty : (enterpriseData.GcashNumber ?? string.Empty);
             var enterprisePhoto = enterpriseData == null || string.IsNullOrWhiteSpace(enterpriseData.StoreLogoPath)
-                ? DefaultPhotoDataUrl()
+                ? (ResolveUploadedAssetPath(userId, "logo") ?? (Session["EnterpriseLogoPath"] as string) ?? DefaultPhotoDataUrl())
                 : enterpriseData.StoreLogoPath;
-            var enterpriseQr = enterpriseData == null ? string.Empty : (enterpriseData.QrDataUrl ?? string.Empty);
+            var enterpriseQr = enterpriseData == null
+                ? (ResolveUploadedAssetPath(userId, "qr") ?? (Session["EnterpriseQrPath"] as string) ?? string.Empty)
+                : (!string.IsNullOrWhiteSpace(enterpriseData.QrDataUrl)
+                    ? enterpriseData.QrDataUrl
+                    : (ResolveUploadedAssetPath(userId, "qr") ?? (Session["EnterpriseQrPath"] as string) ?? string.Empty));
 
             return new EnterpriseDashboardViewModel
             {
@@ -779,8 +803,12 @@ namespace User_Profile_Seller_Juvi.Controllers
 
             return new UserProfileViewModel
             {
-                PhotoDataUrl = string.IsNullOrWhiteSpace(data.StoreLogoPath) ? DefaultPhotoDataUrl() : data.StoreLogoPath,
-                QrDataUrl = data.QrDataUrl ?? string.Empty,
+                PhotoDataUrl = string.IsNullOrWhiteSpace(data.StoreLogoPath)
+                    ? (ResolveUploadedAssetPath(userId, "logo") ?? (Session["EnterpriseLogoPath"] as string) ?? DefaultPhotoDataUrl())
+                    : data.StoreLogoPath,
+                QrDataUrl = !string.IsNullOrWhiteSpace(data.QrDataUrl)
+                    ? data.QrDataUrl
+                    : (ResolveUploadedAssetPath(userId, "qr") ?? (Session["EnterpriseQrPath"] as string) ?? string.Empty),
                 EnterpriseName = data.StoreName ?? string.Empty,
                 EnterpriseType = data.EnterpriseType ?? string.Empty,
                 Contact = data.GcashNumber ?? string.Empty,
@@ -790,6 +818,46 @@ namespace User_Profile_Seller_Juvi.Controllers
                 Section = data.Section ?? string.Empty,
                 ManagerContactNumber = data.ManagerContact ?? string.Empty
             };
+        }
+
+        private string ResolveUploadedAssetPath(int userId, string assetType)
+        {
+            if (userId <= 0 || string.IsNullOrWhiteSpace(assetType))
+            {
+                return null;
+            }
+
+            try
+            {
+                var uploadsFolder = Server.MapPath("~/Content/Uploads");
+                if (string.IsNullOrWhiteSpace(uploadsFolder) || !System.IO.Directory.Exists(uploadsFolder))
+                {
+                    return null;
+                }
+
+                var pattern = $"enterprise_{userId}_{assetType}.*";
+                var files = System.IO.Directory.GetFiles(uploadsFolder, pattern);
+                if (files == null || files.Length == 0)
+                {
+                    return null;
+                }
+
+                var latest = files
+                    .Select(path => new System.IO.FileInfo(path))
+                    .OrderByDescending(info => info.LastWriteTimeUtc)
+                    .FirstOrDefault();
+
+                if (latest == null)
+                {
+                    return null;
+                }
+
+                return "/Content/Uploads/" + latest.Name;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

@@ -81,7 +81,7 @@
 
                 <div class="bottom-actions">
                     <button class="approve-btn" id="approveItemBtn">Approve Selected</button>
-                    <button class="remove-btn" id="removeItemBtn">Remove Selected</button>
+                    <button class="remove-btn" id="removeItemBtn">Reject Selected</button>
                 </div>
 
             </div>
@@ -104,11 +104,22 @@
 
     <div class="toast" id="toast" style="display: none;"></div>
 
+    <div class="approve-ui-backdrop" id="approveUiModal" aria-hidden="true">
+        <div class="approve-ui-card" role="dialog" aria-modal="true" aria-labelledby="approveUiTitle">
+            <h3 id="approveUiTitle" class="approve-ui-title">Approve Product</h3>
+            <p id="approveUiMessage" class="approve-ui-message">Are you sure?</p>
+            <div class="approve-ui-actions">
+                <button type="button" class="approve-ui-btn cancel" id="approveUiCancelBtn">Cancel</button>
+                <button type="button" class="approve-ui-btn ok" id="approveUiOkBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const listingUrl = '@Url.Action("AdminItemListing", "AdminPanel")';
         const enterpriseId = '@ViewBag.EnterpriseId';
     </script>
-    <script src="~/Scripts/AdminItemListing.js"></script>
+    <script src="~/Scripts/AdminItemListing.js?v=20260509a"></script>
 
 </body>
 </html>
