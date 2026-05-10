@@ -125,20 +125,26 @@
         @* Delivery method badge *@
         <div class="glass-card" style="color:#111FA2;">
             <p class="status-subtitle" style="color:#5478FF; font-weight:800; margin-bottom:5px;">🚚 DELIVERY METHOD</p>
-            <p style="font-weight:800; margin:0;">
-                @if (Model.DeliveryOption == "pickup")
-                {
-                    @:Store Pickup
-                }
-                else if (Model.DeliveryOption == "room_to_room")
-                {
-                    @:Room to Room
-                }
-                else
-                {
-                    @:Campus Delivery
-                }
-            </p>
+            <div class="delivery-method-row">
+                <p style="font-weight:800; margin:0;">
+                    @if (Model.DeliveryOption == "pickup")
+                    {
+                        @:Store Pickup
+                    }
+                    else if (Model.DeliveryOption == "room_to_room")
+                    {
+                        @:Room to Room
+                    }
+                    else
+                    {
+                        @:Campus Delivery
+                    }
+                </p>
+                <button type="button" class="msg-courier" onclick="location.href='@Url.Action("Chatroom", "Chatroom")'">
+                    Message Courier
+                </button>
+
+            </div>
         </div>
 
     </div>

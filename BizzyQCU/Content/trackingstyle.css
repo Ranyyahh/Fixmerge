@@ -124,6 +124,17 @@ main, .container, .body-content {
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
 
+.delivery-method-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.msg-courier {
+    margin-left: auto;
+}
+
 .history-card-header {
     display: flex;
     justify-content: space-between;

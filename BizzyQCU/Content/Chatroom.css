@@ -36,7 +36,7 @@ body.home-bg {
 
 .chatroom-shell {
     width: min(1200px, 94vw);
-    margin: 0 auto;
+    margin: 30px auto 0;
     display: grid;
     grid-template-columns: 1fr;
     gap: 18px;

@@ -34,6 +34,36 @@ namespace BizzyQCU.Controllers
             return View();
         }
 
+        public ActionResult EnterpriseChatroom(int? orderId)
+        {
+            if (Session["UserId"] == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
+
+            string role = Session["Role"]?.ToString();
+            if (role != "enterprise")
+            {
+                return RedirectToAction("ProductList", "ProductList");
+            }
+
+            int userId = (int)Session["UserId"];
+            var enterprise = db.GetEnterpriseByUserId(userId);
+
+            if (enterprise == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
+
+            var orders = db.GetPendingOrders(enterprise.EnterpriseId) ?? new System.Collections.Generic.List<PendingOrder>();
+            int activeOrderId = orderId ?? orders.FirstOrDefault()?.OrderId ?? 0;
+
+            ViewBag.EnterpriseName = enterprise.StoreName;
+            ViewBag.ActiveOrderId = activeOrderId;
+
+            return View(orders);
+        }
+
         // ============================================
         // API: GET ENTERPRISE STATS
         // ============================================
