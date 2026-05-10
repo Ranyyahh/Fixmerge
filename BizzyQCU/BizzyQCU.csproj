@@ -183,10 +183,14 @@
     <Compile Include="Models\Admin\ViewEnterprise.cs" />
     <Compile Include="Models\Admin\ViewListing.cs" />
     <Compile Include="Models\Landingpage\Enterprises.cs" />
+    <Compile Include="Models\Landingpage\Enterpriseviewmodels.cs" />
     <Compile Include="Models\Landingpage\SimpleDb.cs" />
     <Compile Include="Models\Landingpage\Students.cs" />
     <Compile Include="Models\Landingpage\Users.cs" />
     <Compile Include="Models\Landingpage\ViewModel.cs" />
+    <Compile Include="Models\StudentDashboard\Ordertrackingviewmodel.cs" />
+    <Compile Include="Models\StudentDashboard\Productdetailviewmodel.cs" />
+    <Compile Include="Models\StudentDashboard\ProductViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -309,10 +313,9 @@
     <Content Include="Views\Checkout\CheckoutPage.cshtml" />
     <Content Include="Views\EnterpriseDashboard\EnterpriseDashboard.cshtml" />
     <Content Include="Views\Home\Homepage.cshtml" />
-    <Content Include="Views\EnterpriseList\EnterpriseList.cshtml" />
     <Content Include="Views\Enterprise\ViewEnterprise.cshtml" />
     <Content Include="Views\Chatroom\Chatroom.cshtml" />
-    <Content Include="Views\Enterprise\EnterpriseList.cshtml" />
+    <Content Include="Views\EnterpriseList\EnterpriseList.cshtml" />
     <Content Include="Views\Tracking\tracking.cshtml" />
     <Content Include="Views\Tracking\history.cshtml" />
     <Content Include="Views\ManageOrders\ManageOrders.cshtml" />

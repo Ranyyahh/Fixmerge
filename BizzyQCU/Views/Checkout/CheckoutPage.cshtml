@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="~/Content/checkout.css">
 }
 
+@* Anti-forgery token read by Checkout.js for the PlaceOrder POST *@
+@Html.AntiForgeryToken()
+
 <div class="container main-container">
     <div class="enterprise-warning mb-3">
         <i class="fas fa-info-circle"></i> You can place orders from one enterprise at a time.
@@ -40,10 +43,10 @@
             <div class="col-md-6 mb-3">
                 <label class="fw-bold">Delivery Option</label>
                 <div class="d-flex justify-content-between align-items-center">
-                    <span id="deliveryOptionDisplay" class="me-2">Room to Room</span>
+                    <span id="deliveryOptionDisplay" class="me-2">Pickup</span>
                     <button type="button" class="btn btn-sm btn-outline-primary change-btn" data-type="delivery">CHANGE</button>
                 </div>
-                <div id="roomSpecifyContainer" class="mt-2">
+                <div id="roomSpecifyContainer" class="mt-2" style="display:none;">
                     <input type="text" id="roomSpecifyInput" class="form-control" placeholder="Specify room (e.g., IL602a, IK504)">
                 </div>
             </div>
@@ -65,13 +68,13 @@
         <div class="d-flex flex-wrap justify-content-between align-items-center">
             <div>
                 <span class="fw-bold">Total Payment</span>
-                <span class="total-payment" id="totalPayment">₱0</span>
+                <span class="total-payment" id="totalPayment">&#8369;0.00</span>
             </div>
             <div>
-                <button class="btn btn-buy-more me-3" id="buyMoreBtn" onclick="window.location.href = '@Url.Action("Productlist", "ProductList")'">
+                <button class="btn btn-buy-more me-3" id="buyMoreBtn">
                     <i class="fas fa-plus-circle"></i> Buy More
                 </button>
-                <button class="btn btn-place-order" id="placeOrderBtn" onclick="window.location.href = '@Url.Action("tracking", "Home")'">
+                <button class="btn btn-place-order" id="placeOrderBtn">
                     <i class="fas fa-check-circle"></i> Place Order
                 </button>
             </div>
@@ -79,6 +82,6 @@
     </div>
 </div>
 
-@section  Scripts {
+@section Scripts {
     <script src="~/Scripts/Checkout.js"></script>
 }
