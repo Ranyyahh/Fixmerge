@@ -16,7 +16,7 @@
     @{
         var sessionRole = Session["Role"] == null ? string.Empty : Session["Role"].ToString();
 
-        // URL para sa account base sa role - dapat sa PROFILE
+        // Account URL based on role
         var accountUrl = "";
         if (sessionRole == "enterprise")
         {
@@ -28,14 +28,14 @@
         }
         else if (sessionRole == "admin")
         {
-            accountUrl = Url.Action("AdminProfile", "Admin");
+            accountUrl = Url.Action("LandingAdmin", "AdminPanel");
         }
         else
         {
             accountUrl = Url.Action("Login", "Home");
         }
 
-        // Home URL base sa role
+        // Home URL based on role
         var homeUrl = "";
         if (sessionRole == "enterprise")
         {
@@ -47,7 +47,7 @@
         }
         else if (sessionRole == "admin")
         {
-            homeUrl = Url.Action("AdminDashboard", "AdminDashboard");
+            homeUrl = Url.Action("LandingAdmin", "AdminPanel");
         }
         else
         {
@@ -78,45 +78,52 @@
             else if (sessionRole == "student")
             {
                 <a href="@Url.Action("ProductList", "ProductList")">PRODUCTS</a>
-                <a href="@Url.Action("ViewEnterprise", "ViewEnterprise")">ENTERPRISES</a>
-                <a href="@Url.Action("Tracking", "Home")">TRACK ORDER</a>
+                <a href="@Url.Action("EnterpriseList", "EnterpriseList")">ENTERPRISES</a>
+                <a href="@Url.Action("History", "Tracking")">TRACK ORDER</a>
                 <a href="@Url.Action("About", "Home")">ABOUT US</a>
             }
             else if (sessionRole == "admin")
             {
-                <a href="@Url.Action("AdminDashboard", "AdminDashboard")">DASHBOARD</a>
-                <a href="@Url.Action("PendingApprovals", "Admin")">PENDING APPROVALS</a>
-                <a href="@Url.Action("ManageUsers", "Admin")">MANAGE USERS</a>
+                <a href="@Url.Action("LandingAdmin", "AdminPanel")">DASHBOARD</a>
+                <a href="@Url.Action("AdminUsers", "AdminPanel")">MANAGE USERS</a>
+                <a href="@Url.Action("AdminlandingEntrep", "AdminPanel")">ENTERPRISES</a>
             }
             else
             {
                 <a href="@Url.Action("Homepage", "Home")">HOME</a>
                 <a href="@Url.Action("ProductList", "ProductList")">PRODUCTS</a>
-                <a href="@Url.Action("ViewEnterprise", "ViewEnterprise")">ENTERPRISES</a>
+                <a href="@Url.Action("EnterpriseList", "EnterpriseList")">ENTERPRISES</a>
                 <a href="@Url.Action("About", "Home")">ABOUT US</a>
             }
 
-            <a href="@accountUrl" class="account-mobile">
-                ACCOUNT
-            </a>
+            <a href="@accountUrl" class="account-mobile">ACCOUNT</a>
         </div>
 
         <div class="right-icons">
-            @if (sessionRole != "enterprise" && sessionRole != "admin")
+            @if (sessionRole == "student")
             {
                 <div class="cart-icon">
-                    <a href="#"><img src="~/Images/cart-icon.png" alt="Cart" onclick="window.location.href = '@Url.Action("Tracking", "Home")'" /></a>
+                    <a href="@Url.Action("Checkout", "Checkout")">
+                        <img src="~/Images/cart-icon.png" alt="Cart" />
+                    </a>
                 </div>
             }
+            else if (sessionRole != "enterprise" && sessionRole != "admin")
+            {
+                <div class="cart-icon">
+                    <a href="@Url.Action("Checkout", "Checkout")">
+                        <img src="~/Images/cart-icon.png" alt="Cart" />
+                    </a>
+                </div>
+            }
+
             <div class="account-icon account-desktop">
                 <a href="@accountUrl">
                     <img src="~/Images/account-icon.png" alt="Account" />
                 </a>
             </div>
 
-            <button class="hamburger" id="hamburgerBtn">
-                ☰
-            </button>
+            <button class="hamburger" id="hamburgerBtn">&#9776;</button>
         </div>
 
     </div>
@@ -133,12 +140,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     @RenderSection("Scripts", required: false)
 
-    <!-- FOR HAMBURGER TOGGLE -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            const btn = document.getElementById("hamburgerBtn");
-            const nav = document.getElementById("mainNav");
-            const body = document.body;
+            var btn = document.getElementById("hamburgerBtn");
+            var nav = document.getElementById("mainNav");
+            var body = document.body;
 
             if (btn && nav) {
                 btn.addEventListener("click", function () {

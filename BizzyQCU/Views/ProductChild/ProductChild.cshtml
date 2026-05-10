@@ -1,99 +1,89 @@
-﻿@* =============================================
-    Views/Products/Pchild.cshtml
-    Child view — inherits _Layout.cshtml (navbar, footer)
-    Example data is hardcoded for display/testing purposes.
-    Replace with @model binding when the ViewModel is ready.
-    ============================================= *@
+﻿@model BizzyQCU.Models.ProductDetailViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = Model.ProductName + " - BizzyQCU";
+}
 
-@* Section: page-specific CSS (linked in <head> via _Layout's @RenderSection("Styles")) *@
 @section Styles {
     <link rel="stylesheet" href="~/Content/Pchild.css">
 }
 
-@* ─── Example / Hardcoded Data ───────────────────────────────────
-       TODO: Remove these variables and replace with @model binding.
-       e.g. @model BizzyQCU.Models.ProductDetailViewModel
-       Then use @Model.ProductName, @Model.Price, etc.
-    ──────────────────────────────────────────────────────────────── *@
-@{
-    var productName = "Pasta Verde";
-    var productPrice = "67.00";
-    var prepTime = "17";
-    var deliveryOptions = "Pickup or Room to Room";
-    var productId = "101";
-
-    var enterpriseName = "QCU Enterprise";
-    var enterpriseId = "5";
-    var isOnline = true;
-}
-
-@* ─── Page Content ──────────────────────────────────────────────── *@
 <div class="checkout-bg">
 
-    @* ── Product Card ── *@
+    @* Product Card *@
     <div class="product-card">
 
-        @* Product Image — TODO: Replace src with @Model.ImageUrl once wired up *@
         <div class="product-img-wrap">
-            <img src="https://placehold.co/320x320?text=Product+Image"
-                 alt="@productName" />
+            @if (Model.ProductImage != null)
+            {
+                <img src="data:image/jpeg;base64,@Convert.ToBase64String(Model.ProductImage)"
+                     alt="@Model.ProductName" />
+            }
+            else
+            {
+                <img src="https://placehold.co/320x320?text=Product+Image"
+                     alt="@Model.ProductName" />
+            }
         </div>
 
-        @* Product Details *@
         <div class="product-info">
 
-            <h1 class="product-title">@productName</h1>
-
-            <p class="product-price">&#8369;@productPrice</p>
+            <h1 class="product-title">@Model.ProductName</h1>
+            <p class="product-price">&#8369;@Model.Price.ToString("0.##")</p>
 
             <p class="product-meta">
-                Preparation time: @prepTime min/s <br />
-                Delivery: @deliveryOptions
+                Preparation time: @Model.PreparationTime min/s <br />
+                Delivery: @Model.DeliveryOptions
             </p>
 
-            @* Quantity Row *@
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <p class="product-desc">@Model.Description</p>
+            }
+
             <div class="quantity-row">
                 <span class="quantity-label">Quantity</span>
                 <div class="qty-controls">
-                    <button class="qty-btn" id="btnMinus" type="button" aria-label="Decrease quantity">−</button>
-                    <input class="qty-input" id="qtyInput" type="number"
-                           value="1" min="1" aria-label="Quantity" />
-                    <button class="qty-btn" id="btnPlus" type="button" aria-label="Increase quantity">+</button>
+                    <button class="qty-btn" id="btnMinus" type="button">&#8722;</button>
+                    <input class="qty-input" id="qtyInput" type="number" value="1" min="1" />
+                    <button class="qty-btn" id="btnPlus" type="button">+</button>
                 </div>
             </div>
 
-            @* Hidden inputs — read by Pchild.js for AJAX POST *@
-            <input type="hidden" id="productId" value="@productId" />
+            <input type="hidden" id="productId" value="@Model.ProductId" />
+            <input type="hidden" id="productName" value="@Model.ProductName" />
+            <input type="hidden" id="productPrice" value="@Model.Price" />
+            <input type="hidden" id="enterpriseId" value="@Model.EnterpriseId" />
 
-            @* Anti-forgery token for secure AJAX requests *@
             @Html.AntiForgeryToken()
 
-            @* Order Button *@
-            <button class="btn-order" id="btnOrder" type="button" onclick="window.location.href = '@Url.Action("CheckoutPage", "Checkout")'">
-                Order Now
-            </button>
+            <button class="btn-order" id="btnOrder" type="button">Order Now</button>
 
         </div>
     </div>
 
-    @* ── Enterprise Card ── *@
+    @* Enterprise Card *@
     <div class="enterprise-card">
 
-        @* Avatar — TODO: Replace placeholder with @Model.EnterpriseAvatarUrl *@
         <div class="enterprise-avatar">
-            <span class="avatar-placeholder">&#128100;</span>
+            @if (Model.EnterpriseLogo != null)
+            {
+                <img src="data:image/jpeg;base64,@Convert.ToBase64String(Model.EnterpriseLogo)"
+                     alt="@Model.EnterpriseName"
+                     style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />
+            }
+            else
+            {
+                <span class="avatar-placeholder">&#128100;</span>
+            }
         </div>
 
         <div class="enterprise-info">
-            <p class="enterprise-name">@enterpriseName</p>
-            <p class="enterprise-status">
-                <span class="status-dot @(isOnline ? "online" : "offline")"></span>
-                @(isOnline ? "Online" : "Offline")
-            </p>
+            <p class="enterprise-name">@Model.EnterpriseName</p>
             <button class="btn-view-enterprise"
                     id="btnViewEnterprise"
-                    data-enterprise-id="@enterpriseId"
-                    type="button" onclick="window.location.href = '@Url.Action("ViewEnterprise", "Enterprise")'">
+                    type="button"
+                    onclick="window.location.href = '@Url.Action("ViewEnterprise", "Enterprise", new { id = Model.EnterpriseId })'">
                 View Enterprise
             </button>
         </div>
@@ -102,10 +92,8 @@
 
 </div>
 
-@* ── Toast Notification (hidden by default, shown via JS) ── *@
 <div class="checkout-toast" id="checkoutToast" role="status" aria-live="polite"></div>
 
-@* Section: page-specific JS (rendered before </body> via _Layout's @RenderSection("Scripts")) *@
 @section Scripts {
     <script src="~/Scripts/Pchild.js"></script>
 }

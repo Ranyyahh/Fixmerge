@@ -1,141 +1,93 @@
-﻿// =============================================
-// Pchild.js — Product Detail / Order Page
-// BizzyQCU Web App
-// =============================================
+﻿document.addEventListener('DOMContentLoaded', function () {
 
-document.addEventListener("DOMContentLoaded", function () {
+    var btnMinus = document.getElementById('btnMinus');
+    var btnPlus = document.getElementById('btnPlus');
+    var qtyInput = document.getElementById('qtyInput');
+    var btnOrder = document.getElementById('btnOrder');
 
-    // -----------------------------------------------
-    // QUANTITY CONTROLS
-    // -----------------------------------------------
+    // ─── Quantity controls ────────────────────────────────────────────────────
+    btnMinus.addEventListener('click', function () {
+        var val = parseInt(qtyInput.value) || 1;
+        if (val > 1) { qtyInput.value = val - 1; }
+    });
 
-    const qtyInput = document.getElementById("qtyInput");
-    const btnMinus = document.getElementById("btnMinus");
-    const btnPlus = document.getElementById("btnPlus");
+    btnPlus.addEventListener('click', function () {
+        var val = parseInt(qtyInput.value) || 1;
+        qtyInput.value = val + 1;
+    });
 
-    /**
-     * Decrements quantity by 1.
-     * Prevents going below 1.
-     */
-    btnMinus.addEventListener("click", function () {
-        let current = parseInt(qtyInput.value) || 1;
-        if (current > 1) {
-            qtyInput.value = current - 1;
+    qtyInput.addEventListener('change', function () {
+        var val = parseInt(qtyInput.value);
+        if (isNaN(val) || val < 1) qtyInput.value = 1;
+    });
+
+    // ─── Order Now ────────────────────────────────────────────────────────────
+    btnOrder.addEventListener('click', function () {
+
+        // Read values from hidden inputs set by ProductChild.cshtml
+        var productId = parseInt(document.getElementById('productId').value);
+        var productName = document.getElementById('productName').value;
+        var unitPrice = parseFloat(document.getElementById('productPrice').value);
+        var enterpriseId = parseInt(document.getElementById('enterpriseId').value);
+
+        // Enterprise name comes from the visible span on the page
+        var enterpriseNameEl = document.querySelector('.enterprise-name');
+        var enterpriseName = enterpriseNameEl ? enterpriseNameEl.innerText.trim() : 'Unknown';
+
+        // Get quantity
+        var qty = parseInt(qtyInput.value) || 1;
+
+        // Get product image as base64 (already rendered as data URI in the img tag)
+        var imageBase64 = '';
+        var imgEl = document.querySelector('.product-img-wrap img');
+        if (imgEl && imgEl.src && imgEl.src.indexOf('base64,') !== -1) {
+            imageBase64 = imgEl.src.split('base64,')[1];
         }
-        // TODO: Update cart badge/count in the navbar if a live cart is implemented
-    });
 
-    /**
-     * Increments quantity by 1.
-     * TODO: Add a maximum stock cap here once product stock data is available from the server
-     */
-    btnPlus.addEventListener("click", function () {
-        let current = parseInt(qtyInput.value) || 1;
-        qtyInput.value = current + 1;
-        // TODO: Validate against available stock from the model (e.g., Model.StockCount)
-    });
+        // Add to cart (with quantity loop if qty > 1, or store qty directly)
+        // We store qty directly by modifying the bridge call
+        var stored = sessionStorage.getItem('bizzyCart');
+        var cart = [];
+        if (stored) { try { cart = JSON.parse(stored); } catch (e) { cart = []; } }
 
-    /**
-     * Validates manual input in the quantity field.
-     * Ensures only positive integers are accepted.
-     */
-    qtyInput.addEventListener("change", function () {
-        let val = parseInt(this.value);
-        if (isNaN(val) || val < 1) {
-            this.value = 1;
+        // Enforce single-enterprise rule
+        if (cart.length > 0 && cart[0].EnterpriseId !== enterpriseId) {
+            alert('⚠️ You can only order from one enterprise at a time. Complete or clear your current order first.');
+            return;
         }
-        // TODO: Clamp to max stock if stock data is bound to the page
-    });
 
+        // Find existing item
+        var existing = null;
+        for (var i = 0; i < cart.length; i++) {
+            if (cart[i].ProductId === productId) { existing = cart[i]; break; }
+        }
 
-    // -----------------------------------------------
-    // ORDER NOW BUTTON
-    // -----------------------------------------------
+        if (existing) {
+            existing.Quantity += qty;
+        } else {
+            cart.push({
+                Id: Date.now(),
+                ProductId: productId,
+                ProductName: productName,
+                UnitPrice: unitPrice,
+                Quantity: qty,
+                EnterpriseId: enterpriseId,
+                EnterpriseName: enterpriseName,
+                ImageBase64: imageBase64
+            });
+        }
 
-    const btnOrder = document.getElementById("btnOrder");
+        sessionStorage.setItem('bizzyCart', JSON.stringify(cart));
 
-    btnOrder.addEventListener("click", function () {
-        const quantity = parseInt(qtyInput.value) || 1;
+        // Show brief toast then redirect to checkout
+        var toast = document.getElementById('checkoutToast');
+        if (toast) {
+            toast.innerText = '✅ Added to cart! Redirecting...';
+            toast.style.display = 'block';
+        }
 
-        // TODO: Retrieve the product ID from a hidden input or data attribute
-        //       e.g., const productId = document.getElementById("productId").value;
-
-        // TODO: Retrieve the delivery method selected by the user
-        //       e.g., const deliveryMethod = document.querySelector('input[name="delivery"]:checked')?.value;
-
-        // TODO: Validate that the user is logged in before placing an order
-        //       If not logged in, redirect to /Account/Login or show a modal
-
-        // TODO: Send an AJAX POST request to the order endpoint, e.g.:
-        //       fetch('/Order/Place', {
-        //           method: 'POST',
-        //           headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
-        //           body: JSON.stringify({ productId, quantity, deliveryMethod })
-        //       })
-        //       .then(res => res.json())
-        //       .then(data => {
-        //           if (data.success) showToast("Order placed successfully!");
-        //           else showToast("Failed to place order. Please try again.");
-        //       });
-
-        // Temporary feedback — replace with actual AJAX call above
-        showToast("Order placed! (" + quantity + " item" + (quantity > 1 ? "s" : "") + ")");
-    });
-
-
-    // -----------------------------------------------
-    // VIEW ENTERPRISE BUTTON
-    // -----------------------------------------------
-
-    const btnViewEnterprise = document.getElementById("btnViewEnterprise");
-
-    if (btnViewEnterprise) {
-        btnViewEnterprise.addEventListener("click", function () {
-            // TODO: Get the enterprise ID from a data attribute or hidden input
-            //       e.g., const enterpriseId = this.dataset.enterpriseId;
-
-            // TODO: Navigate to the enterprise profile page
-            //       e.g., window.location.href = `/Enterprise/Profile/${enterpriseId}`;
-
-            console.log("View Enterprise clicked.");
-        });
-    }
-
-
-    // -----------------------------------------------
-    // TOAST NOTIFICATION HELPER
-    // -----------------------------------------------
-
-    /**
-     * Shows a brief toast notification at the bottom-right of the screen.
-     * @param {string} message - The message to display.
-     */
-    function showToast(message) {
-        const toast = document.getElementById("checkoutToast");
-        if (!toast) return;
-
-        toast.textContent = message;
-        toast.classList.add("show");
-
-        // TODO: Consider stacking multiple toasts if rapid actions are supported
         setTimeout(function () {
-            toast.classList.remove("show");
-        }, 2800);
-    }
-
-
-    // -----------------------------------------------
-    // ANTI-FORGERY TOKEN HELPER (for future AJAX use)
-    // -----------------------------------------------
-
-    /**
-     * Retrieves the ASP.NET Core Anti-Forgery token from the page.
-     * Needed for secure POST requests via fetch/AJAX.
-     * TODO: Call this inside the fetch() POST request when the order endpoint is wired up
-     */
-    function getAntiForgeryToken() {
-        const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
-        return tokenInput ? tokenInput.value : "";
-    }
-
+            window.location.href = '/Checkout/Checkout';
+        }, 800);
+    });
 });

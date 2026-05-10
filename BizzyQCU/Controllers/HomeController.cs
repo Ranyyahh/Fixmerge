@@ -6,7 +6,7 @@ namespace BizzyQCU.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly SimpleDb db = new SimpleDb(); 
+        private readonly SimpleDb db = new SimpleDb();
 
         public ActionResult Login()
         {
@@ -23,18 +23,14 @@ namespace BizzyQCU.Controllers
             return View();
         }
 
-        public ActionResult Tracking()
-        {
-            return View();
-        }
-
         public ActionResult Manage()
         {
             return View();
         }
 
-        public ActionResult History()
+        public ActionResult About()
         {
+            ViewBag.Message = "About page.";
             return View();
         }
 
@@ -42,7 +38,7 @@ namespace BizzyQCU.Controllers
         {
             if (Session["UserId"] != null)
             {
-                string role = Session["Role"]?.ToString();
+                string role = Session["Role"] != null ? Session["Role"].ToString() : "";
                 if (role == "enterprise")
                 {
                     return RedirectToAction("EnterpriseDashboard", "EnterpriseDashboard");
@@ -53,7 +49,7 @@ namespace BizzyQCU.Controllers
                 }
                 else if (role == "admin")
                 {
-                    return RedirectToAction("AdminDashboard", "AdminDashboard");
+                    return RedirectToAction("LandingAdmin", "AdminPanel");
                 }
             }
 
@@ -61,33 +57,17 @@ namespace BizzyQCU.Controllers
             return View();
         }
 
-        public ActionResult ProductList()
+        public ActionResult Index()
         {
-      
-            if (Session["UserId"] != null && Session["Role"]?.ToString() == "enterprise")
+            if (Session["UserId"] != null)
             {
-                return RedirectToAction("EnterpriseDashboard", "EnterpriseDashboard");
+                string role = Session["Role"] != null ? Session["Role"].ToString() : "";
+                if (role == "enterprise")
+                {
+                    return RedirectToAction("EnterpriseDashboard", "EnterpriseDashboard");
+                }
             }
-
-            ViewBag.Message = "Product List page.";
-            return View();
-        }
-
-        public ActionResult ViewEnterprise()
-        {
-            if (Session["UserId"] != null && Session["Role"]?.ToString() == "enterprise")
-            {
-                return RedirectToAction("EnterpriseDashboard", "EnterpriseDashboard");
-            }
-
-            ViewBag.Message = "Your Enterprises.";
-            return View();
-        }
-
-        public ActionResult About()
-        {
-            ViewBag.Message = "About page.";
-            return View();
+            return View("Homepage");
         }
 
         public ActionResult UserProfile()
@@ -98,15 +78,6 @@ namespace BizzyQCU.Controllers
         public new ActionResult Profile()
         {
             return RedirectToAction("EnterpriseProfile", "Profile");
-        }
-
-        public ActionResult Index()
-        {
-            if (Session["UserId"] != null && Session["Role"]?.ToString() == "enterprise")
-            {
-                return RedirectToAction("EnterpriseDashboard", "EnterpriseDashboard");
-            }
-            return View("Homepage");
         }
 
         [HttpPost]
@@ -120,8 +91,7 @@ namespace BizzyQCU.Controllers
                 }
 
                 int userId = (int)Session["UserId"];
-
-                string userTypeValue = Session["Role"]?.ToString() == "enterprise" ? "entrepreneur" : "customer";
+                string userTypeValue = Session["Role"] != null && Session["Role"].ToString() == "enterprise" ? "entrepreneur" : "customer";
 
                 bool result = db.SubmitFeedback(email, contactNumber, userTypeValue, category, message, rating, userId);
 
