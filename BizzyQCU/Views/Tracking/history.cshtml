@@ -19,7 +19,7 @@
 
     <div class="scrollable-area">
 
-        @if (!Model.GetEnumerator().MoveNext())
+        @if (Model == null || !Model.Any())
         {
             <div class="glass-card" style="text-align:center; color:#999;">
                 <p style="font-size:2rem;">🛒</p>
@@ -34,12 +34,14 @@
             {
                 string statusEmoji;
                 string statusColor;
-                if (order.Status == "completed")
+                string currentStatus = (order.Status ?? "").ToLower();
+
+                if (currentStatus == "completed")
                 {
                     statusEmoji = "✅";
                     statusColor = "#2e7d32";
                 }
-                else if (order.Status == "cancelled")
+                else if (currentStatus == "cancelled")
                 {
                     statusEmoji = "❌";
                     statusColor = "#c62828";
@@ -98,19 +100,24 @@
                         </span>
                     </div>
 
-                    @if (order.Status == "preparing" || order.Status == "ready")
-                    {
-                        <div style="margin-top:12px;">
+                    <div style="margin-top:12px;">
+                        @if (currentStatus == "preparing" || currentStatus == "ready")
+                        {
                             <a href="@Url.Action("Tracking", "Tracking", new { orderId = order.OrderId })"
-                               class="btn-track"
                                style="display:inline-block; padding:8px 20px; background:#111FA2; color:white; border-radius:10px; font-weight:700; text-decoration:none; font-size:13px;">
                                 Track Order →
                             </a>
-                        </div>
-                    }
+                        }
+                        else if (currentStatus == "completed" || currentStatus == "cancelled")
+                        {
+                    <a href="@Url.Action("Checkout", "Checkout", new { orderId = order.OrderId })"
+                       style="display:block; width:100%; text-align:center; padding:10px 0; background:#111FA2; color:white; border-radius:8px; font-weight:800; text-decoration:none; font-size:14px; letter-spacing:1px;">
+                        REORDER
+                    </a>
+                        }
+                    </div>
                 </div>
             }
         }
-
     </div>
 </div>

@@ -12,6 +12,78 @@ namespace BizzyQCU.Controllers
         {
             return View("CheckoutPage");
         }
+        // GET: Handles the Reorder logic
+        public ActionResult Reorder(int orderId)
+        {
+            if (Session["UserId"] == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            int userId = (int)Session["UserId"];
+            string connStr = ConfigurationManager.ConnectionStrings["BizzyQCUConnection"].ConnectionString;
+
+            using (var conn = new MySqlConnection(connStr))
+            {
+                conn.Open();
+
+                // 1. Clear the existing cart for this user first
+                string clearSql = "DELETE FROM carts WHERE user_id = @uid";
+                using (var cmd = new MySqlCommand(clearSql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@uid", userId);
+                    cmd.ExecuteNonQuery();
+                }
+
+                // 2. Fetch items from the old order and the enterprise_id
+                // We join with the orders table to get the enterprise_id for the cart
+                string fetchSql = @"
+            SELECT oi.product_id, oi.quantity, o.enterprise_id 
+            FROM order_items oi
+            JOIN orders o ON oi.order_id = o.order_id
+            WHERE oi.order_id = @oid";
+
+                using (var cmd = new MySqlCommand(fetchSql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@oid", orderId);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        // We'll store them in a temporary list to avoid reader conflicts
+                        var itemsToReorder = new System.Collections.Generic.List<dynamic>();
+                        while (reader.Read())
+                        {
+                            itemsToReorder.Add(new
+                            {
+                                ProductId = reader["product_id"],
+                                Quantity = reader["quantity"],
+                                EnterpriseId = reader["enterprise_id"]
+                            });
+                        }
+                        reader.Close();
+
+                        // 3. Insert these items into the carts table
+                        foreach (var item in itemsToReorder)
+                        {
+                            string insertCartSql = @"
+                        INSERT INTO carts (user_id, product_id, quantity, enterprise_id) 
+                        VALUES (@uid, @pid, @qty, @eid)";
+
+                            using (var insCmd = new MySqlCommand(insertCartSql, conn))
+                            {
+                                insCmd.Parameters.AddWithValue("@uid", userId);
+                                insCmd.Parameters.AddWithValue("@pid", item.ProductId);
+                                insCmd.Parameters.AddWithValue("@qty", item.Quantity);
+                                insCmd.Parameters.AddWithValue("@eid", item.EnterpriseId);
+                                insCmd.ExecuteNonQuery();
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 4. Redirect to the Checkout page (this matches your URL localhost:44343/Checkout/Checkout)
+            return RedirectToAction("Checkout");
+        }
 
         // Backward-compatible redirect for old links/bookmarks
         public ActionResult CheckoutPage()
@@ -68,6 +140,7 @@ namespace BizzyQCU.Controllers
                         studentId = Convert.ToInt32(result);
                     }
 
+
                     // Insert the order
                     string orderSql = @"
                         INSERT INTO orders
@@ -94,6 +167,7 @@ namespace BizzyQCU.Controllers
                         newOrderId = Convert.ToInt32(cmd.ExecuteScalar());
                     }
 
+
                     // Insert order items
                     string itemSql = @"
                         INSERT INTO order_items (order_id, product_id, quantity, unit_price)
@@ -119,6 +193,7 @@ namespace BizzyQCU.Controllers
                 return Json(new { success = false, message = "Order failed: " + ex.Message });
             }
         }
+
 
         // Helper class for deserializing cart items from the AJAX POST
         private class CartItem
