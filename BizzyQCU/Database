@@ -84,7 +84,7 @@ CREATE TABLE orders (
     enterprise_id INT NOT NULL,
     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     total_amount DECIMAL(10,2) NOT NULL,
-    status ENUM('preparing','completed','cancelled') DEFAULT 'preparing',
+    status ENUM('pending','preparing','out_for_delivery','completed','cancelled') DEFAULT 'pending',
     payment_method VARCHAR(50),
     delivery_option VARCHAR(50) DEFAULT 'pickup',
     order_note TEXT,
@@ -104,6 +104,21 @@ CREATE TABLE order_items (
     unit_price DECIMAL(10,2) NOT NULL,
     FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(product_id)
+);
+
+
+CREATE TABLE chat_messages (
+    message_id INT PRIMARY KEY AUTO_INCREMENT,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    order_id INT NOT NULL,
+    message_text TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    is_courier_message BOOLEAN DEFAULT FALSE,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
 );
 
 

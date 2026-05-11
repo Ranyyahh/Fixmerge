@@ -22,7 +22,7 @@ namespace BizzyQCU.Controllers
         // POST: Place the order — called via AJAX from Checkout.js
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult PlaceOrder(
+        public ActionResult PlaceOrder( 
             int enterpriseId,
             decimal totalAmount,
             string paymentMethod,
@@ -118,6 +118,59 @@ namespace BizzyQCU.Controllers
             {
                 return Json(new { success = false, message = "Order failed: " + ex.Message });
             }
+        }
+        public ActionResult Reorder(int orderId)
+        {
+            if (Session["UserId"] == null) return RedirectToAction("Login", "Account");
+
+            int userId = (int)Session["UserId"];
+            string connStr = ConfigurationManager.ConnectionStrings["BizzyQCUConnection"].ConnectionString;
+
+            // This list will hold the items to pass to the View
+            var reorderItems = new System.Collections.Generic.List<object>();
+
+            using (var conn = new MySqlConnection(connStr))
+            {
+                conn.Open();
+                // Fetch product details along with order items so the cart has names/prices
+                string sql = @"
+            SELECT oi.product_id, oi.quantity, oi.unit_price, 
+                   p.product_name, e.enterprise_id, e.store_name, p.product_image
+            FROM order_items oi
+            JOIN products p ON oi.product_id = p.product_id
+            JOIN enterprises e ON p.enterprise_id = e.enterprise_id
+            WHERE oi.order_id = @oid";
+
+                using (var cmd = new MySqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@oid", orderId);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            byte[] imgBytes = reader["product_image"] as byte[];
+                            string base64 = imgBytes != null ? Convert.ToBase64String(imgBytes) : "";
+
+                            reorderItems.Add(new
+                            {
+                                Id = DateTime.Now.Ticks, // Temporary ID for JS state
+                                ProductId = reader["product_id"],
+                                ProductName = reader["product_name"],
+                                UnitPrice = reader["unit_price"],
+                                Quantity = reader["quantity"],
+                                EnterpriseId = reader["enterprise_id"],
+                                EnterpriseName = reader["store_name"],
+                                ImageBase64 = base64
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Convert to JSON and pass it to the Checkout View via TempData
+            TempData["ReorderCart"] = Newtonsoft.Json.JsonConvert.SerializeObject(reorderItems);
+
+            return RedirectToAction("Checkout");
         }
 
         // Helper class for deserializing cart items from the AJAX POST

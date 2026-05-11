@@ -83,5 +83,23 @@
 </div>
 
 @section Scripts {
+    <script>
+        (function() {
+            // Check if TempData has reorder items from the controller
+            var reorderData = @Html.Raw(TempData["ReorderCart"] ?? "null");
+
+            if (reorderData) {
+                // Save the reorder items into sessionStorage
+                sessionStorage.setItem('bizzyCart', JSON.stringify(reorderData));
+            }
+
+            // Existing logic to sync DB cart if needed
+            var dbCart = @Html.Raw(ViewBag.CartJson ?? "[]");
+            if (dbCart && dbCart.length > 0 && !reorderData) {
+                sessionStorage.setItem('bizzyCart', JSON.stringify(dbCart));
+            }
+        })();
+    </script>
     <script src="~/Scripts/Checkout.js"></script>
+}
 }
