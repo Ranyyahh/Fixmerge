@@ -1,37 +1,55 @@
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Chatroom";
-    ViewBag.BodyClass = "product-page";
 }
 
-
-
 <div class="product-page-container chatroom-page-container">
- 
-
     <div class="chatroom-shell">
-        
-
         <section class="chatroom-thread">
             <div class="chatroom-thread-header">
-                <div class="chatroom-thread-title">Puto Loco</div>
-                <span class="chatroom-thread-status">Online</span>
+                <div class="chatroom-thread-title">QCU Bookstore</div>
+                <span class="chatroom-thread-status">Active</span>
             </div>
 
             <div class="chatroom-messages" id="chatMessages">
-                <div class="chat-bubble incoming">Hi! Your order has been confirmed.</div>
-                <div class="chat-bubble incoming">Estimated prep time is 15-20 minutes.</div>
-                <div class="chat-bubble outgoing">Thanks! I will pick it up at 1:30 PM.</div>
-                <div class="chat-bubble incoming">Perfect, see you later.</div>
             </div>
 
-            <form class="chatroom-composer" action="#" method="post">
-                <input type="text" class="chatroom-input" name="message" placeholder="Type your message..." />
-                <button type="submit" class="enterprise-btn chatroom-send-btn">Send</button>
-            </form>
+            <div class="chatroom-composer">
+                <input type="text" id="msgInput" class="chatroom-input" placeholder="Type your message..." />
+                <button type="button" id="sendBtn" class="enterprise-btn chatroom-send-btn">Send</button>
+            </div>
         </section>
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    var myUserId = @(Session["UserId"] ?? 0);
 
+    function fetchChat() {
+        $.get('/Chatroom/GetMessages', function (data) {
+            var html = '';
+            data.forEach(function (m) {
+                var type = (m.senderId == myUserId) ? 'outgoing' : 'incoming';
+                html += '<div class="chat-bubble ' + type + '">' + m.text + '</div>';
+            });
+            $('#chatMessages').html(html);
+            var objDiv = document.getElementById("chatMessages");
+            objDiv.scrollTop = objDiv.scrollHeight;
+        });
+    }
 
+    $('#sendBtn').click(function () {
+        var msg = $('#msgInput').val();
+        if (!msg) return;
+
+        $.post('/Chatroom/SendMessage', { message: msg }, function () {
+            $('#msgInput').val('');
+            fetchChat();
+        });
+    });
+
+    // Auto-refresh every 3 seconds
+    setInterval(fetchChat, 3000);
+    fetchChat();
+</script>

@@ -338,6 +338,7 @@
     <Content Include="Views\AddProduct\Addproduct.cshtml" />
     <Content Include="Views\EditStore\EditStore.cshtml" />
     <Content Include="Views\EditProduct\EditProduct.cshtml" />
+    <Content Include="Views\EnterpriseDashboard\EnterpriseChatroom.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Account\" />
@@ -345,6 +346,7 @@
     <Folder Include="Views\Admin\" />
     <Folder Include="Views\ApprovalRequest\" />
     <Folder Include="Views\Base\" />
+    <Folder Include="Views\Reorder\" />
     <Folder Include="Views\Test\" />
   </ItemGroup>
   <PropertyGroup>
