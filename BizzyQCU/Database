@@ -107,6 +107,21 @@ CREATE TABLE order_items (
 );
 
 
+CREATE TABLE chat_messages (
+    message_id INT PRIMARY KEY AUTO_INCREMENT,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    order_id INT NOT NULL,
+    message_text TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    is_courier_message BOOLEAN DEFAULT FALSE,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
+);
+
+
 CREATE TABLE delivery_options (
     delivery_id INT PRIMARY KEY AUTO_INCREMENT,
     enterprise_id INT NOT NULL,

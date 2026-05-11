@@ -540,6 +540,12 @@ namespace BizzyQCU.Models.Landingpage
                                 order.OrderTime = reader.IsDBNull(reader.GetOrdinal("order_time")) ? "" : reader.GetString("order_time");
                                 order.OrderDateFormatted = reader.IsDBNull(reader.GetOrdinal("order_date_formatted")) ? "" : reader.GetString("order_date_formatted");
                                 order.Items = reader.IsDBNull(reader.GetOrdinal("items")) ? "" : reader.GetString("items");
+                                order.Status = reader.GetString("status");
+                                order.CustomerName = reader.IsDBNull(reader.GetOrdinal("customer_name")) ? "Customer" : reader.GetString("customer_name").Trim();
+                                if (string.IsNullOrWhiteSpace(order.CustomerName))
+                                {
+                                    order.CustomerName = "Customer";
+                                }
                                 orders.Add(order);
                             }
                         }

@@ -92,6 +92,13 @@ body.home-bg {
     line-height: 1.4;
 }
 
+.chat-bubble small {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    opacity: 0.72;
+}
+
 .chat-bubble.incoming {
     background: #f2f4ff;
     color: #20243c;

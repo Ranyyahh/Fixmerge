@@ -140,8 +140,9 @@
                         @:Campus Delivery
                     }
                 </p>
-                <button type="button" class="msg-courier" onclick="location.href='@Url.Action("Chatroom", "Chatroom")'">
-                    Message Courier
+                <button type="button" class="msg-courier"
+                        onclick="location.href='@Url.Action("Chatroom", "Chatroom", new { orderId = Model.OrderId })'">
+                    💬 Message Courier
                 </button>
 
             </div>
