@@ -1,22 +1,24 @@
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Chatroom";
+    int orderId = ViewBag.OrderId != null ? Convert.ToInt32(ViewBag.OrderId) : 0;
+    bool chatOpen = ViewBag.ChatOpen == null || Convert.ToBoolean(ViewBag.ChatOpen);
 }
 
 <div class="product-page-container chatroom-page-container">
     <div class="chatroom-shell">
         <section class="chatroom-thread">
             <div class="chatroom-thread-header">
-                <div class="chatroom-thread-title">QCU Bookstore</div>
-                <span class="chatroom-thread-status">Active</span>
+                <div class="chatroom-thread-title">@ViewBag.StoreName</div>
+                <span class="chatroom-thread-status">Order #QCU-@orderId</span>
             </div>
 
             <div class="chatroom-messages" id="chatMessages">
             </div>
 
             <div class="chatroom-composer">
-                <input type="text" id="msgInput" class="chatroom-input" placeholder="Type your message..." />
-                <button type="button" id="sendBtn" class="enterprise-btn chatroom-send-btn">Send</button>
+                <input type="text" id="msgInput" class="chatroom-input" placeholder="Type your message..." @(chatOpen ? "" : "disabled") />
+                <button type="button" id="sendBtn" class="enterprise-btn chatroom-send-btn" @(chatOpen ? "" : "disabled")>Send</button>
             </div>
         </section>
     </div>
@@ -25,31 +27,78 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     var myUserId = @(Session["UserId"] ?? 0);
+    var orderId = @orderId;
+    var chatOpen = @chatOpen.ToString().ToLowerInvariant();
+    var lastRendered = '';
+
+    function htmlEncode(value) {
+        return $('<div/>').text(value || '').html();
+    }
 
     function fetchChat() {
-        $.get('/Chatroom/GetMessages', function (data) {
+        if (!orderId) return;
+
+        $.get('/Chatroom/GetMessages', { orderId: orderId }, function (data) {
+            if (!data || data.success === false) {
+                $('#chatMessages').html('<div class="chat-bubble incoming">' + htmlEncode((data && data.message) || 'Unable to load messages.') + '</div>');
+                return;
+            }
+
+            var messages = data.messages || [];
             var html = '';
-            data.forEach(function (m) {
-                var type = (m.senderId == myUserId) ? 'outgoing' : 'incoming';
-                html += '<div class="chat-bubble ' + type + '">' + m.text + '</div>';
+            messages.forEach(function (m) {
+                var type = m.messageType || ((m.senderId == myUserId) ? 'outgoing' : 'incoming');
+                html += '<div class="chat-bubble ' + htmlEncode(type) + '">';
+                html += '<div>' + htmlEncode(m.text) + '</div>';
+                html += '<small>' + htmlEncode(m.sentAt) + '</small>';
+                html += '</div>';
             });
-            $('#chatMessages').html(html);
-            var objDiv = document.getElementById("chatMessages");
-            objDiv.scrollTop = objDiv.scrollHeight;
+
+            if (!html) {
+                html = '<div class="chat-bubble incoming">No messages yet.</div>';
+            }
+
+            if (html !== lastRendered) {
+                $('#chatMessages').html(html);
+                lastRendered = html;
+                var objDiv = document.getElementById("chatMessages");
+                objDiv.scrollTop = objDiv.scrollHeight;
+            }
         });
     }
 
-    $('#sendBtn').click(function () {
-        var msg = $('#msgInput').val();
+    function sendMessage() {
+        if (!chatOpen || !orderId) return;
+
+        var msg = $('#msgInput').val().trim();
         if (!msg) return;
 
-        $.post('/Chatroom/SendMessage', { message: msg }, function () {
-            $('#msgInput').val('');
-            fetchChat();
+        $('#sendBtn').prop('disabled', true);
+        $.post('/Chatroom/SendMessage', { orderId: orderId, message: msg }, function (data) {
+            if (data && data.success) {
+                $('#msgInput').val('');
+                fetchChat();
+            } else {
+                alert((data && data.message) || 'Message not sent.');
+            }
+        }).always(function () {
+            $('#sendBtn').prop('disabled', false);
         });
+    }
+
+    $('#sendBtn').click(sendMessage);
+
+    $('#msgInput').on('keydown', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            sendMessage();
+        }
     });
 
-    // Auto-refresh every 3 seconds
+    if (!chatOpen) {
+        $('#chatMessages').html('<div class="chat-bubble incoming">This chat is already closed for this order.</div>');
+    }
+
     setInterval(fetchChat, 3000);
     fetchChat();
 </script>

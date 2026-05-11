@@ -474,7 +474,17 @@ namespace BizzyQCU.Models.Landingpage
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = "SELECT order_id, total_amount, status FROM orders WHERE enterprise_id = @enterpriseId AND status = 'preparing'";
+                    string sql = @"
+                        SELECT
+                            o.order_id,
+                            o.total_amount,
+                            o.status,
+                            CONCAT(COALESCE(s.firstname, ''), ' ', COALESCE(s.lastname, '')) AS customer_name
+                        FROM orders o
+                        INNER JOIN students s ON s.student_id = o.student_id
+                        WHERE o.enterprise_id = @enterpriseId
+                          AND o.status IN ('pending', 'preparing', 'out_for_delivery')
+                        ORDER BY o.order_date DESC";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
@@ -487,7 +497,11 @@ namespace BizzyQCU.Models.Landingpage
                                 order.OrderId = reader.GetInt32("order_id");
                                 order.TotalAmount = reader.GetDecimal("total_amount");
                                 order.Status = reader.GetString("status");
-                                order.CustomerName = "Customer";
+                                order.CustomerName = reader.IsDBNull(reader.GetOrdinal("customer_name")) ? "Customer" : reader.GetString("customer_name").Trim();
+                                if (string.IsNullOrWhiteSpace(order.CustomerName))
+                                {
+                                    order.CustomerName = "Customer";
+                                }
                                 orders.Add(order);
                             }
                         }
