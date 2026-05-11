@@ -112,7 +112,7 @@ main {
 }
 
 /* BUTTONS & STATUS */
-.btn-confirm, .btn-status {
+.btn-confirm, .btn-status, .btn-cancel-inline {
     padding: 12px 25px;
     border-radius: 12px;
     font-weight: 800;
@@ -129,6 +129,20 @@ main {
     background: #F3F4F6;
     color: #111FA2;
     border: 1px solid #E5E7EB;
+}
+
+.btn-cancel-inline {
+    background: #FEE2E2;
+    color: #991B1B;
+    border: none;
+}
+
+.card-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .btn-message-emoji {
@@ -172,6 +186,11 @@ main {
 .status-delivery {
     background: #D1FAE5;
     color: #065F46;
+}
+
+.status-completed {
+    background: #DCFCE7;
+    color: #166534;
 }
 
 .status-cancelled {

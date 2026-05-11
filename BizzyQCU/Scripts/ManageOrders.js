@@ -4,6 +4,58 @@ document.addEventListener('DOMContentLoaded', function () {
     loadPendingOrders();
 });
 
+function getStatusMeta(status) {
+    const normalized = (status || 'pending').toLowerCase();
+    const statuses = {
+        pending: { text: 'Pending', className: 'status-pending' },
+        preparing: { text: 'Preparing', className: 'status-preparing' },
+        out_for_delivery: { text: 'Out for Delivery', className: 'status-delivery' },
+        completed: { text: 'Completed', className: 'status-completed' },
+        cancelled: { text: 'Cancelled', className: 'status-cancelled' }
+    };
+
+    return statuses[normalized] || statuses.pending;
+}
+
+function getOrderActions(orderId, status) {
+    const normalized = (status || 'pending').toLowerCase();
+
+    if (normalized === 'pending') {
+        return `
+            <button class="btn-confirm" onclick="updateStatus(event, ${orderId}, 'preparing')">Confirm Order</button>
+            <button class="btn-cancel-inline" onclick="updateStatus(event, ${orderId}, 'cancelled')">Cancel</button>
+        `;
+    }
+
+    if (normalized === 'completed' || normalized === 'cancelled') {
+        return '';
+    }
+
+    return `<button class="btn-status" onclick="toggleDropdown(event, ${orderId})">Change Status ▾</button>`;
+}
+
+function getStatusOptions(orderId, status) {
+    const normalized = (status || 'pending').toLowerCase();
+
+    if (normalized === 'pending' || normalized === 'completed' || normalized === 'cancelled') {
+        return '';
+    }
+
+    const options = [];
+    if (normalized === 'preparing') {
+        options.push(`<button onclick="updateStatus(event, ${orderId}, 'out_for_delivery')">Out for Delivery</button>`);
+    }
+
+    options.push(`<button onclick="updateStatus(event, ${orderId}, 'completed')">Complete Order</button>`);
+    options.push(`<button onclick="updateStatus(event, ${orderId}, 'cancelled')">Cancel Order</button>`);
+
+    return `
+        <div class="status-dropdown" id="dropdown-${orderId}" style="display:none">
+            ${options.join('')}
+        </div>
+    `;
+}
+
 async function loadPendingOrders() {
     const container = document.getElementById('ordersContainer');
     if (!container) return;
@@ -19,7 +71,7 @@ async function loadPendingOrders() {
         } else {
             container.innerHTML = `
                 <div class="empty-orders">
-                    <p>🎉 No pending orders!</p>
+                    <p>No active orders!</p>
                     <p class="empty-subtitle">All orders have been processed.</p>
                 </div>
             `;
@@ -48,10 +100,9 @@ function renderOrderCards(orders) {
         const orderTime = order.OrderTime || order.orderTime || '';
         const orderDateFormatted = order.OrderDateFormatted || order.orderDateFormatted || '';
         const deliveryOption = order.DeliveryOption || order.deliveryOption || 'pickup';
-        const orderStatus = order.Status || order.status || 'preparing';
-
-        const statusClass = orderStatus === 'preparing' ? 'status-preparing' : 'status-pending';
-        const statusText = orderStatus === 'preparing' ? 'Preparing' : 'Pending';
+        const orderStatus = order.Status || order.status || 'pending';
+        const statusMeta = getStatusMeta(orderStatus);
+        const itemsSummary = order.Items || order.items || '';
 
         cardsHtml += `
             <div class="glass-card" onclick="viewOrder(${orderId})">
@@ -60,22 +111,19 @@ function renderOrderCards(orders) {
                         <h4 class="cust-name">${escapeHtml(customerName)}</h4>
                         <span class="card-timestamp">${orderDateFormatted} • ${orderTime}</span>
                     </div>
-                    <span class="badge-pill ${statusClass}" id="pill-${orderId}">${statusText}</span>
+                    <span class="badge-pill ${statusMeta.className}" id="pill-${orderId}">${statusMeta.text}</span>
                 </div>
                 <div class="order-summary">
                     <p class="item-count">${deliveryOption === 'pickup' ? '📍 Pickup' : '🚚 Delivery'}</p>
-                    <p class="item-list">Total: ₱ ${Number(totalAmount).toFixed(2)}</p>
+                    <p class="item-list">${escapeHtml(itemsSummary || 'Order details available on select')}</p>
                 </div>
                 <div class="card-footer">
                     <span class="price-text">₱ ${Number(totalAmount).toFixed(2)}</span>
-                    <div id="action-area-${orderId}">
-                        <button class="btn-status" onclick="toggleDropdown(event, ${orderId})">Change Status ▾</button>
+                    <div class="card-actions" id="action-area-${orderId}">
+                        ${getOrderActions(orderId, orderStatus)}
                     </div>
                 </div>
-                <div class="status-dropdown" id="dropdown-${orderId}" style="display:none">
-                    <button onclick="updateStatus(event, ${orderId}, 'completed')">✅ Complete Order</button>
-                    <button onclick="updateStatus(event, ${orderId}, 'cancelled')">❌ Cancel Order</button>
-                </div>
+                ${getStatusOptions(orderId, orderStatus)}
             </div>
         `;
     });
@@ -95,9 +143,9 @@ async function updateStatus(event, orderId, newStatus) {
         const response = await fetch('/ManageOrders/UpdateOrderStatus', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: JSON.stringify({ orderId: orderId, status: newStatus })
+            body: `orderId=${encodeURIComponent(orderId)}&status=${encodeURIComponent(newStatus)}`
         });
 
         const data = await response.json();
@@ -146,6 +194,7 @@ async function viewOrder(orderId) {
 
         if (data.success && data.order) {
             const order = data.order;
+            const statusMeta = getStatusMeta(order.Status);
 
             let itemsHtml = '';
             if (order.Items && order.Items.length > 0) {
@@ -181,7 +230,7 @@ async function viewOrder(orderId) {
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">📦 Status</span>
-                            <span class="detail-value status-${order.Status}">${order.Status ? order.Status.toUpperCase() : 'PENDING'}</span>
+                            <span class="detail-value ${statusMeta.className}">${statusMeta.text}</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">🛒 Items</span>

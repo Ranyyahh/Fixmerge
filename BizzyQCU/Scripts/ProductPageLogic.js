@@ -119,11 +119,7 @@
             try { cart = JSON.parse(stored); } catch (e) { cart = []; }
         }
 
-        // Enforce single-enterprise rule
-        if (cart.length > 0 && cart[0].EnterpriseId !== enterpriseId) {
-            showMessage('You can only order from one enterprise at a time. Complete or clear your current order first.', true);
-            return;
-        }
+      
 
         // Find existing
         var existing = null;

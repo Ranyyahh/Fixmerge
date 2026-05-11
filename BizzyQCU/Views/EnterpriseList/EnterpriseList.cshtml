@@ -22,7 +22,6 @@
                     autocomplete = "off"
                 })
             </div>
-
             <button class="filter-icon-btn" id="filterToggleBtn" aria-label="Toggle filters">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
                     <line x1="4" y1="6" x2="20" y2="6" />
@@ -93,6 +92,29 @@
 
                 string popularity = ent.ProductCount >= 5 ? "high" : "low";
 
+                string statusLabel;
+                string statusClass;
+                if (ent.Status == "approved")
+                {
+                    statusLabel = "Online";
+                    statusClass = "status-online";
+                }
+                else if (ent.Status == "suspended")
+                {
+                    statusLabel = "Suspended";
+                    statusClass = "status-suspended";
+                }
+                else
+                {
+                    statusLabel = "Pending";
+                    statusClass = "status-pending";
+                }
+
+                // Logo is a varchar path in DB
+                string logoSrc = !string.IsNullOrEmpty(ent.StoreLogo)
+                    ? Url.Content(ent.StoreLogo)
+                    : Url.Content("~/Content/Images/placeholder.png");
+
                 <div class="product-card"
                      data-category="@cat"
                      data-popularity="@popularity"
@@ -101,19 +123,12 @@
                      style="cursor:pointer;">
 
                     <div class="product-img-placeholder">
-                        @if (ent.StoreLogo != null)
-                        {
-                            <img src="data:image/jpeg;base64,@Convert.ToBase64String(ent.StoreLogo)"
-                                 alt="@ent.StoreName" />
-                        }
-                        else
-                        {
-                            <img src="~/Content/Images/placeholder.png" alt="@ent.StoreName" />
-                        }
+                        <img src="@logoSrc" alt="@ent.StoreName" />
                     </div>
 
                     <div class="product-card-info">
                         <span class="product-store">@ent.StoreName</span>
+                        <span class="@statusClass" style="font-size:0.78rem; font-weight:700; margin-bottom:4px;">@statusLabel</span>
                         <div class="product-footer">
                             <button class="enterprise-btn"
                                     onclick="event.stopPropagation(); window.location.href='@viewUrl'">
@@ -131,5 +146,5 @@
 </div>
 
 @section scripts {
-    <script src="~/Scripts/ProductPageLogic.js"></script>
+    <script src="@Url.Content("~/Scripts/ProductPageLogic.js")?v=20260512-multi-enterprise"></script>
 }

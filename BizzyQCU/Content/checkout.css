@@ -33,6 +33,13 @@
     margin-bottom: 1rem;
 }
 
+.enterprise-group-row td {
+    background-color: #f8f9fa;
+    color: #111fa2;
+    font-weight: 700;
+    padding: 0.8rem 1rem;
+}
+
 .table-cart th,
 .table-cart td {
     border: none;

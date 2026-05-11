@@ -410,14 +410,24 @@ body.view-enterprise-bg {
     background: linear-gradient(to top, rgba(255, 222, 66, 1), rgba(17, 31, 162, 0.5))#111fa2 !important;
     padding: 15px;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    width: 560px;
+    height: 560px;
+    max-width: calc(100vw - 40px);
+    max-height: calc(100vh - 40px);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
     .ad-modal-content img {
         width: 100%;
-        max-width: 600px;
-        max-height: 80vh;
-        object-fit: contain;
+        height: 360px !important;
+        max-width: none;
+        max-height: none !important;
+        object-fit: cover !important;
         display: block;
+        flex: 0 0 360px;
     }
 
 .close-btn {

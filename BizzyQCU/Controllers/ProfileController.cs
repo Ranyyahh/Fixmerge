@@ -117,6 +117,8 @@ namespace BizzyQCU.Controllers
         public string Product { get; set; }
         public DateTime Date { get; set; }
         public decimal Total { get; set; }
+        public string Status { get; set; }
+        public string StatusLabel { get; set; }
     }
 
     public class TransactionsPageViewModel
@@ -434,7 +436,8 @@ namespace BizzyQCU.Controllers
                 records = records
                     .Where(record =>
                         record.UserName.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        record.Product.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
+                        record.Product.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        record.StatusLabel.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
                     .ToList();
             }
 
@@ -701,37 +704,45 @@ namespace BizzyQCU.Controllers
 
         private List<TransactionRecordViewModel> GetTransactions()
         {
-            return new List<TransactionRecordViewModel>
+            var userId = GetCurrentUserId();
+            if (userId == 0)
             {
-                new TransactionRecordViewModel
+                return new List<TransactionRecordViewModel>();
+            }
+
+            return db.GetTransactionHistoryByUserId(userId)
+                .Select(record => new TransactionRecordViewModel
                 {
-                    UserName = "Rick Grimes",
-                    Product = "2x Pork Sisig Rice, 1x Mountain Dew",
-                    Date = new DateTime(2026, 4, 25),
-                    Total = 700m
-                },
-                new TransactionRecordViewModel
-                {
-                    UserName = "Boy Abunda",
-                    Product = "1x Caramel Macchiato, 1x Tuna Sandwich",
-                    Date = new DateTime(2026, 4, 22),
-                    Total = 1000m
-                },
-                new TransactionRecordViewModel
-                {
-                    UserName = "Carl Poppa",
-                    Product = "4pcs Pork Siomai, 1x Gulaman",
-                    Date = new DateTime(2026, 4, 15),
-                    Total = 300m
-                },
-                new TransactionRecordViewModel
-                {
-                    UserName = "Raja Kulambu",
-                    Product = "1x Beef Pares w/ Rice",
-                    Date = new DateTime(2026, 3, 29),
-                    Total = 500m
-                }
-            };
+                    UserName = string.IsNullOrWhiteSpace(record.CustomerName) ? "Customer" : record.CustomerName,
+                    Product = record.Products,
+                    Date = record.OrderDate,
+                    Total = record.TotalAmount,
+                    Status = string.IsNullOrWhiteSpace(record.Status) ? "preparing" : record.Status.Trim().ToLowerInvariant(),
+                    StatusLabel = FormatTransactionStatus(record.Status)
+                })
+                .ToList();
+        }
+
+        private string FormatTransactionStatus(string status)
+        {
+            status = string.IsNullOrWhiteSpace(status) ? string.Empty : status.Trim();
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                return "Preparing";
+            }
+
+            if (string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Completed";
+            }
+
+            if (string.Equals(status, "cancelled", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(status, "canceled", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Cancelled";
+            }
+
+            return char.ToUpperInvariant(status[0]) + status.Substring(1).ToLowerInvariant();
         }
 
         private string DefaultPhotoDataUrl()

@@ -18,8 +18,8 @@
             <img class="brand-logo-image-compact" src="@Url.Content("~/Content/Images/Logo.png")" alt="BizzyQCU" />
         </a>
 
-        <form action="@Url.Action("Transactions", "Home")" class="transactions-search-form" method="get">
-            <input id="transactionSearch" name="search" type="search" placeholder="Search by Name or Product..." value="@Model.SearchTerm" />
+        <form action="@Url.Action("Transactions", "Profile")" class="transactions-search-form" method="get">
+            <input id="transactionSearch" name="search" type="search" placeholder="Search by Name, Product, or Status..." value="@Model.SearchTerm" />
             <button type="submit" aria-label="Search transactions">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <circle cx="11" cy="11" r="7"></circle>
@@ -31,7 +31,7 @@
 
     <div class="transactions-panel">
         <div class="transactions-table-tab">
-            ?? Transaction History
+            Transaction History
         </div>
 
         <div class="transactions-table-wrap">
@@ -41,6 +41,7 @@
                     <col class="transactions-col-product" />
                     <col class="transactions-col-date" />
                     <col class="transactions-col-total" />
+                    <col class="transactions-col-status" />
                 </colgroup>
                 <thead>
                     <tr>
@@ -48,6 +49,7 @@
                         <th>Product</th>
                         <th>Date</th>
                         <th>Total</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -55,18 +57,19 @@
                     {
                         foreach (var record in Model.Transactions)
                         {
-                            <tr data-search="@((record.UserName + " " + record.Product).ToLowerInvariant())">
+                            <tr data-search="@((record.UserName + " " + record.Product + " " + record.StatusLabel).ToLowerInvariant())">
                                 <td data-label="User"><span class="transaction-user">@record.UserName</span></td>
                                 <td data-label="Product"><span class="transaction-product">@record.Product</span></td>
                                 <td data-label="Date"><span class="transaction-date">@record.Date.ToString("MM/dd/yyyy")</span></td>
-                                <td data-label="Total"><span class="transaction-total">? @record.Total.ToString("0.00")</span></td>
+                                <td data-label="Total"><span class="transaction-total">PHP @record.Total.ToString("0.00")</span></td>
+                                <td data-label="Status"><span class="transaction-status transaction-status-@record.Status">@record.StatusLabel</span></td>
                             </tr>
                         }
                     }
                     else
                     {
                         <tr class="empty-row">
-                            <td colspan="4">No transactions matched your search.</td>
+                            <td colspan="5">No transactions matched your search.</td>
                         </tr>
                     }
                 </tbody>

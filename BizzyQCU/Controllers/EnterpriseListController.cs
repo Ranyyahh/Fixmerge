@@ -22,17 +22,16 @@ namespace BizzyQCU.Controllers
             {
                 conn.Open();
 
-                // No ratings table — removed AVG(r.rating) join
                 string sql = @"
                     SELECT e.enterprise_id, e.store_name, e.enterprise_type,
-                           e.store_description, e.store_logo,
+                           e.store_description, e.store_logo, e.status,
                            COUNT(DISTINCT p.product_id) AS product_count
                     FROM enterprises e
                     LEFT JOIN products p ON e.enterprise_id = p.enterprise_id
                         AND p.status = 'active' AND p.is_approved = 1
                     WHERE e.status = 'approved'
                     GROUP BY e.enterprise_id, e.store_name, e.enterprise_type,
-                             e.store_description, e.store_logo
+                             e.store_description, e.store_logo, e.status
                     ORDER BY e.store_name ASC";
 
                 using (var cmd = new MySqlCommand(sql, conn))
@@ -46,7 +45,8 @@ namespace BizzyQCU.Controllers
                             StoreName = reader.GetString("store_name"),
                             EnterpriseType = reader.IsDBNull(reader.GetOrdinal("enterprise_type")) ? "" : reader.GetString("enterprise_type"),
                             Description = reader.IsDBNull(reader.GetOrdinal("store_description")) ? "" : reader.GetString("store_description"),
-                            StoreLogo = reader.IsDBNull(reader.GetOrdinal("store_logo")) ? null : (byte[])reader["store_logo"],
+                            StoreLogo = reader.IsDBNull(reader.GetOrdinal("store_logo")) ? null : reader.GetString("store_logo"),
+                            Status = reader.IsDBNull(reader.GetOrdinal("status")) ? "pending" : reader.GetString("status"),
                             ProductCount = reader.GetInt32("product_count"),
                             AvgRating = 0
                         });

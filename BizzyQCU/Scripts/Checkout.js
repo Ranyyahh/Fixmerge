@@ -23,12 +23,6 @@ window.CartBridge = {
         var cart = [];
         if (stored) { try { cart = JSON.parse(stored); } catch (e) { cart = []; } }
 
-        // Enforce single-enterprise rule
-        if (cart.length > 0 && cart[0].EnterpriseId !== enterpriseId) {
-            alert('⚠️ You can only order from one enterprise at a time. Complete or clear your current order first.');
-            return false;
-        }
-
         // If product already in cart, increase quantity
         var existing = null;
         for (var i = 0; i < cart.length; i++) {
@@ -74,7 +68,39 @@ function removeItem(itemId) {
 function calculateTotal() {
     var sum = 0;
     cartItems.forEach(function (item) { sum += item.UnitPrice * item.Quantity; });
+    return sum + (getDeliveryFee() * getEnterpriseGroups().length);
+}
+
+function calculateItemsTotal(items) {
+    var sum = 0;
+    items.forEach(function (item) { sum += item.UnitPrice * item.Quantity; });
     return sum;
+}
+
+function getEnterpriseGroups() {
+    var groups = [];
+    cartItems.forEach(function (item) {
+        var enterpriseId = parseInt(item.EnterpriseId);
+        var group = null;
+        for (var i = 0; i < groups.length; i++) {
+            if (groups[i].enterpriseId === enterpriseId) {
+                group = groups[i];
+                break;
+            }
+        }
+
+        if (!group) {
+            group = {
+                enterpriseId: enterpriseId,
+                enterpriseName: item.EnterpriseName || 'Unknown Enterprise',
+                items: []
+            };
+            groups.push(group);
+        }
+
+        group.items.push(item);
+    });
+    return groups;
 }
 
 function getDeliveryFee() {
@@ -100,40 +126,47 @@ function renderCart() {
     var container = document.getElementById('enterpriseHeaderContainer');
 
     if (!cartItems.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">🛒 No products ordered. Add products from the catalog.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No products ordered. Add products from the catalog.</td></tr>';
         document.getElementById('totalPayment').innerText = '₱0.00';
         if (container) container.style.display = 'none';
         return;
     }
 
+    var groups = getEnterpriseGroups();
     if (container) {
-        container.innerHTML = '<div class="enterprise-header"><i class="fas fa-store"></i> ' + escapeHtml(cartItems[0].EnterpriseName) + '</div>';
+        container.innerHTML = '<div class="enterprise-header"><i class="fas fa-store"></i> ' + groups.length + ' enterprise' + (groups.length === 1 ? '' : 's') + ' in this checkout</div>';
         container.style.display = 'block';
     }
 
-    cartItems.forEach(function (item) {
-        var subtotal = item.UnitPrice * item.Quantity;
-        var imgHtml;
-        if (item.ImageBase64) {
-            imgHtml = '<img src="data:image/jpeg;base64,' + item.ImageBase64 + '" class="product-image">';
-        } else {
-            imgHtml = '<img src="/Images/default.jpg" class="product-image">';
-        }
+    groups.forEach(function (group) {
+        var headerRow = document.createElement('tr');
+        headerRow.classList.add('enterprise-group-row');
+        headerRow.innerHTML = '<td colspan="6"><i class="fas fa-store"></i> ' + escapeHtml(group.enterpriseName) + '</td>';
+        tbody.appendChild(headerRow);
 
-        var row = document.createElement('tr');
-        row.classList.add('product-row');
-        row.innerHTML =
-            '<td data-label="Image" style="text-align:center">' + imgHtml + '</td>' +
-            '<td data-label="Product" class="product-name">' + escapeHtml(item.ProductName) + '</td>' +
-            '<td data-label="Unit Price">&#8369;' + item.UnitPrice.toFixed(2) + '</td>' +
-            '<td data-label="Quantity"><input type="number" class="quantity-input" data-id="' + item.Id + '" value="' + item.Quantity + '" min="1" step="1"></td>' +
-            '<td data-label="Subtotal">&#8369;' + subtotal.toFixed(2) + '</td>' +
-            '<td data-label="Action" class="text-center"><i class="fas fa-trash-alt action-icon" data-id="' + item.Id + '"></i></td>';
-        tbody.appendChild(row);
+        group.items.forEach(function (item) {
+            var subtotal = item.UnitPrice * item.Quantity;
+            var imgHtml;
+            if (item.ImageBase64) {
+                imgHtml = '<img src="data:image/jpeg;base64,' + item.ImageBase64 + '" class="product-image">';
+            } else {
+                imgHtml = '<img src="/Images/default.jpg" class="product-image">';
+            }
+
+            var row = document.createElement('tr');
+            row.classList.add('product-row');
+            row.innerHTML =
+                '<td data-label="Image" style="text-align:center">' + imgHtml + '</td>' +
+                '<td data-label="Product" class="product-name">' + escapeHtml(item.ProductName) + '</td>' +
+                '<td data-label="Unit Price">&#8369;' + item.UnitPrice.toFixed(2) + '</td>' +
+                '<td data-label="Quantity"><input type="number" class="quantity-input" data-id="' + item.Id + '" value="' + item.Quantity + '" min="1" step="1"></td>' +
+                '<td data-label="Subtotal">&#8369;' + subtotal.toFixed(2) + '</td>' +
+                '<td data-label="Action" class="text-center"><i class="fas fa-trash-alt action-icon" data-id="' + item.Id + '"></i></td>';
+            tbody.appendChild(row);
+        });
     });
 
-    var fee = getDeliveryFee();
-    var grandTotal = calculateTotal() + fee;
+    var grandTotal = calculateTotal();
     document.getElementById('totalPayment').innerHTML = '&#8369;' + grandTotal.toFixed(2);
 
     document.querySelectorAll('.quantity-input').forEach(function (input) {
@@ -195,7 +228,7 @@ function placeOrder() {
     var roomInput = document.getElementById('roomSpecifyInput').value.trim();
     var location = (delivery === 'Pickup') ? 'Store Pickup' : (roomInput || 'Not specified');
     var deliveryFee = getDeliveryFee();
-    var grandTotal = calculateTotal() + deliveryFee;
+    var groups = getEnterpriseGroups();
 
     // Map display text → DB enum value
     var deliveryOption;
@@ -204,11 +237,6 @@ function placeOrder() {
     else { deliveryOption = 'pickup'; }
 
     var paymentMethod = (payment === 'GCash') ? 'gcash' : 'cash';
-
-    // Build items payload
-    var itemsPayload = cartItems.map(function (item) {
-        return { ProductId: item.ProductId, Quantity: item.Quantity, UnitPrice: item.UnitPrice };
-    });
 
     // Get anti-forgery token
     var token = '';
@@ -219,35 +247,53 @@ function placeOrder() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Placing...';
 
-    fetch('/Checkout/PlaceOrder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: [
-            'enterpriseId=' + encodeURIComponent(cartItems[0].EnterpriseId),
-            'totalAmount=' + encodeURIComponent(grandTotal.toFixed(2)),
-            'paymentMethod=' + encodeURIComponent(paymentMethod),
-            'deliveryOption=' + encodeURIComponent(deliveryOption),
-            'customerLocation=' + encodeURIComponent(location),
-            'orderNote=' + encodeURIComponent(note),
-            'deliveryFee=' + encodeURIComponent(deliveryFee.toFixed(2)),
-            'itemsJson=' + encodeURIComponent(JSON.stringify(itemsPayload)),
-            '__RequestVerificationToken=' + encodeURIComponent(token)
-        ].join('&')
-    })
-        .then(function (res) { return res.json(); })
-        .then(function (data) {
-            if (data.success) {
-                sessionStorage.removeItem('bizzyCart');
-                cartItems = [];
-                window.location.href = '/Tracking/Tracking?orderId=' + data.orderId;
+    var orderIds = [];
+    var chain = Promise.resolve();
+
+    groups.forEach(function (group) {
+        chain = chain.then(function () {
+            var itemsPayload = group.items.map(function (item) {
+                return { ProductId: item.ProductId, Quantity: item.Quantity, UnitPrice: item.UnitPrice };
+            });
+            var orderTotal = calculateItemsTotal(group.items) + deliveryFee;
+
+            return fetch('/Checkout/PlaceOrder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: [
+                    'enterpriseId=' + encodeURIComponent(group.enterpriseId),
+                    'totalAmount=' + encodeURIComponent(orderTotal.toFixed(2)),
+                    'paymentMethod=' + encodeURIComponent(paymentMethod),
+                    'deliveryOption=' + encodeURIComponent(deliveryOption),
+                    'customerLocation=' + encodeURIComponent(location),
+                    'orderNote=' + encodeURIComponent(note),
+                    'deliveryFee=' + encodeURIComponent(deliveryFee.toFixed(2)),
+                    'itemsJson=' + encodeURIComponent(JSON.stringify(itemsPayload)),
+                    '__RequestVerificationToken=' + encodeURIComponent(token)
+                ].join('&')
+            })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    if (!data.success) {
+                        throw new Error(data.message || 'Unknown error.');
+                    }
+                    orderIds.push(data.orderId);
+                });
+        });
+    });
+
+    chain
+        .then(function () {
+            sessionStorage.removeItem('bizzyCart');
+            cartItems = [];
+            if (orderIds.length === 1) {
+                window.location.href = '/Tracking/Tracking?orderId=' + orderIds[0];
             } else {
-                alert('❌ Order failed: ' + (data.message || 'Unknown error.'));
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-check-circle"></i> Place Order';
+                window.location.href = '/Tracking/History';
             }
         })
         .catch(function (err) {
-            alert('❌ Network error. Please try again.');
+            alert('Order failed: ' + (err.message || 'Please try again.'));
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-check-circle"></i> Place Order';
             console.error(err);
