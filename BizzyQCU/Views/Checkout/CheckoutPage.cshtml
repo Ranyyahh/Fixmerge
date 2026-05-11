@@ -12,9 +12,8 @@
 
 <div class="container main-container">
     <div class="enterprise-warning mb-3">
-        <i class="fas fa-info-circle"></i> You can place orders from one enterprise at a time.
-        Once you start ordering from a specific enterprise, you will be limited to that enterprise until you complete your order.
-        After successfully placing your order, you may then proceed to order from another enterprise.
+        <i class="fas fa-info-circle"></i> You can order from different enterprises in one checkout.
+        Items are grouped by enterprise and each enterprise will receive its own order.
     </div>
 
     <div class="checkout-card">
@@ -83,6 +82,7 @@
 </div>
 
 @section Scripts {
+    <script src="@Url.Content("~/Scripts/Checkout.js")?v=20260512-multi-enterprise"></script>
     <script>
         (function() {
             // Check if TempData has reorder items from the controller

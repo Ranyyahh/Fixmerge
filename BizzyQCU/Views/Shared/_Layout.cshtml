@@ -100,20 +100,27 @@
         </div>
 
         <div class="right-icons">
-            @if (sessionRole == "student")
+            @if (sessionRole == "student" || (sessionRole != "enterprise" && sessionRole != "admin"))
             {
-                <div class="cart-icon">
-                    <a href="@Url.Action("Checkout", "Checkout")">
-                        <img src="~/Images/cart-icon.png" alt="Cart" />
-                    </a>
+                <div class="cart-icon" style="position:relative;">
+                    <img src="~/Images/cart-icon.png" alt="Cart"
+                         id="cartIconBtn"
+                         style="cursor:pointer;"
+                         onclick="handleCartClick()" />
+                    <span id="cartBadge"
+                          style="display:none; position:absolute; top:-6px; right:-6px;
+                                 background:#e03131; color:white; border-radius:50%;
+                                 width:18px; height:18px; font-size:11px; font-weight:800;
+                                 line-height:18px; text-align:center;">
+                    </span>
                 </div>
-            }
-            else if (sessionRole != "enterprise" && sessionRole != "admin")
-            {
-                <div class="cart-icon">
-                    <a href="@Url.Action("Checkout", "Checkout")">
-                        <img src="~/Images/cart-icon.png" alt="Cart" />
-                    </a>
+
+                <div id="cartEmptyToast"
+                     style="display:none; position:fixed; top:72px; right:16px; z-index:9999;
+                            background:#111FA2; color:white; padding:12px 20px;
+                            border-radius:12px; font-weight:700; font-size:0.9rem;
+                            box-shadow:0 6px 24px rgba(0,0,0,0.18); pointer-events:none;">
+                    &#128722; Please select a product first!
                 </div>
             }
 
@@ -141,6 +148,7 @@
     @RenderSection("Scripts", required: false)
 
     <script>
+        // ── Hamburger ──────────────────────────────────────────────────
         document.addEventListener("DOMContentLoaded", function () {
             var btn = document.getElementById("hamburgerBtn");
             var nav = document.getElementById("mainNav");
@@ -159,7 +167,49 @@
                     });
                 });
             }
+
+            // ── Cart badge count ────────────────────────────────────────
+            updateCartBadge();
         });
+
+        function getCartCount() {
+            var stored = sessionStorage.getItem('bizzyCart');
+            if (!stored) { return 0; }
+            try {
+                var cart = JSON.parse(stored);
+                var total = 0;
+                for (var i = 0; i < cart.length; i++) {
+                    total += cart[i].Quantity || 1;
+                }
+                return total;
+            } catch (e) { return 0; }
+        }
+
+        function updateCartBadge() {
+            var badge = document.getElementById('cartBadge');
+            if (!badge) { return; }
+            var count = getCartCount();
+            if (count > 0) {
+                badge.textContent = count > 9 ? '9+' : count;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function handleCartClick() {
+            var count = getCartCount();
+            if (count > 0) {
+                window.location.href = '@Url.Action("Checkout", "Checkout")';
+            } else {
+                var toast = document.getElementById('cartEmptyToast');
+                if (!toast) { return; }
+                toast.style.display = 'block';
+                setTimeout(function () {
+                    toast.style.display = 'none';
+                }, 2500);
+            }
+        }
     </script>
 </body>
 </html>

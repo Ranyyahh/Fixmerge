@@ -17,7 +17,6 @@ namespace BizzyQCU.Controllers
             {
                 conn.Open();
 
-                // Load product + enterprise
                 string sql = @"
                     SELECT p.product_id, p.product_name, p.description, p.price,
                            p.preparation_time, p.product_image,
@@ -45,18 +44,14 @@ namespace BizzyQCU.Controllers
                                 ProductImage = reader.IsDBNull(reader.GetOrdinal("product_image")) ? null : (byte[])reader["product_image"],
                                 EnterpriseId = reader.GetInt32("enterprise_id"),
                                 EnterpriseName = reader.GetString("store_name"),
-                                EnterpriseLogo = reader.IsDBNull(reader.GetOrdinal("store_logo")) ? null : (byte[])reader["store_logo"]
+                                EnterpriseLogo = reader.IsDBNull(reader.GetOrdinal("store_logo")) ? null : reader.GetString("store_logo")
                             };
                         }
                     }
                 }
 
-                if (model == null)
-                {
-                    return HttpNotFound();
-                }
+                if (model == null) { return HttpNotFound(); }
 
-                // Load delivery options for this enterprise
                 string deliverySql = @"
                     SELECT delivery_type
                     FROM delivery_options
@@ -71,18 +66,9 @@ namespace BizzyQCU.Controllers
                         while (reader2.Read())
                         {
                             string raw = reader2.GetString("delivery_type");
-                            if (raw == "pickup")
-                            {
-                                options.Add("Pickup");
-                            }
-                            else if (raw == "room_to_room")
-                            {
-                                options.Add("Room to Room");
-                            }
-                            else if (raw == "campus_delivery")
-                            {
-                                options.Add("Campus Delivery");
-                            }
+                            if (raw == "pickup") { options.Add("Pickup"); }
+                            else if (raw == "room_to_room") { options.Add("Room to Room"); }
+                            else if (raw == "campus_delivery") { options.Add("Campus Delivery"); }
                         }
                     }
                 }

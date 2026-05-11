@@ -82,6 +82,13 @@ namespace BizzyQCU.Controllers
                     return Json(new { success = false, message = "Enterprise not found" });
                 }
 
+                var allowedStatuses = new[] { "preparing", "out_for_delivery", "completed", "cancelled" };
+                status = string.IsNullOrWhiteSpace(status) ? string.Empty : status.Trim().ToLowerInvariant();
+                if (!allowedStatuses.Contains(status))
+                {
+                    return Json(new { success = false, message = "Invalid order status" });
+                }
+
                 bool result = db.UpdateOrderStatus(orderId, status, enterprise.EnterpriseId);
                 return Json(new { success = result, message = result ? "Status updated" : "Update failed" });
             }

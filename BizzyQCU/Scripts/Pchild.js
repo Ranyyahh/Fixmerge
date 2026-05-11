@@ -50,12 +50,6 @@
         var cart = [];
         if (stored) { try { cart = JSON.parse(stored); } catch (e) { cart = []; } }
 
-        // Enforce single-enterprise rule
-        if (cart.length > 0 && cart[0].EnterpriseId !== enterpriseId) {
-            alert('⚠️ You can only order from one enterprise at a time. Complete or clear your current order first.');
-            return;
-        }
-
         // Find existing item
         var existing = null;
         for (var i = 0; i < cart.length; i++) {

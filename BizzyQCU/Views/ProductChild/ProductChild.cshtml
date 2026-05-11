@@ -2,6 +2,17 @@
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = Model.ProductName + " - BizzyQCU";
+
+    string rawLogo = Model.EnterpriseLogo;
+    string logoSrc;
+    if (rawLogo != null && rawLogo.Length > 0)
+    {
+        logoSrc = Url.Content(rawLogo);
+    }
+    else
+    {
+        logoSrc = Url.Content("~/Content/Images/test-img-profile.jpg");
+    }
 }
 
 @section Styles {
@@ -10,7 +21,7 @@
 
 <div class="checkout-bg">
 
-    @* Product Card *@
+    @* ── Product Card ── *@
     <div class="product-card">
 
         <div class="product-img-wrap">
@@ -36,7 +47,7 @@
                 Delivery: @Model.DeliveryOptions
             </p>
 
-            @if (!string.IsNullOrEmpty(Model.Description))
+            @if (Model.Description != null && Model.Description.Length > 0)
             {
                 <p class="product-desc">@Model.Description</p>
             }
@@ -62,20 +73,12 @@
         </div>
     </div>
 
-    @* Enterprise Card *@
+    @* ── Enterprise Card ── *@
     <div class="enterprise-card">
 
         <div class="enterprise-avatar">
-            @if (Model.EnterpriseLogo != null)
-            {
-                <img src="data:image/jpeg;base64,@Convert.ToBase64String(Model.EnterpriseLogo)"
-                     alt="@Model.EnterpriseName"
-                     style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />
-            }
-            else
-            {
-                <span class="avatar-placeholder">&#128100;</span>
-            }
+            <img src="@logoSrc" alt="@Model.EnterpriseName"
+                 style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />
         </div>
 
         <div class="enterprise-info">
@@ -95,5 +98,5 @@
 <div class="checkout-toast" id="checkoutToast" role="status" aria-live="polite"></div>
 
 @section Scripts {
-    <script src="~/Scripts/Pchild.js"></script>
+    <script src="@Url.Content("~/Scripts/Pchild.js")?v=20260512-multi-enterprise"></script>
 }

@@ -3,6 +3,45 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = Model.StoreName + " - BizzyQCU";
     ViewBag.BodyClass = "view-enterprise-bg";
+
+    // Pick a random product for the ad modal
+    BizzyQCU.Models.EnterpriseProductItem adProduct = null;
+    if (Model.Products != null && Model.Products.Count > 0)
+    {
+        var rng = new Random();
+        adProduct = Model.Products[rng.Next(Model.Products.Count)];
+    }
+
+    // Status badge
+    string statusLabel;
+    string statusClass;
+    if (Model.Status == "approved")
+    {
+        statusLabel = "Online";
+        statusClass = "status-online";
+    }
+    else if (Model.Status == "suspended")
+    {
+        statusLabel = "Suspended";
+        statusClass = "status-suspended";
+    }
+    else
+    {
+        statusLabel = "Pending";
+        statusClass = "status-pending";
+    }
+
+    // Logo — store_logo is varchar path in DB
+    string logoSrc;
+    string rawLogo = Model.StoreLogo;
+    if (rawLogo != null && rawLogo.Length > 0)
+    {
+        logoSrc = Url.Content(rawLogo);
+    }
+    else
+    {
+        logoSrc = Url.Content("~/Content/Images/test-img-profile.jpg");
+    }
 }
 
 <div class="enterprise-page">
@@ -13,19 +52,11 @@
         <div class="enterprise-header">
             <div class="left-section">
                 <div class="enterprise-picture">
-                    @if (Model.StoreLogo != null)
-                    {
-                        <img src="data:image/jpeg;base64,@Convert.ToBase64String(Model.StoreLogo)"
-                             alt="@Model.StoreName" />
-                    }
-                    else
-                    {
-                        <img src="~/Content/Images/test-img-profile.jpg" alt="@Model.StoreName" />
-                    }
+                    <img src="@logoSrc" alt="@Model.StoreName" />
                 </div>
                 <div class="ent-info">
                     <h2>@Model.StoreName</h2>
-                    <span class="status-online">Online</span>
+                    <span class="@statusClass">@statusLabel</span>
                 </div>
             </div>
         </div>
@@ -79,13 +110,61 @@
 
 </div>
 
-@* ── Ad Modal ── *@
-<div id="ent-ad-modal" class="ad-modal">
-    <div class="ad-modal-content">
-        <span class="close-btn">&times;</span>
-        <img src="@Url.Content(ViewBag.AdImageUrl ?? "~/Content/Images/ad-sample.png")" alt="enterprise-ad" />
+@* ── Ad Modal — random product from this enterprise ── *@
+@if (adProduct != null)
+{
+    string adProductUrl = Url.Action("ProductChild", "ProductChild", new { id = adProduct.ProductId });
+
+    <div id="ent-ad-modal" class="ad-modal">
+        <div class="ad-modal-content" style="position:relative; text-align:center; cursor:pointer;"
+             onclick="window.location.href='@adProductUrl'">
+
+            <span class="close-btn"
+                  onclick="event.stopPropagation(); document.getElementById('ent-ad-modal').style.display='none';">
+                &times;
+            </span>
+
+            @if (adProduct.ProductImage != null)
+            {
+                <img src="data:image/jpeg;base64,@Convert.ToBase64String(adProduct.ProductImage)"
+                     alt="@adProduct.ProductName"
+                     style="width:100%; max-height:320px; object-fit:cover; border-radius:12px;" />
+            }
+            else
+            {
+                <img src="~/Content/Images/ad-sample.png"
+                     alt="@adProduct.ProductName"
+                     style="width:100%; max-height:320px; object-fit:cover; border-radius:12px;" />
+            }
+
+            <div style="padding:14px 10px 6px;">
+                <p style="font-weight:800; font-size:1.1rem; margin:0 0 4px; color:#111FA2;">
+                    @adProduct.ProductName
+                </p>
+                @if (adProduct.Description != null && adProduct.Description.Length > 0)
+                {
+                    <p style="font-size:0.95rem; color:#444; margin:0 0 4px;">@adProduct.Description</p>
+                }
+                <p style="font-weight:900; font-size:1.2rem; color:#111FA2; margin:0;">
+                    &#8369;@adProduct.Price.ToString("0.00")
+                </p>
+                <div style="margin-top:12px; background:#111FA2; color:white; border-radius:20px; padding:8px 28px; font-weight:700; font-size:0.95rem; display:inline-block;">
+                    Order Now
+                </div>
+            </div>
+
+        </div>
     </div>
-</div>
+}
+else
+{
+    <div id="ent-ad-modal" class="ad-modal">
+        <div class="ad-modal-content">
+            <span class="close-btn">&times;</span>
+            <img src="~/Content/Images/ad-sample.png" alt="enterprise-ad" />
+        </div>
+    </div>
+}
 
 @section Scripts {
     <script src="~/Scripts/Enterprise-Ad-Modal.js"></script>

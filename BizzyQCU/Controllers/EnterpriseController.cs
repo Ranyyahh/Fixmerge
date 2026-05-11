@@ -19,11 +19,10 @@ namespace BizzyQCU.Controllers
             {
                 conn.Open();
 
-                // No ratings table — load enterprise info only
                 string sql = @"
                     SELECT e.enterprise_id, e.store_name, e.enterprise_type,
-                           e.store_description, e.store_logo,
-                           e.contact_number, e.gcash_number
+                           e.store_description, e.store_logo, e.contact_number,
+                           e.gcash_number, e.status
                     FROM enterprises e
                     WHERE e.enterprise_id = @id
                       AND e.status = 'approved'";
@@ -41,9 +40,10 @@ namespace BizzyQCU.Controllers
                                 StoreName = reader.GetString("store_name"),
                                 EnterpriseType = reader.IsDBNull(reader.GetOrdinal("enterprise_type")) ? "" : reader.GetString("enterprise_type"),
                                 Description = reader.IsDBNull(reader.GetOrdinal("store_description")) ? "" : reader.GetString("store_description"),
-                                StoreLogo = reader.IsDBNull(reader.GetOrdinal("store_logo")) ? null : (byte[])reader["store_logo"],
+                                StoreLogo = reader.IsDBNull(reader.GetOrdinal("store_logo")) ? null : reader.GetString("store_logo"),
                                 ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
                                 GcashNumber = reader.IsDBNull(reader.GetOrdinal("gcash_number")) ? "" : reader.GetString("gcash_number"),
+                                Status = reader.IsDBNull(reader.GetOrdinal("status")) ? "pending" : reader.GetString("status"),
                                 AvgRating = 0,
                                 RatingCount = 0,
                                 Products = new List<EnterpriseProductItem>()
@@ -54,7 +54,6 @@ namespace BizzyQCU.Controllers
 
                 if (model == null) { return HttpNotFound(); }
 
-                // Load active products
                 string productSql = @"
                     SELECT p.product_id, p.product_name, p.description,
                            p.price, p.product_image, p.preparation_time,
@@ -87,7 +86,6 @@ namespace BizzyQCU.Controllers
                     }
                 }
 
-                // Load delivery options
                 string deliverySql = @"
                     SELECT delivery_type FROM delivery_options
                     WHERE enterprise_id = @eid AND is_active = 1";

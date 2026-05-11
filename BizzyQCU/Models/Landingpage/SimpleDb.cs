@@ -103,6 +103,15 @@ namespace BizzyQCU.Models.Landingpage
         public decimal Subtotal => Quantity * UnitPrice;
     }
 
+    public class TransactionHistoryItem
+    {
+        public string CustomerName { get; set; }
+        public string Products { get; set; }
+        public DateTime OrderDate { get; set; }
+        public decimal TotalAmount { get; set; }
+        public string Status { get; set; }
+    }
+
     // ========== PRODUCT MODELS ==========
     public class ProductImage
     {
@@ -129,6 +138,23 @@ namespace BizzyQCU.Models.Landingpage
     public class SimpleDb
     {
         private string connectionString = "server=localhost;database=BizzyQCU;uid=root;pwd=;";
+        private static bool orderStatusColumnChecked;
+
+        private void EnsureOrderStatusColumn(MySqlConnection conn)
+        {
+            if (orderStatusColumnChecked)
+            {
+                return;
+            }
+
+            string sql = @"ALTER TABLE orders MODIFY status ENUM('pending','preparing','out_for_delivery','completed','cancelled') DEFAULT 'pending'";
+            using (var cmd = new MySqlCommand(sql, conn))
+            {
+                cmd.ExecuteNonQuery();
+            }
+
+            orderStatusColumnChecked = true;
+        }
 
         public bool TestConnection()
         {
@@ -474,16 +500,26 @@ namespace BizzyQCU.Models.Landingpage
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
+                    EnsureOrderStatusColumn(conn);
                     string sql = @"
                         SELECT
                             o.order_id,
+                            CONCAT(COALESCE(s.firstname, ''), ' ', COALESCE(s.lastname, '')) AS customer_name,
                             o.total_amount,
+                            o.order_date,
+                            o.delivery_option,
+                            o.order_note,
                             o.status,
-                            CONCAT(COALESCE(s.firstname, ''), ' ', COALESCE(s.lastname, '')) AS customer_name
+                            DATE_FORMAT(o.order_date, '%h:%i %p') AS order_time,
+                            DATE_FORMAT(o.order_date, '%M %d, %Y') AS order_date_formatted,
+                            GROUP_CONCAT(CONCAT(oi.quantity, 'x ', COALESCE(p.product_name, 'Unknown Product')) ORDER BY p.product_name SEPARATOR ', ') AS items
                         FROM orders o
                         INNER JOIN students s ON s.student_id = o.student_id
+                        LEFT JOIN order_items oi ON oi.order_id = o.order_id
+                        LEFT JOIN products p ON p.product_id = oi.product_id
                         WHERE o.enterprise_id = @enterpriseId
                           AND o.status IN ('pending', 'preparing', 'out_for_delivery')
+                        GROUP BY o.order_id, s.firstname, s.lastname, o.total_amount, o.order_date, o.delivery_option, o.order_note, o.status
                         ORDER BY o.order_date DESC";
 
                     using (var cmd = new MySqlCommand(sql, conn))
@@ -495,7 +531,15 @@ namespace BizzyQCU.Models.Landingpage
                             {
                                 var order = new PendingOrder();
                                 order.OrderId = reader.GetInt32("order_id");
+                                order.CustomerName = reader.IsDBNull(reader.GetOrdinal("customer_name")) ? "Customer" : reader.GetString("customer_name").Trim();
                                 order.TotalAmount = reader.GetDecimal("total_amount");
+                                order.OrderDate = reader.GetDateTime("order_date");
+                                order.DeliveryOption = reader.IsDBNull(reader.GetOrdinal("delivery_option")) ? "pickup" : reader.GetString("delivery_option");
+                                order.OrderNote = reader.IsDBNull(reader.GetOrdinal("order_note")) ? "" : reader.GetString("order_note");
+                                order.Status = reader.IsDBNull(reader.GetOrdinal("status")) ? "pending" : reader.GetString("status");
+                                order.OrderTime = reader.IsDBNull(reader.GetOrdinal("order_time")) ? "" : reader.GetString("order_time");
+                                order.OrderDateFormatted = reader.IsDBNull(reader.GetOrdinal("order_date_formatted")) ? "" : reader.GetString("order_date_formatted");
+                                order.Items = reader.IsDBNull(reader.GetOrdinal("items")) ? "" : reader.GetString("items");
                                 order.Status = reader.GetString("status");
                                 order.CustomerName = reader.IsDBNull(reader.GetOrdinal("customer_name")) ? "Customer" : reader.GetString("customer_name").Trim();
                                 if (string.IsNullOrWhiteSpace(order.CustomerName))
@@ -524,6 +568,7 @@ namespace BizzyQCU.Models.Landingpage
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
+                    EnsureOrderStatusColumn(conn);
                     string sql = "UPDATE orders SET status = @status WHERE order_id = @orderId AND enterprise_id = @enterpriseId";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
@@ -567,11 +612,12 @@ namespace BizzyQCU.Models.Landingpage
                     o.customer_location
                 FROM orders o
                 INNER JOIN students s ON s.student_id = o.student_id
-                WHERE o.order_id = @orderId";
+                        WHERE o.order_id = @orderId AND o.enterprise_id = @enterpriseId";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@orderId", orderId);
+                        cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
                         using (var reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -676,7 +722,7 @@ namespace BizzyQCU.Models.Landingpage
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = @"SELECT COUNT(*) FROM orders WHERE enterprise_id = @enterpriseId AND status = 'preparing'";
+                    string sql = @"SELECT COUNT(*) FROM orders WHERE enterprise_id = @enterpriseId AND status IN ('pending', 'preparing', 'out_for_delivery')";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
@@ -698,7 +744,7 @@ namespace BizzyQCU.Models.Landingpage
                 {
                     conn.Open();
                     string sql = @"SELECT COUNT(*) FROM orders WHERE enterprise_id = @enterpriseId 
-                                   AND delivery_option != 'pickup' AND status = 'preparing'";
+                                   AND delivery_option != 'pickup' AND status = 'out_for_delivery'";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
@@ -719,7 +765,7 @@ namespace BizzyQCU.Models.Landingpage
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = @"SELECT COUNT(*) FROM orders WHERE enterprise_id = @enterpriseId AND DATE(order_date) = CURDATE() AND status = 'preparing'";
+                    string sql = @"SELECT COUNT(*) FROM orders WHERE enterprise_id = @enterpriseId AND DATE(order_date) = CURDATE() AND status IN ('pending', 'preparing', 'out_for_delivery')";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
@@ -1027,6 +1073,65 @@ namespace BizzyQCU.Models.Landingpage
                 return result;
             }
             return result;
+        }
+
+        public List<TransactionHistoryItem> GetTransactionHistoryByUserId(int userId)
+        {
+            var transactions = new List<TransactionHistoryItem>();
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"
+                        SELECT
+                            CONCAT(COALESCE(s.firstname, ''), ' ', COALESCE(s.lastname, '')) AS customer_name,
+                            GROUP_CONCAT(CONCAT(oi.quantity, 'x ', COALESCE(p.product_name, 'Unknown Product')) ORDER BY p.product_name SEPARATOR ', ') AS products,
+                            o.order_date,
+                            o.total_amount,
+                            o.status
+                        FROM orders o
+                        INNER JOIN enterprises e ON e.enterprise_id = o.enterprise_id
+                        INNER JOIN students s ON s.student_id = o.student_id
+                        INNER JOIN order_items oi ON oi.order_id = o.order_id
+                        LEFT JOIN products p ON p.product_id = oi.product_id
+                        WHERE e.user_id = @userId
+                          AND o.status IN ('completed', 'cancelled')
+                        GROUP BY o.order_id, s.firstname, s.lastname, o.order_date, o.total_amount, o.status
+                        ORDER BY o.order_date DESC";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@userId", userId);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                transactions.Add(new TransactionHistoryItem
+                                {
+                                    CustomerName = reader.IsDBNull(reader.GetOrdinal("customer_name"))
+                                        ? "Customer"
+                                        : reader.GetString("customer_name").Trim(),
+                                    Products = reader.IsDBNull(reader.GetOrdinal("products"))
+                                        ? "No products"
+                                        : reader.GetString("products"),
+                                    OrderDate = reader.GetDateTime("order_date"),
+                                    TotalAmount = reader.GetDecimal("total_amount"),
+                                    Status = reader.IsDBNull(reader.GetOrdinal("status"))
+                                        ? string.Empty
+                                        : reader.GetString("status")
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetTransactionHistoryByUserId error: " + ex.Message);
+            }
+
+            return transactions;
         }
 
         public StudentUserProfileData GetEnterpriseUserProfileByUserId(int userId)
