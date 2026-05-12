@@ -40,12 +40,14 @@ namespace BizzyQCU.Controllers
             int totalProducts = allProducts.Count;
             int totalPages = (int)Math.Ceiling((double)totalProducts / pageSize);
             var products = allProducts.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
+            var adProduct = allProducts.OrderBy(_ => Guid.NewGuid()).FirstOrDefault();
 
             ViewBag.EnterpriseName = enterprise.StoreName;
             ViewBag.StoreDescription = enterprise.StoreDescription ?? "";
             ViewBag.ContactNumber = enterprise.ContactNumber ?? "";
             ViewBag.GcashNumber = enterprise.GcashNumber ?? "";
             ViewBag.Products = products;
+            ViewBag.AdProduct = adProduct;
             ViewBag.EnterpriseId = enterprise.EnterpriseId;
             ViewBag.CurrentPage = currentPage;
             ViewBag.TotalPages = totalPages;

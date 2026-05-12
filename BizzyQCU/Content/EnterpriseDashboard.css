@@ -734,6 +734,59 @@ footer {
     border-radius: 20px;
 }
 
+.edit-store-product-ad {
+    background: #ffffff;
+    color: #111FA2;
+    overflow: hidden;
+    align-items: stretch;
+    justify-content: flex-start;
+}
+
+.edit-store-ad-image {
+    height: 230px;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 14px;
+}
+
+.edit-store-ad-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.edit-store-ad-copy {
+    padding: 16px 4px 0;
+}
+
+.edit-store-ad-label {
+    color: #5478FF;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.edit-store-ad-copy h2 {
+    color: #111FA2;
+    font-size: 1.7rem;
+    font-weight: 900;
+    margin: 6px 0;
+}
+
+.edit-store-ad-copy p {
+    color: #4b5563;
+    font-size: 0.95rem;
+    margin: 0 0 10px;
+}
+
+.edit-store-ad-copy strong {
+    color: #111FA2;
+    font-size: 1.2rem;
+}
+
 .edit-store-ad-icon {
     font-size: 12rem;
     color: #0f0f0f;

@@ -19,8 +19,11 @@
     else
     {
         emoji = "🍳";
-        statusLabel = "Preparing Order";
+        statusLabel = Model.Status == "out_for_delivery" ? "Out for Delivery" : "Preparing Order";
     }
+
+    string currentStatus = (Model.Status ?? "").ToLowerInvariant();
+    bool canCancelOrder = currentStatus == "pending" || currentStatus == "preparing" || currentStatus == "out_for_delivery";
 
     string progressClass;
     if (Model.Status == "completed")
@@ -38,6 +41,7 @@
 }
 
 <link rel="stylesheet" href="~/Content/trackingstyle.css" />
+@Html.AntiForgeryToken()
 
 <div class="split-wrapper">
     <div class="sidebar-fixed">
@@ -62,6 +66,10 @@
         </div>
         <h1 class="order-number">Order #QCU-@Model.OrderId</h1>
         <p class="live-indicator">LIVE STATUS</p>
+        @if (canCancelOrder)
+        {
+            <button type="button" id="cancelOrderBtn" class="cancel-order-btn">Cancel Order</button>
+        }
     </div>
 
     <div class="scrollable-area">
@@ -150,3 +158,46 @@
 
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var cancelBtn = document.getElementById('cancelOrderBtn');
+            if (!cancelBtn) return;
+
+            cancelBtn.addEventListener('click', function () {
+                if (!confirm('Cancel this order? The enterprise will see it as cancelled right away.')) {
+                    return;
+                }
+
+                cancelBtn.disabled = true;
+                cancelBtn.textContent = 'Cancelling...';
+
+                fetch('@Url.Action("CancelOrder", "Tracking")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                    },
+                    body: '__RequestVerificationToken=' + encodeURIComponent(document.querySelector('input[name="__RequestVerificationToken"]').value) +
+                        '&orderId=' + encodeURIComponent('@Model.OrderId')
+                })
+                    .then(function (response) { return response.json(); })
+                    .then(function (data) {
+                        if (data && data.success) {
+                            window.location.reload();
+                            return;
+                        }
+
+                        alert((data && data.message) || 'Unable to cancel order.');
+                        cancelBtn.disabled = false;
+                        cancelBtn.textContent = 'Cancel Order';
+                    })
+                    .catch(function () {
+                        alert('Unable to cancel order.');
+                        cancelBtn.disabled = false;
+                        cancelBtn.textContent = 'Cancel Order';
+                    });
+            });
+        })();
+    </script>
+}

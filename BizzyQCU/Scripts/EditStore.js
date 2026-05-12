@@ -31,7 +31,3 @@ function editProduct(productId) {
     window.location.href = '/EditProduct/EditProduct/' + productId;
 }
 
-// Add product button
-document.querySelector('.edit-store-ad-box')?.addEventListener('click', function () {
-    window.location.href = '/AddProduct/AddProduct';
-});

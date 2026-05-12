@@ -2,6 +2,7 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Edit Store";
     ViewBag.BodyClass = "product-page";
+    var adProduct = ViewBag.AdProduct as BizzyQCU.Models.Landingpage.Product;
 }
 
 @section Styles {
@@ -16,11 +17,35 @@
 
     <section class="edit-store-content">
         <div class="edit-store-ad-panel">
-            <label for="adImage" class="edit-store-ad-box">
-                <input id="adImage" type="file" accept="image/*" class="add-product-image-input" />
-                <span class="edit-store-ad-icon"><i class="fa-regular fa-image"></i></span>
-                <span class="edit-store-ad-text">Ad</span>
-            </label>
+            @if (adProduct != null)
+            {
+                <a href="@Url.Action("EditProduct", "EditProduct", new { id = adProduct.ProductId })" class="edit-store-ad-box edit-store-product-ad">
+                    <div class="edit-store-ad-image">
+                        @if (adProduct.HasImage)
+                        {
+                            <img src="@Url.Action("GetProductImage", "EditStore", new { productId = adProduct.ProductId })"
+                                 alt="@adProduct.ProductName" />
+                        }
+                        else
+                        {
+                            <span class="edit-store-ad-icon"><i class="fa-regular fa-image"></i></span>
+                        }
+                    </div>
+                    <div class="edit-store-ad-copy">
+                        <span class="edit-store-ad-label">Featured Product</span>
+                        <h2>@adProduct.ProductName</h2>
+                        <p>@(string.IsNullOrEmpty(adProduct.Description) ? "No description yet." : adProduct.Description)</p>
+                        <strong>PHP @adProduct.Price.ToString("N2")</strong>
+                    </div>
+                </a>
+            }
+            else
+            {
+                <a href="@Url.Action("AddProduct", "AddProduct")" class="edit-store-ad-box">
+                    <span class="edit-store-ad-icon"><i class="fa-regular fa-image"></i></span>
+                    <span class="edit-store-ad-text">Ad</span>
+                </a>
+            }
         </div>
 
         <div class="edit-store-products">
