@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Configuration;
+using System.IO;
+using System.Linq;
 using System.Web.Mvc;
 using MySql.Data.MySqlClient;
 
@@ -225,6 +227,78 @@ namespace BizzyQCU.Controllers
             TempData["ReorderCart"] = Newtonsoft.Json.JsonConvert.SerializeObject(reorderItems);
 
             return RedirectToAction("Checkout");
+        }
+
+        [HttpGet]
+        public JsonResult GetEnterpriseQr(int enterpriseId)
+        {
+            if (enterpriseId <= 0)
+            {
+                return Json(new { success = false, message = "Invalid enterprise ID." }, JsonRequestBehavior.AllowGet);
+            }
+
+            string connStr = ConfigurationManager.ConnectionStrings["BizzyQCUConnection"].ConnectionString;
+
+            try
+            {
+                int userId = 0;
+                string storeName = "Enterprise";
+
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string sql = "SELECT user_id, store_name FROM enterprises WHERE enterprise_id = @enterpriseId LIMIT 1";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (!reader.Read())
+                            {
+                                return Json(new { success = false, message = "Enterprise not found." }, JsonRequestBehavior.AllowGet);
+                            }
+
+                            userId = reader.GetInt32("user_id");
+                            storeName = reader.IsDBNull(reader.GetOrdinal("store_name")) ? "Enterprise" : reader.GetString("store_name");
+                        }
+                    }
+                }
+
+                var uploadsFolder = Server.MapPath("~/Content/Uploads");
+                if (string.IsNullOrWhiteSpace(uploadsFolder) || !Directory.Exists(uploadsFolder))
+                {
+                    return Json(new { success = false, message = "QR code not available yet." }, JsonRequestBehavior.AllowGet);
+                }
+
+                var pattern = "enterprise_" + userId + "_qr.*";
+                var files = Directory.GetFiles(uploadsFolder, pattern);
+                if (files == null || files.Length == 0)
+                {
+                    return Json(new { success = false, message = "QR code not available yet." }, JsonRequestBehavior.AllowGet);
+                }
+
+                var latest = files
+                    .Select(path => new FileInfo(path))
+                    .OrderByDescending(info => info.LastWriteTimeUtc)
+                    .FirstOrDefault();
+
+                if (latest == null)
+                {
+                    return Json(new { success = false, message = "QR code not available yet." }, JsonRequestBehavior.AllowGet);
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    enterpriseId = enterpriseId,
+                    enterpriseName = storeName,
+                    qrUrl = Url.Content("~/Content/Uploads/" + latest.Name)
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Failed to fetch QR code: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
         }
 
         // Helper class for deserializing cart items from the AJAX POST
