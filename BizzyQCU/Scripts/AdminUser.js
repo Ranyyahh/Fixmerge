@@ -68,6 +68,17 @@ let currentEditContext = null;
 let pendingEditSubmitEvent = null;
 let pendingFeedbackDeleteId = null;
 
+function normalizeDigits(value, maxLength) {
+    return (value || '').replace(/\D/g, '').slice(0, maxLength);
+}
+
+function restrictDigitsInput(input, maxLength) {
+    if (!input) return;
+    input.addEventListener('input', function () {
+        this.value = normalizeDigits(this.value, maxLength);
+    });
+}
+
 function loadAllStudentRequests() {
     fetch('/AdminPanel/GetAllStudentRequests')
         .then(response => response.json())
@@ -648,13 +659,14 @@ function openEditEnterpriseModal(requestId) {
             <div class="edit-form-group"><label>Store Name</label><input name="storeName" value="${escapeHtml(enterprise.StoreName || '')}" required /></div>
             <div class="edit-form-group"><label>Business Type</label><input name="businessType" value="${escapeHtml(enterprise.StoreDescription || '')}" required /></div>
             <div class="edit-form-group"><label>Contact Number</label><input name="contactNumber" value="${escapeHtml(enterprise.ContactNumber || '')}" /></div>
-            <div class="edit-form-group"><label>GCash Number</label><input name="gcashNumber" value="${escapeHtml(enterprise.GcashNumber || '')}" /></div>
+            <div class="edit-form-group"><label>GCash Number</label><input name="gcashNumber" value="${escapeHtml(enterprise.GcashNumber || '')}" inputmode="numeric" maxlength="11" pattern="09[0-9]{9}" title="Enter an 11-digit GCash number starting with 09." /></div>
         </div>
         <div class="edit-form-actions">
             <button type="button" class="edit-cancel-btn" onclick="closeEditModal()">Cancel</button>
             <button type="submit" class="edit-save-btn">Save Changes</button>
         </div>
     `;
+    restrictDigitsInput(form.gcashNumber, 11);
     document.getElementById('editRequestModal').classList.remove('hidden');
 }
 
@@ -670,6 +682,15 @@ function closeEditModal() {
 function submitEditForm(event) {
     event.preventDefault();
     if (!currentEditContext) return;
+
+    if (currentEditContext.type === 'enterprise') {
+        const gcashNumber = (event.target.gcashNumber.value || '').trim();
+        if (gcashNumber && !/^09\d{9}$/.test(gcashNumber)) {
+            alert('GCash number must be 11 digits and start with 09.');
+            event.target.gcashNumber.focus();
+            return;
+        }
+    }
 
     pendingEditSubmitEvent = event;
     openSaveConfirmModal();

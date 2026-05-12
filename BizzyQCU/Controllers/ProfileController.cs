@@ -528,9 +528,7 @@ namespace BizzyQCU.Controllers
             ViewBag.Title = "Enterprise Profile";
 
             // Enterprise profile uses a shared model with student-specific validators.
-            // Clear unrelated validation entries so enterprise saves are not blocked.
-            ModelState.Remove("Profile.StudentId");
-            ModelState.Remove("Profile.ManagerContactNumber");
+            // Clear only unrelated validation entries so enterprise saves are not blocked.
             ModelState.Remove("Profile.ManagerName");
 
             if (!ModelState.IsValid)

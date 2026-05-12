@@ -1184,7 +1184,7 @@ namespace BizzyQCU.Models.Landingpage
                 {
                     conn.Open();
                     string sql = @"SELECT u.username, u.email, s.firstname, s.lastname, s.contact_number, s.section, s.student_number,
-                                          s.birthdate, s.address
+                                          s.birthdate, s.address, s.profile_image
                                    FROM users u
                                    LEFT JOIN students s ON s.user_id = u.user_id
                                    WHERE u.user_id = @userId LIMIT 1";
@@ -1208,7 +1208,10 @@ namespace BizzyQCU.Models.Landingpage
                                     Section = reader.IsDBNull(reader.GetOrdinal("section")) ? "" : reader.GetString("section"),
                                     StudentNumber = reader.IsDBNull(reader.GetOrdinal("student_number")) ? "" : reader.GetString("student_number"),
                                     Birthdate = reader.IsDBNull(reader.GetOrdinal("birthdate")) ? (DateTime?)null : reader.GetDateTime("birthdate"),
-                                    Address = reader.IsDBNull(reader.GetOrdinal("address")) ? "" : reader.GetString("address")
+                                    Address = reader.IsDBNull(reader.GetOrdinal("address")) ? "" : reader.GetString("address"),
+                                    PhotoDataUrl = reader.IsDBNull(reader.GetOrdinal("profile_image"))
+                                        ? ""
+                                        : BuildImageDataUri((byte[])reader["profile_image"])
                                 };
                             }
                         }
@@ -1400,6 +1403,9 @@ namespace BizzyQCU.Models.Landingpage
                         studentCount = Convert.ToInt32(countCmd.ExecuteScalar());
                     }
 
+                    byte[] profileImageBytes = TryParseImageDataUrl(photoDataUrl);
+                    bool hasNewProfileImage = profileImageBytes != null && profileImageBytes.Length > 0;
+
                     string sql = studentCount > 0
                         ? @"UPDATE students
                             SET firstname = @firstname,
@@ -1408,12 +1414,13 @@ namespace BizzyQCU.Models.Landingpage
                                 section = @section,
                                 birthdate = @birthdate,
                                 address = @address,
-                                contact_number = @contact
+                                contact_number = @contact" + (hasNewProfileImage ? @",
+                                profile_image = @profileImage" : "") + @"
                             WHERE user_id = @userId"
                         : @"INSERT INTO students
-                            (user_id, firstname, lastname, student_number, section, birthdate, address, contact_number)
+                            (user_id, firstname, lastname, student_number, section, birthdate, address, contact_number, profile_image)
                             VALUES
-                            (@userId, @firstname, @lastname, @studentNumber, @section, @birthdate, @address, @contact)";
+                            (@userId, @firstname, @lastname, @studentNumber, @section, @birthdate, @address, @contact, @profileImage)";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
@@ -1425,6 +1432,10 @@ namespace BizzyQCU.Models.Landingpage
                         cmd.Parameters.AddWithValue("@address", address ?? "");
                         cmd.Parameters.AddWithValue("@contact", contactNumber ?? "");
                         cmd.Parameters.AddWithValue("@userId", userId);
+                        if (hasNewProfileImage || studentCount == 0)
+                        {
+                            cmd.Parameters.AddWithValue("@profileImage", hasNewProfileImage ? (object)profileImageBytes : DBNull.Value);
+                        }
                         cmd.ExecuteNonQuery();
                     }
                     string userSql = "UPDATE users SET email = @email WHERE user_id = @userId";
@@ -1438,6 +1449,50 @@ namespace BizzyQCU.Models.Landingpage
                 }
             }
             catch (Exception) { return false; }
+        }
+
+        private byte[] TryParseImageDataUrl(string dataUrl)
+        {
+            if (string.IsNullOrWhiteSpace(dataUrl))
+            {
+                return null;
+            }
+
+            const string base64Marker = ";base64,";
+            int markerIndex = dataUrl.IndexOf(base64Marker, StringComparison.OrdinalIgnoreCase);
+            if (!dataUrl.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase) || markerIndex < 0)
+            {
+                return null;
+            }
+
+            string base64 = dataUrl.Substring(markerIndex + base64Marker.Length);
+            try
+            {
+                return Convert.FromBase64String(base64);
+            }
+            catch (FormatException)
+            {
+                return null;
+            }
+        }
+
+        private string BuildImageDataUri(byte[] bytes)
+        {
+            if (bytes == null || bytes.Length == 0) return "";
+
+            string mime = "image/jpeg";
+            if (bytes.Length >= 4)
+            {
+                if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47) mime = "image/png";
+                else if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) mime = "image/jpeg";
+                else if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46) mime = "image/gif";
+                else if (bytes[0] == 0x42 && bytes[1] == 0x4D) mime = "image/bmp";
+                else if (bytes.Length > 11 &&
+                    bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46 &&
+                    bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50) mime = "image/webp";
+            }
+
+            return "data:" + mime + ";base64," + Convert.ToBase64String(bytes);
         }
 
         public bool SaveEnterpriseProfileData(int userId, string storeName, string enterpriseType, string gcashNumber, string email, string managerName, string managerStudentId, string managerContact, string section, string storeLogoPath, byte[] qrBytes)

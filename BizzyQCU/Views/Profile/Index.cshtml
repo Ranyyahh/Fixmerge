@@ -62,10 +62,29 @@
         background: #f0c330;
         color: #2b2b2b;
     }
+
+    .profile-dashboard-back {
+        align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        margin: 0 0 14px;
+        border-radius: 8px;
+        background: #eceefc;
+        color: #1e2f98;
+        text-decoration: none;
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1;
+    }
 </style>
 
 <section class="screen screen-dashboard">
     <div class="dashboard-panel">
+        <a class="profile-dashboard-back" href="@Url.Action("EnterpriseDashboard", "EnterpriseDashboard")" aria-label="Back to dashboard">&lt;</a>
+
         <!-- Left: Enterprise Card -->
         <div class="info-card enterprise-card">
             <div class="panel-heading">

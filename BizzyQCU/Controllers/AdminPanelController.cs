@@ -174,6 +174,10 @@ namespace BizzyQCU.Controllers
         public JsonResult UpdateEnterpriseRequestDetails(int requestId, string username, string email, string storeName, string businessType, string contactNumber, string gcashNumber)
         {
             if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
+            if (!string.IsNullOrWhiteSpace(gcashNumber) && !System.Text.RegularExpressions.Regex.IsMatch(gcashNumber, @"^09\d{9}$"))
+            {
+                return Json(new { success = false, message = "GCash number must be 11 digits and start with 09." });
+            }
 
             bool result = adminDb.UpdateEnterpriseRequestDetails(requestId, username, email, storeName, businessType, contactNumber, gcashNumber);
             return Json(new { success = result, message = result ? "Enterprise details updated." : "Failed to update enterprise details." });
