@@ -429,36 +429,39 @@ textarea {
         flex: 1;
     }
 
-    .product-footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-top: 10px;
-    }
+.product-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center; 
+    margin-top: 10px;
+    gap: 10px;
+}
 
-    .product-price {
-        font-size: 18px;
-        font-weight: bold;
-        color: #111fa2;
-    }
+.product-price {
+    font-size: 18px;
+    font-weight: bold;
+    color: #111fa2;
+    margin: 0; /* Remove any default margin */
+}
 
-    .add-btn {
-        width: 36px;
-        height: 36px;
-        border-radius: 70%;
-        border: none;
-        background: #f4b301;
-        color: white;
-        font-size: 22px;
-        font-weight: bold;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.2s ease;
-        line-height: 1;
-        padding: 0;
-    }
+.add-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 70%;
+    border: none;
+    background: #f4b301;
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+    line-height: 1;
+    padding: 0;
+    /* Remove margin: 0 auto since parent handles centering */
+}
 
         .add-btn:hover {
             background: #d49a00;
@@ -687,7 +690,6 @@ textarea {
         color: #111fa2;
         font-weight: normal;
     }
-
 
     /* ============================================
    MEDIA QUERIES - TABLET (max 1024px)

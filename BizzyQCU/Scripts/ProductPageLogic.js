@@ -8,7 +8,17 @@
     var filterToggleBtn = document.getElementById('filterToggleBtn');
     var filterSection = document.getElementById('filterSection');
 
-    /* ── Mobile filter toggle ─────────────────────────────────────────── */
+    // Check if mobile screen
+    function isMobile() {
+        return window.innerWidth <= 768;
+    }
+
+    // Pagination variables - ONLY for desktop
+    var currentPage = 1;
+    var itemsPerPage = 4;
+    var paginationEnabled = !isMobile();
+
+    // Mobile filter toggle
     if (filterToggleBtn && filterSection) {
         filterToggleBtn.addEventListener('click', function () {
             var isOpen = filterSection.classList.toggle('filter-section--open');
@@ -16,14 +26,14 @@
         });
     }
 
-    /* ── Product filtering ────────────────────────────────────────────── */
-    function filterProducts() {
+    // Function to get filtered cards
+    function getFilteredCards() {
         var searchVal = searchInput ? searchInput.value.toLowerCase() : '';
         var categoryVal = categoryFilter ? categoryFilter.value : '';
         var popularityVal = popularityFilter ? popularityFilter.value : '';
         var priceVal = priceFilter ? priceFilter.value : '';
         var cards = document.querySelectorAll('.product-card');
-        var visible = 0;
+        var filteredCards = [];
 
         cards.forEach(function (card) {
             var nameEl = card.querySelector('.product-name');
@@ -37,24 +47,173 @@
             var matchPrice = !priceVal || card.dataset.price === priceVal;
 
             if (matchSearch && matchCategory && matchPopularity && matchPrice) {
-                card.style.display = '';
-                visible++;
-            } else {
-                card.style.display = 'none';
+                filteredCards.push(card);
             }
         });
 
+        return filteredCards;
+    }
+
+    // Function to update pagination display (DESKTOP ONLY)
+    function updatePagination() {
+        // If on mobile, show all products and exit
+        if (isMobile()) {
+            var allCards = document.querySelectorAll('.product-card');
+            allCards.forEach(function (card) {
+                card.style.display = '';
+            });
+
+            var paginationSection = document.querySelector('.simple-pagination');
+            if (paginationSection) {
+                paginationSection.style.display = 'none';
+            }
+
+            if (noResults) {
+                var filteredCards = getFilteredCards();
+                noResults.style.display = filteredCards.length === 0 ? 'block' : 'none';
+            }
+            return;
+        }
+
+        // Desktop pagination logic
+        var filteredCards = getFilteredCards();
+        var totalPages = Math.ceil(filteredCards.length / itemsPerPage);
+
+        if (currentPage > totalPages) {
+            currentPage = totalPages || 1;
+        }
+
+        var allCards = document.querySelectorAll('.product-card');
+        allCards.forEach(function (card) {
+            card.style.display = 'none';
+        });
+
+        var start = (currentPage - 1) * itemsPerPage;
+        var end = Math.min(start + itemsPerPage, filteredCards.length);
+
+        for (var i = start; i < end; i++) {
+            filteredCards[i].style.display = '';
+        }
+
+        var pageInfo = document.getElementById('pageInfo');
+        if (pageInfo) {
+            if (totalPages === 0) {
+                pageInfo.textContent = 'Page 0 of 0';
+            } else {
+                pageInfo.textContent = 'Page ' + currentPage + ' of ' + totalPages;
+            }
+        }
+
+        var prevBtn = document.getElementById('prevPageBtn');
+        var nextBtn = document.getElementById('nextPageBtn');
+
+        if (prevBtn) {
+            prevBtn.disabled = currentPage <= 1 || totalPages === 0;
+        }
+        if (nextBtn) {
+            nextBtn.disabled = currentPage >= totalPages || totalPages === 0;
+        }
+
         if (noResults) {
-            noResults.style.display = visible === 0 ? 'block' : 'none';
+            noResults.style.display = filteredCards.length === 0 ? 'block' : 'none';
+        }
+
+        var paginationSection = document.querySelector('.simple-pagination');
+        if (paginationSection) {
+            paginationSection.style.display = filteredCards.length === 0 ? 'none' : 'block';
         }
     }
 
+    // Go to previous page
+    function goToPrevPage() {
+        if (!isMobile() && currentPage > 1) {
+            currentPage--;
+            updatePagination();
+        }
+    }
+
+    // Go to next page
+    function goToNextPage() {
+        if (!isMobile()) {
+            var filteredCards = getFilteredCards();
+            var totalPages = Math.ceil(filteredCards.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                updatePagination();
+            }
+        }
+    }
+
+    // Filter products - resets to page 1
+    function filterProducts() {
+        currentPage = 1;
+        updatePagination();
+    }
+
+    // Attach filter event listeners
     if (searchInput) searchInput.addEventListener('input', filterProducts);
     if (categoryFilter) categoryFilter.addEventListener('change', filterProducts);
     if (popularityFilter) popularityFilter.addEventListener('change', filterProducts);
     if (priceFilter) priceFilter.addEventListener('change', filterProducts);
 
-    /* ── Popup message helper ─────────────────────────────────────────── */
+    // Pagination button event listeners
+    var prevBtn = document.getElementById('prevPageBtn');
+    var nextBtn = document.getElementById('nextPageBtn');
+
+    if (prevBtn) {
+        prevBtn.addEventListener('click', goToPrevPage);
+    }
+    if (nextBtn) {
+        nextBtn.addEventListener('click', goToNextPage);
+    }
+
+    // Handle window resize - reapply pagination or show all
+    window.addEventListener('resize', function () {
+        paginationEnabled = !isMobile();
+        if (isMobile()) {
+            // On mobile: show all products
+            var allCards = document.querySelectorAll('.product-card');
+            allCards.forEach(function (card) {
+                card.style.display = '';
+            });
+            var paginationSection = document.querySelector('.simple-pagination');
+            if (paginationSection) {
+                paginationSection.style.display = 'none';
+            }
+        } else {
+            // On desktop: reapply pagination
+            currentPage = 1;
+            updatePagination();
+        }
+    });
+
+    // ===== HANDLE PAGINATION VISIBILITY ON MOBILE =====
+    function handleMobilePagination() {
+        var paginationWrapper = document.querySelector('.pagination-wrapper');
+        var paginationDiv = document.querySelector('.pagination-container');
+
+        if (window.innerWidth <= 768) {
+            // Hide pagination on mobile
+            if (paginationWrapper) paginationWrapper.style.display = 'none';
+            if (paginationDiv) paginationDiv.style.display = 'none';
+
+            // Show all products
+            var allCards = document.querySelectorAll('.product-card');
+            allCards.forEach(function (card) {
+                card.style.display = '';
+            });
+        } else {
+            // Show pagination on desktop
+            if (paginationWrapper) paginationWrapper.style.display = 'flex';
+            if (paginationDiv) paginationDiv.style.display = 'flex';
+        }
+    }
+
+    // Run on load and resize
+    window.addEventListener('load', handleMobilePagination);
+    window.addEventListener('resize', handleMobilePagination);
+
+    // Popup message helper
     function showMessage(message, isError) {
         var existingOverlay = document.getElementById('customMessageOverlay');
         if (existingOverlay) { existingOverlay.remove(); }
@@ -90,7 +249,7 @@
         document.body.appendChild(overlay);
     }
 
-    /* ── Login check ──────────────────────────────────────────────────── */
+    // Login check
     function checkLogin(callback) {
         fetch('/Account/CheckLogin', { method: 'GET' })
             .then(function (r) { return r.json(); })
@@ -98,9 +257,8 @@
             .catch(function () { if (callback) { callback(false); } });
     }
 
-    /* ── Add to cart (+ button) ───────────────────────────────────────── */
+    // Add to cart
     function addToCart(card) {
-        // Read data attributes set by the Razor view
         var productId = parseInt(card.getAttribute('data-product-id'));
         var productName = card.getAttribute('data-product-name');
         var unitPrice = parseFloat(card.getAttribute('data-price-value'));
@@ -119,9 +277,6 @@
             try { cart = JSON.parse(stored); } catch (e) { cart = []; }
         }
 
-      
-
-        // Find existing
         var existing = null;
         for (var i = 0; i < cart.length; i++) {
             if (cart[i].ProductId === productId) { existing = cart[i]; break; }
@@ -143,23 +298,23 @@
         }
 
         sessionStorage.setItem('bizzyCart', JSON.stringify(cart));
+
         if (typeof notifyCartUpdated === 'function') {
             notifyCartUpdated();
         } else {
             window.dispatchEvent(new Event('bizzyCartUpdated'));
         }
+
         showMessage(productName + ' added to cart!', false);
     }
 
-    /* ── Attach events to cards ───────────────────────────────────────── */
+    // Attach events to cards
     function attachCardEvents() {
         var cards = document.querySelectorAll('.product-card');
         cards.forEach(function (card) {
-            // Prevent duplicate listeners
             if (card._eventsAttached) { return; }
             card._eventsAttached = true;
 
-            // Whole-card click → go to product detail page
             card.addEventListener('click', function (e) {
                 if (e.target.classList.contains('add-btn')) { return; }
                 e.preventDefault();
@@ -176,7 +331,6 @@
                 });
             });
 
-            // + button → add to cart
             var addBtn = card.querySelector('.add-btn');
             if (addBtn) {
                 addBtn.addEventListener('click', function (e) {
@@ -197,11 +351,12 @@
 
     attachCardEvents();
 
-    // Re-attach after any DOM mutation (filtering doesn't add new nodes,
-    // but kept here for safety if cards are ever dynamically injected)
     var observer = new MutationObserver(attachCardEvents);
     var productGrid = document.getElementById('productGrid');
     if (productGrid) {
         observer.observe(productGrid, { childList: true, subtree: true });
     }
+
+    // Initial pagination update
+    updatePagination();
 });
