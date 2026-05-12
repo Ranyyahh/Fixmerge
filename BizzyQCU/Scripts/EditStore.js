@@ -6,9 +6,9 @@ function deleteProduct(productId) {
         fetch('/EditStore/DeleteProduct', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
             },
-            body: JSON.stringify({ productId: productId })
+            body: 'productId=' + encodeURIComponent(productId)
         })
             .then(response => response.json())
             .then(data => {

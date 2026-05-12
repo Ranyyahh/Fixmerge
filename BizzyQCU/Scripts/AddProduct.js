@@ -37,11 +37,27 @@ document.getElementById('saveProductBtn').addEventListener('click', async functi
         return;
     }
 
+    if (!preparationTime) {
+        alert('Please enter preparation time in minutes');
+        return;
+    }
+
+    const prepMinutes = Number(preparationTime);
+    if (!Number.isInteger(prepMinutes)) {
+        alert('Preparation time must be whole minutes only (no seconds).');
+        return;
+    }
+
+    if (prepMinutes < 1 || prepMinutes > 60) {
+        alert('Preparation time must be between 1 and 60 minutes only.');
+        return;
+    }
+
     const formData = new FormData();
     formData.append('name', name);
     formData.append('price', parseFloat(price));
     formData.append('category', category);
-    formData.append('preparationTime', preparationTime);
+    formData.append('preparationTime', prepMinutes);
     formData.append('description', description);
     formData.append('productImage', imageFile || '');
 

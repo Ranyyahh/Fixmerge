@@ -33,7 +33,7 @@
                     <option value="Merch">Merch</option>
                 </select>
 
-                <input type="text" id="preparationTime" placeholder="Preparation Time (e.g., 15-20 mins)" aria-label="Preparation Time" />
+                <input type="number" id="preparationTime" min="1" max="60" step="1" placeholder="Preparation Time (minutes, max 60)" aria-label="Preparation Time" required />
                 <textarea id="productDescription" placeholder="Description" aria-label="Description"></textarea>
             </div>
         </div>

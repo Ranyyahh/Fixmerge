@@ -258,6 +258,10 @@ async function viewOrder(orderId) {
                             <span class="detail-value ${statusMeta.className}">${statusMeta.text}</span>
                         </div>
                         <div class="detail-row">
+                            <span class="detail-label">⏱ ETA</span>
+                            <span class="detail-value">${order.EstimatedTime || 'TBD'}</span>
+                        </div>
+                        <div class="detail-row">
                             <span class="detail-label">🛒 Items</span>
                         </div>
                         ${itemsHtml}

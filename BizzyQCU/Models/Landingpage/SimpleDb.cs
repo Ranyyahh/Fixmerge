@@ -94,6 +94,7 @@ namespace BizzyQCU.Models.Landingpage
         public string PaymentMethod { get; set; }
         public string OrderTime { get; set; }
         public string OrderDateFormatted { get; set; }
+        public string EstimatedTime { get; set; }
         public string CustomerLocation { get; set; }
         public decimal DeliveryFee { get; set; }
         public List<OrderItem> Items { get; set; }
@@ -444,8 +445,23 @@ namespace BizzyQCU.Models.Landingpage
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
+                    // Try hard delete first.
                     string sql = "DELETE FROM products WHERE product_id = @productId AND enterprise_id = @enterpriseId";
                     using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@productId", productId);
+                        cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            return true;
+                        }
+                    }
+
+                    // If hard delete did not remove anything (or row is constrained by references),
+                    // fallback to soft delete so it disappears from active listings.
+                    string softDeleteSql = "UPDATE products SET status = 'inactive' WHERE product_id = @productId AND enterprise_id = @enterpriseId";
+                    using (var cmd = new MySqlCommand(softDeleteSql, conn))
                     {
                         cmd.Parameters.AddWithValue("@productId", productId);
                         cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
@@ -456,8 +472,29 @@ namespace BizzyQCU.Models.Landingpage
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("DeleteProduct error: " + ex.Message);
-                return false;
+                // Common case: product is referenced by existing order_items.
+                // Fallback to soft delete in a fresh command.
+                try
+                {
+                    using (var conn = new MySqlConnection(connectionString))
+                    {
+                        conn.Open();
+                        string softDeleteSql = "UPDATE products SET status = 'inactive' WHERE product_id = @productId AND enterprise_id = @enterpriseId";
+                        using (var cmd = new MySqlCommand(softDeleteSql, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@productId", productId);
+                            cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                            int rowsAffected = cmd.ExecuteNonQuery();
+                            return rowsAffected > 0;
+                        }
+                    }
+                }
+                catch (Exception innerEx)
+                {
+                    System.Diagnostics.Debug.WriteLine("DeleteProduct error: " + ex.Message);
+                    System.Diagnostics.Debug.WriteLine("DeleteProduct soft delete fallback error: " + innerEx.Message);
+                    return false;
+                }
             }
         }
 
@@ -574,14 +611,46 @@ namespace BizzyQCU.Models.Landingpage
                 {
                     conn.Open();
                     EnsureOrderStatusColumn(conn);
-                    string sql = "UPDATE orders SET status = @status WHERE order_id = @orderId AND enterprise_id = @enterpriseId";
-                    using (var cmd = new MySqlCommand(sql, conn))
+
+                    // When order is confirmed (pending -> preparing), compute ETA dynamically:
+                    // current time + total preparation minutes from ordered products.
+                    if (string.Equals(status, "preparing", StringComparison.OrdinalIgnoreCase))
                     {
-                        cmd.Parameters.AddWithValue("@status", status.ToLower());
-                        cmd.Parameters.AddWithValue("@orderId", orderId);
-                        cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
-                        int rowsAffected = cmd.ExecuteNonQuery();
-                        return rowsAffected > 0;
+                        string etaSql = @"
+                            UPDATE orders o
+                            JOIN (
+                                SELECT 
+                                    oi.order_id,
+                                    GREATEST(1, COALESCE(SUM(COALESCE(p.preparation_time, 0) * oi.quantity), 0)) AS total_prep_minutes
+                                FROM order_items oi
+                                LEFT JOIN products p ON p.product_id = oi.product_id
+                                WHERE oi.order_id = @orderId
+                                GROUP BY oi.order_id
+                            ) prep ON prep.order_id = o.order_id
+                            SET o.status = @status,
+                                o.estimated_time = ADDTIME(CURTIME(), SEC_TO_TIME(prep.total_prep_minutes * 60))
+                            WHERE o.order_id = @orderId AND o.enterprise_id = @enterpriseId";
+
+                        using (var cmd = new MySqlCommand(etaSql, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@status", status.ToLower());
+                            cmd.Parameters.AddWithValue("@orderId", orderId);
+                            cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                            int rowsAffected = cmd.ExecuteNonQuery();
+                            return rowsAffected > 0;
+                        }
+                    }
+                    else
+                    {
+                        string sql = "UPDATE orders SET status = @status WHERE order_id = @orderId AND enterprise_id = @enterpriseId";
+                        using (var cmd = new MySqlCommand(sql, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@status", status.ToLower());
+                            cmd.Parameters.AddWithValue("@orderId", orderId);
+                            cmd.Parameters.AddWithValue("@enterpriseId", enterpriseId);
+                            int rowsAffected = cmd.ExecuteNonQuery();
+                            return rowsAffected > 0;
+                        }
                     }
                 }
             }
@@ -614,6 +683,7 @@ namespace BizzyQCU.Models.Landingpage
                     o.payment_method,
                     DATE_FORMAT(o.order_date, '%h:%i %p') AS order_time,
                     DATE_FORMAT(o.order_date, '%M %d, %Y') AS order_date_formatted,
+                    TIME_FORMAT(o.estimated_time, '%h:%i %p') AS estimated_time_formatted,
                     o.customer_location
                 FROM orders o
                 INNER JOIN students s ON s.student_id = o.student_id
@@ -638,6 +708,7 @@ namespace BizzyQCU.Models.Landingpage
                                 order.PaymentMethod = reader.GetString("payment_method");
                                 order.OrderTime = reader.GetString("order_time");
                                 order.OrderDateFormatted = reader.GetString("order_date_formatted");
+                                order.EstimatedTime = reader.IsDBNull(reader.GetOrdinal("estimated_time_formatted")) ? "TBD" : reader.GetString("estimated_time_formatted");
                                 order.CustomerLocation = reader.GetString("customer_location");
                                 order.DeliveryFee = 0;  // I-set sa 0 palagi
                                 order.Items = GetOrderItems(orderId);
