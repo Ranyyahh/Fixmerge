@@ -45,6 +45,7 @@ body.home-bg {
         cursor: pointer;
         transition-duration: 0.4s;
         margin-bottom: 10px;
+        text-decoration: none;
     }
 
         .Homepage-tagline .GetStarted-btn:hover {
