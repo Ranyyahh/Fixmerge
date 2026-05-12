@@ -14,7 +14,6 @@
 </head>
 <body>
     @{
-        var isLoggedIn = Session["UserId"] != null;
         var sessionRole = Session["Role"] == null ? string.Empty : Session["Role"].ToString();
 
         // Account URL based on role
@@ -97,14 +96,11 @@
                 <a href="@Url.Action("About", "Home")">ABOUT US</a>
             }
 
-            @if (isLoggedIn)
-            {
-                <a href="@accountUrl" class="account-mobile">ACCOUNT</a>
-            }
+            <a href="@accountUrl" class="account-mobile">ACCOUNT</a>
         </div>
 
         <div class="right-icons">
-            @if (isLoggedIn && sessionRole == "student")
+            @if (sessionRole == "student" || (sessionRole != "enterprise" && sessionRole != "admin"))
             {
                 <div class="cart-icon" style="position:relative;">
                     <img src="~/Images/cart-icon.png" alt="Cart"
@@ -128,14 +124,11 @@
                 </div>
             }
 
-            @if (isLoggedIn)
-            {
-                <div class="account-icon account-desktop">
-                    <a href="@accountUrl">
-                        <img src="~/Images/account-icon.png" alt="Account" />
-                    </a>
-                </div>
-            }
+            <div class="account-icon account-desktop">
+                <a href="@accountUrl">
+                    <img src="~/Images/account-icon.png" alt="Account" />
+                </a>
+            </div>
 
             <button class="hamburger" id="hamburgerBtn">&#9776;</button>
         </div>
