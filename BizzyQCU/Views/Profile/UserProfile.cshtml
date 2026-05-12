@@ -362,8 +362,33 @@
             <div class="profile-info">
 
                 <div class="info-row">
-                    <span>Name</span>
-                    <input id="nameInput" class="info-input" value="@Model.Profile.ManagerName" readonly />
+                    <span>First Name</span>
+                    <input id="firstNameInput" class="info-input" value="@Model.Profile.Firstname" readonly />
+                </div>
+
+                <div class="info-row">
+                    <span>Last Name</span>
+                    <input id="lastNameInput" class="info-input" value="@Model.Profile.Lastname" readonly />
+                </div>
+
+                <div class="info-row">
+                    <span>Student Number</span>
+                    <input id="studentNumberInput" class="info-input" value="@Model.Profile.StudentId" readonly />
+                </div>
+
+                <div class="info-row">
+                    <span>Section</span>
+                    <input id="sectionInput" class="info-input" value="@Model.Profile.Section" readonly />
+                </div>
+
+                <div class="info-row">
+                    <span>Birthdate</span>
+                    <input id="birthdateInput" class="info-input" value="@Model.Profile.Birthdate" readonly />
+                </div>
+
+                <div class="info-row">
+                    <span>Address</span>
+                    <input id="addressInput" class="info-input" value="@Model.Profile.Address" readonly />
                 </div>
 
                 <div class="info-row">
@@ -397,8 +422,33 @@
         </div>
 
         <div class="modal-field">
-            <label for="modalNameInput">Name</label>
-            <input id="modalNameInput" type="text" />
+            <label for="modalFirstNameInput">First Name</label>
+            <input id="modalFirstNameInput" type="text" />
+        </div>
+
+        <div class="modal-field">
+            <label for="modalLastNameInput">Last Name</label>
+            <input id="modalLastNameInput" type="text" />
+        </div>
+
+        <div class="modal-field">
+            <label for="modalStudentNumberInput">Student Number</label>
+            <input id="modalStudentNumberInput" type="text" />
+        </div>
+
+        <div class="modal-field">
+            <label for="modalSectionInput">Section</label>
+            <input id="modalSectionInput" type="text" />
+        </div>
+
+        <div class="modal-field">
+            <label for="modalBirthdateInput">Birthdate</label>
+            <input id="modalBirthdateInput" type="date" />
+        </div>
+
+        <div class="modal-field">
+            <label for="modalAddressInput">Address</label>
+            <input id="modalAddressInput" type="text" />
         </div>
 
         <div class="modal-field">

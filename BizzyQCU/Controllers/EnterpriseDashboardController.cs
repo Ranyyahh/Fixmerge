@@ -31,6 +31,7 @@ namespace BizzyQCU.Controllers
             }
 
             ViewBag.EnterpriseName = enterprise.StoreName;
+            ViewBag.StoreLogo = enterprise.StoreLogo;
             return View();
         }
 

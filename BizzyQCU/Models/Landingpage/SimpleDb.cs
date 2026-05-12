@@ -11,10 +11,14 @@ namespace BizzyQCU.Models.Landingpage
     public class StudentUserProfileData
     {
         public string Name { get; set; }
+        public string Firstname { get; set; }
+        public string Lastname { get; set; }
         public string ContactNumber { get; set; }
         public string Email { get; set; }
         public string Section { get; set; }
         public string StudentNumber { get; set; }
+        public DateTime? Birthdate { get; set; }
+        public string Address { get; set; }
         public string PhotoDataUrl { get; set; }
     }
 
@@ -180,7 +184,7 @@ namespace BizzyQCU.Models.Landingpage
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = "SELECT enterprise_id, user_id, store_name, store_description, contact_number, gcash_number, status FROM enterprises WHERE user_id = @userId";
+                    string sql = "SELECT enterprise_id, user_id, store_name, store_description, store_logo, contact_number, gcash_number, status FROM enterprises WHERE user_id = @userId";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@userId", userId);
@@ -194,6 +198,7 @@ namespace BizzyQCU.Models.Landingpage
                                     UserId = reader.GetInt32("user_id"),
                                     StoreName = reader.GetString("store_name"),
                                     StoreDescription = reader.IsDBNull(reader.GetOrdinal("store_description")) ? "" : reader.GetString("store_description"),
+                                    StoreLogo = reader.IsDBNull(reader.GetOrdinal("store_logo")) ? "" : reader.GetString("store_logo"),
                                     ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
                                     GcashNumber = reader.IsDBNull(reader.GetOrdinal("gcash_number")) ? "" : reader.GetString("gcash_number"),
                                     Status = reader.GetString("status")
@@ -1012,7 +1017,7 @@ namespace BizzyQCU.Models.Landingpage
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = @"SELECT e.enterprise_id, e.store_name, e.enterprise_type, e.gcash_number, u.email,
+                    string sql = @"SELECT e.enterprise_id, e.store_name, e.enterprise_type, e.gcash_number, e.store_logo, u.email,
                                           em.manager_name, em.manager_student_id, em.manager_contact, em.manager_section
                                    FROM users u
                                    INNER JOIN enterprises e ON e.user_id = u.user_id
@@ -1032,6 +1037,7 @@ namespace BizzyQCU.Models.Landingpage
                                     StoreName = reader.IsDBNull(reader.GetOrdinal("store_name")) ? "" : reader.GetString("store_name"),
                                     EnterpriseType = reader.IsDBNull(reader.GetOrdinal("enterprise_type")) ? "" : reader.GetString("enterprise_type"),
                                     GcashNumber = reader.IsDBNull(reader.GetOrdinal("gcash_number")) ? "" : reader.GetString("gcash_number"),
+                                    StoreLogoPath = reader.IsDBNull(reader.GetOrdinal("store_logo")) ? "" : reader.GetString("store_logo"),
                                     Email = reader.IsDBNull(reader.GetOrdinal("email")) ? "" : reader.GetString("email"),
                                     ManagerName = reader.IsDBNull(reader.GetOrdinal("manager_name")) ? "" : reader.GetString("manager_name"),
                                     ManagerStudentId = reader.IsDBNull(reader.GetOrdinal("manager_student_id")) ? "" : reader.GetString("manager_student_id"),
@@ -1177,7 +1183,8 @@ namespace BizzyQCU.Models.Landingpage
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = @"SELECT u.username, u.email, s.firstname, s.lastname, s.contact_number, s.section, s.student_number
+                    string sql = @"SELECT u.username, u.email, s.firstname, s.lastname, s.contact_number, s.section, s.student_number,
+                                          s.birthdate, s.address
                                    FROM users u
                                    LEFT JOIN students s ON s.user_id = u.user_id
                                    WHERE u.user_id = @userId LIMIT 1";
@@ -1194,10 +1201,14 @@ namespace BizzyQCU.Models.Landingpage
                                 return new StudentUserProfileData
                                 {
                                     Name = string.IsNullOrEmpty(firstName) ? username : $"{firstName} {lastName}",
+                                    Firstname = firstName,
+                                    Lastname = lastName,
                                     ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
                                     Email = reader.GetString("email"),
                                     Section = reader.IsDBNull(reader.GetOrdinal("section")) ? "" : reader.GetString("section"),
-                                    StudentNumber = reader.IsDBNull(reader.GetOrdinal("student_number")) ? "" : reader.GetString("student_number")
+                                    StudentNumber = reader.IsDBNull(reader.GetOrdinal("student_number")) ? "" : reader.GetString("student_number"),
+                                    Birthdate = reader.IsDBNull(reader.GetOrdinal("birthdate")) ? (DateTime?)null : reader.GetDateTime("birthdate"),
+                                    Address = reader.IsDBNull(reader.GetOrdinal("address")) ? "" : reader.GetString("address")
                                 };
                             }
                         }
@@ -1375,25 +1386,43 @@ namespace BizzyQCU.Models.Landingpage
             catch (Exception) { return false; }
         }
 
-        public bool UpdateStudentUserProfile(int userId, string fullName, string contactNumber, string email, string photoDataUrl)
+        public bool UpdateStudentUserProfile(int userId, string firstName, string lastName, string studentNumber, string section, DateTime? birthdate, string address, string contactNumber, string email, string photoDataUrl)
         {
             try
             {
-                string firstName = "", lastName = "";
-                if (!string.IsNullOrWhiteSpace(fullName))
-                {
-                    var parts = fullName.Split(new[] { ' ' }, 2);
-                    firstName = parts[0];
-                    lastName = parts.Length > 1 ? parts[1] : "";
-                }
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string sql = "UPDATE students SET firstname = @firstname, lastname = @lastname, contact_number = @contact WHERE user_id = @userId";
+                    int studentCount;
+                    using (var countCmd = new MySqlCommand("SELECT COUNT(*) FROM students WHERE user_id = @userId", conn))
+                    {
+                        countCmd.Parameters.AddWithValue("@userId", userId);
+                        studentCount = Convert.ToInt32(countCmd.ExecuteScalar());
+                    }
+
+                    string sql = studentCount > 0
+                        ? @"UPDATE students
+                            SET firstname = @firstname,
+                                lastname = @lastname,
+                                student_number = @studentNumber,
+                                section = @section,
+                                birthdate = @birthdate,
+                                address = @address,
+                                contact_number = @contact
+                            WHERE user_id = @userId"
+                        : @"INSERT INTO students
+                            (user_id, firstname, lastname, student_number, section, birthdate, address, contact_number)
+                            VALUES
+                            (@userId, @firstname, @lastname, @studentNumber, @section, @birthdate, @address, @contact)";
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
-                        cmd.Parameters.AddWithValue("@firstname", firstName);
-                        cmd.Parameters.AddWithValue("@lastname", lastName);
+                        cmd.Parameters.AddWithValue("@firstname", firstName ?? "");
+                        cmd.Parameters.AddWithValue("@lastname", lastName ?? "");
+                        cmd.Parameters.AddWithValue("@studentNumber", studentNumber ?? "");
+                        cmd.Parameters.AddWithValue("@section", section ?? "");
+                        cmd.Parameters.AddWithValue("@birthdate", birthdate.HasValue ? (object)birthdate.Value.Date : DBNull.Value);
+                        cmd.Parameters.AddWithValue("@address", address ?? "");
                         cmd.Parameters.AddWithValue("@contact", contactNumber ?? "");
                         cmd.Parameters.AddWithValue("@userId", userId);
                         cmd.ExecuteNonQuery();
@@ -1437,13 +1466,15 @@ namespace BizzyQCU.Models.Landingpage
                         string enterpriseSql = @"UPDATE enterprises
                                                  SET store_name = @storeName,
                                                      enterprise_type = @enterpriseType,
-                                                     gcash_number = @gcashNumber
+                                                     gcash_number = @gcashNumber,
+                                                     store_logo = COALESCE(@storeLogoPath, store_logo)
                                                  WHERE user_id = @userId";
                         using (var enterpriseCmd = new MySqlCommand(enterpriseSql, conn, tx))
                         {
                             enterpriseCmd.Parameters.AddWithValue("@storeName", storeName ?? "");
                             enterpriseCmd.Parameters.AddWithValue("@enterpriseType", enterpriseType ?? "");
                             enterpriseCmd.Parameters.AddWithValue("@gcashNumber", gcashNumber ?? "");
+                            enterpriseCmd.Parameters.AddWithValue("@storeLogoPath", string.IsNullOrWhiteSpace(storeLogoPath) ? (object)DBNull.Value : storeLogoPath);
                             enterpriseCmd.Parameters.AddWithValue("@userId", userId);
                             enterpriseCmd.ExecuteNonQuery();
                         }

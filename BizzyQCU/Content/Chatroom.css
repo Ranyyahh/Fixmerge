@@ -61,6 +61,17 @@ body.home-bg {
     margin-bottom: 12px;
 }
 
+.chatroom-back-btn {
+    border: 1px solid #c8d0ff;
+    background: #ffffff;
+    color: #111fa2;
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
 .chatroom-thread-title {
     color: #111fa2;
     font-size: 18px;

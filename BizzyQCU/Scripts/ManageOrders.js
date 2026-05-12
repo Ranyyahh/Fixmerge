@@ -259,7 +259,7 @@ async function viewOrder(orderId) {
                                 <p class="courier-type">${order.CustomerPhone || 'No phone number'}</p>
                             </div>
                         </div>
-                        ${order.CustomerPhone ? `<button class="btn-message-emoji" onclick="window.location.href='tel:${order.CustomerPhone}'">📞 Call</button>` : ''}
+                        <button class="btn-message-emoji" onclick="window.location.href='/EnterpriseDashboard/EnterpriseChatroom?orderId=${order.OrderId}'">💬 Message</button>
                     </div>
                 </div>
             `;

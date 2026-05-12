@@ -65,6 +65,7 @@ function getZeroChartData(period) {
 }
 
 let currentChart = null;
+let currentPeriod = 'daily';
 
 function renderStats(stats) {
     const totalSalesElem = document.querySelector('.stat-total-sales');
@@ -144,7 +145,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         renderStats(stats);
 
         // Load chart data from server
-        let currentPeriod = 'daily';
         let chartData = await DashboardDataService.getChartData(currentPeriod);
         renderChart(currentPeriod, chartData);
 
@@ -162,9 +162,17 @@ document.addEventListener('DOMContentLoaded', async function () {
         const newOrdersBtn = document.getElementById('newOrdersBtn');
         if (newOrdersBtn) {
             newOrdersBtn.addEventListener('click', () => {
-                window.location.href = '/ManageOrders/Index';
+                window.location.href = '/ManageOrders/ManageOrders';
             });
         }
+
+        setInterval(async () => {
+            const freshStats = await DashboardDataService.getStats();
+            renderStats(freshStats);
+
+            const freshChartData = await DashboardDataService.getChartData(currentPeriod);
+            renderChart(currentPeriod, freshChartData);
+        }, 10000);
 
         // Card hover effects
         const cards = document.querySelectorAll('.stats-card');

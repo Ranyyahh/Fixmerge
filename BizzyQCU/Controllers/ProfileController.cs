@@ -81,6 +81,11 @@ namespace BizzyQCU.Controllers
         [Display(Name = "Manager Gcash No.")]
         [RegularExpression(@"^$|^09\d{9}$", ErrorMessage = "Enter an 11-digit Gcash number starting with 09.")]
         public string ManagerContactNumber { get; set; }
+
+        public string Firstname { get; set; }
+        public string Lastname { get; set; }
+        public string Birthdate { get; set; }
+        public string Address { get; set; }
     }
 
     public class ChangePasswordViewModel
@@ -131,6 +136,12 @@ namespace BizzyQCU.Controllers
     {
         public string ManagerName { get; set; }
         public string ManagerContactNumber { get; set; }
+        public string Firstname { get; set; }
+        public string Lastname { get; set; }
+        public string StudentNumber { get; set; }
+        public string Section { get; set; }
+        public string Birthdate { get; set; }
+        public string Address { get; set; }
         public string Email { get; set; }
         public string PhotoDataUrl { get; set; }
     }
@@ -286,6 +297,12 @@ namespace BizzyQCU.Controllers
                 {
                     managerName = profile.ManagerName ?? string.Empty,
                     managerContactNumber = profile.ManagerContactNumber ?? string.Empty,
+                    firstname = profile.Firstname ?? string.Empty,
+                    lastname = profile.Lastname ?? string.Empty,
+                    studentNumber = profile.StudentId ?? string.Empty,
+                    section = profile.Section ?? string.Empty,
+                    birthdate = profile.Birthdate ?? string.Empty,
+                    address = profile.Address ?? string.Empty,
                     email = profile.Email ?? string.Empty,
                     photoDataUrl = profile.PhotoDataUrl ?? DefaultPhotoDataUrl()
                 }
@@ -310,6 +327,9 @@ namespace BizzyQCU.Controllers
                 }
 
                 var isEnterpriseUser = db.GetEnterpriseByUserId(userId) != null;
+                DateTime parsedBirthdate;
+                DateTime? birthdate = DateTime.TryParse(request.Birthdate, out parsedBirthdate) ? (DateTime?)parsedBirthdate : null;
+
                 var updated = isEnterpriseUser
                     ? db.UpdateEnterpriseUserProfile(
                         userId,
@@ -318,7 +338,12 @@ namespace BizzyQCU.Controllers
                         request.Email ?? string.Empty)
                     : db.UpdateStudentUserProfile(
                         userId,
-                        request.ManagerName ?? string.Empty,
+                        request.Firstname ?? string.Empty,
+                        request.Lastname ?? string.Empty,
+                        request.StudentNumber ?? string.Empty,
+                        request.Section ?? string.Empty,
+                        birthdate,
+                        request.Address ?? string.Empty,
                         request.ManagerContactNumber ?? string.Empty,
                         request.Email ?? string.Empty,
                         request.PhotoDataUrl ?? string.Empty);
@@ -788,7 +813,11 @@ namespace BizzyQCU.Controllers
                 ManagerName = data.Name ?? string.Empty,
                 StudentId = data.StudentNumber ?? string.Empty,
                 Section = data.Section ?? string.Empty,
-                ManagerContactNumber = data.ContactNumber ?? string.Empty
+                ManagerContactNumber = data.ContactNumber ?? string.Empty,
+                Firstname = data.Firstname ?? string.Empty,
+                Lastname = data.Lastname ?? string.Empty,
+                Birthdate = data.Birthdate.HasValue ? data.Birthdate.Value.ToString("yyyy-MM-dd") : string.Empty,
+                Address = data.Address ?? string.Empty
             };
         }
 

@@ -21,6 +21,10 @@ namespace BizzyQCU.Models.Landingpage
         [Column("store_description")]
         public string StoreDescription { get; set; }
 
+        [Column("store_logo")]
+        [StringLength(500)]
+        public string StoreLogo { get; set; }
+
         [Column("contact_number")]
         [StringLength(20)]
         public string ContactNumber { get; set; }

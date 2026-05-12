@@ -12,6 +12,11 @@ function loadCartFromSession() {
 
 function saveCartToSession() {
     sessionStorage.setItem('bizzyCart', JSON.stringify(cartItems));
+    if (typeof notifyCartUpdated === 'function') {
+        notifyCartUpdated();
+    } else {
+        window.dispatchEvent(new Event('bizzyCartUpdated'));
+    }
 }
 
 // ─── Called by ProductChild page when "Order Now" is clicked ──────────────────
@@ -45,6 +50,11 @@ window.CartBridge = {
         }
 
         sessionStorage.setItem('bizzyCart', JSON.stringify(cart));
+        if (typeof notifyCartUpdated === 'function') {
+            notifyCartUpdated();
+        } else {
+            window.dispatchEvent(new Event('bizzyCartUpdated'));
+        }
         return true;
     }
 };

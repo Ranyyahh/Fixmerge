@@ -1,11 +1,21 @@
 window.onload = function () {
-    var nameInput = document.getElementById("nameInput");
+    var firstNameInput = document.getElementById("firstNameInput");
+    var lastNameInput = document.getElementById("lastNameInput");
+    var studentNumberInput = document.getElementById("studentNumberInput");
+    var sectionInput = document.getElementById("sectionInput");
+    var birthdateInput = document.getElementById("birthdateInput");
+    var addressInput = document.getElementById("addressInput");
     var contactInput = document.getElementById("contactInput");
     var emailInput = document.getElementById("emailInput");
     var editBtn = document.getElementById("editInfoBtn");
     var profileStatus = document.getElementById("profileStatus");
     var editProfileModal = document.getElementById("editProfileModal");
-    var modalNameInput = document.getElementById("modalNameInput");
+    var modalFirstNameInput = document.getElementById("modalFirstNameInput");
+    var modalLastNameInput = document.getElementById("modalLastNameInput");
+    var modalStudentNumberInput = document.getElementById("modalStudentNumberInput");
+    var modalSectionInput = document.getElementById("modalSectionInput");
+    var modalBirthdateInput = document.getElementById("modalBirthdateInput");
+    var modalAddressInput = document.getElementById("modalAddressInput");
     var modalContactInput = document.getElementById("modalContactInput");
     var modalEmailInput = document.getElementById("modalEmailInput");
     var modalProfileImage = document.getElementById("modalProfileImage");
@@ -17,7 +27,12 @@ window.onload = function () {
     var hasPhotoChanged = false;
     var modalPhotoDataUrl = "";
     var originalState = {
-        name: "",
+        firstName: "",
+        lastName: "",
+        studentNumber: "",
+        section: "",
+        birthdate: "",
+        address: "",
         contact: "",
         email: "",
         photo: ""
@@ -29,7 +44,12 @@ window.onload = function () {
     }
 
     function captureOriginalState() {
-        originalState.name = nameInput.value || "";
+        originalState.firstName = firstNameInput.value || "";
+        originalState.lastName = lastNameInput.value || "";
+        originalState.studentNumber = studentNumberInput.value || "";
+        originalState.section = sectionInput.value || "";
+        originalState.birthdate = birthdateInput.value || "";
+        originalState.address = addressInput.value || "";
         originalState.contact = contactInput.value || "";
         originalState.email = emailInput.value || "";
         var profileImage = document.getElementById("profileImage");
@@ -37,7 +57,12 @@ window.onload = function () {
     }
 
     function restoreReadOnlyFields() {
-        nameInput.value = originalState.name;
+        firstNameInput.value = originalState.firstName;
+        lastNameInput.value = originalState.lastName;
+        studentNumberInput.value = originalState.studentNumber;
+        sectionInput.value = originalState.section;
+        birthdateInput.value = originalState.birthdate;
+        addressInput.value = originalState.address;
         contactInput.value = originalState.contact;
         emailInput.value = originalState.email;
         var profileImage = document.getElementById("profileImage");
@@ -58,7 +83,12 @@ window.onload = function () {
                     return;
                 }
 
-                nameInput.value = response.data.managerName || "";
+                firstNameInput.value = response.data.firstname || "";
+                lastNameInput.value = response.data.lastname || "";
+                studentNumberInput.value = response.data.studentNumber || "";
+                sectionInput.value = response.data.section || "";
+                birthdateInput.value = response.data.birthdate || "";
+                addressInput.value = response.data.address || "";
                 contactInput.value = response.data.managerContactNumber || "";
                 emailInput.value = response.data.email || "";
 
@@ -83,10 +113,15 @@ window.onload = function () {
         return /^09\d{9}$/.test(contact);
     }
 
-    function validateInputs(name, contact, email) {
+    function validateInputs(firstName, lastName, studentNumber, section, contact, email) {
 
-        if (!name) {
-            setStatus("Name is required.", "error");
+        if (!firstName || !lastName) {
+            setStatus("First name and last name are required.", "error");
+            return false;
+        }
+
+        if (!studentNumber || !section) {
+            setStatus("Student number and section are required.", "error");
             return false;
         }
 
@@ -111,7 +146,12 @@ window.onload = function () {
     }
 
     function openModal() {
-        modalNameInput.value = nameInput.value || "";
+        modalFirstNameInput.value = firstNameInput.value || "";
+        modalLastNameInput.value = lastNameInput.value || "";
+        modalStudentNumberInput.value = studentNumberInput.value || "";
+        modalSectionInput.value = sectionInput.value || "";
+        modalBirthdateInput.value = birthdateInput.value || "";
+        modalAddressInput.value = addressInput.value || "";
         modalContactInput.value = contactInput.value || "";
         modalEmailInput.value = emailInput.value || "";
         modalPhotoDataUrl = originalState.photo || "";
@@ -129,16 +169,26 @@ window.onload = function () {
     }
 
     function saveProfileFromModal() {
-        var updatedName = (modalNameInput.value || "").trim();
+        var updatedFirstName = (modalFirstNameInput.value || "").trim();
+        var updatedLastName = (modalLastNameInput.value || "").trim();
+        var updatedStudentNumber = (modalStudentNumberInput.value || "").trim();
+        var updatedSection = (modalSectionInput.value || "").trim();
+        var updatedBirthdate = (modalBirthdateInput.value || "").trim();
+        var updatedAddress = (modalAddressInput.value || "").trim();
         var updatedContact = (modalContactInput.value || "").trim();
         var updatedEmail = (modalEmailInput.value || "").trim();
 
-        if (!validateInputs(updatedName, updatedContact, updatedEmail)) {
+        if (!validateInputs(updatedFirstName, updatedLastName, updatedStudentNumber, updatedSection, updatedContact, updatedEmail)) {
             return;
         }
 
         var payload = {
-            managerName: updatedName,
+            firstname: updatedFirstName,
+            lastname: updatedLastName,
+            studentNumber: updatedStudentNumber,
+            section: updatedSection,
+            birthdate: updatedBirthdate,
+            address: updatedAddress,
             managerContactNumber: updatedContact,
             email: updatedEmail,
             photoDataUrl: hasPhotoChanged ? modalPhotoDataUrl : ""
@@ -160,7 +210,12 @@ window.onload = function () {
                     return;
                 }
 
-                nameInput.value = updatedName;
+                firstNameInput.value = updatedFirstName;
+                lastNameInput.value = updatedLastName;
+                studentNumberInput.value = updatedStudentNumber;
+                sectionInput.value = updatedSection;
+                birthdateInput.value = updatedBirthdate;
+                addressInput.value = updatedAddress;
                 contactInput.value = updatedContact;
                 emailInput.value = updatedEmail;
                 var profileImage = document.getElementById("profileImage");
@@ -225,7 +280,12 @@ window.onload = function () {
         }
     };
 
-    nameInput.setAttribute("readonly", "true");
+    firstNameInput.setAttribute("readonly", "true");
+    lastNameInput.setAttribute("readonly", "true");
+    studentNumberInput.setAttribute("readonly", "true");
+    sectionInput.setAttribute("readonly", "true");
+    birthdateInput.setAttribute("readonly", "true");
+    addressInput.setAttribute("readonly", "true");
     contactInput.setAttribute("readonly", "true");
     emailInput.setAttribute("readonly", "true");
     loadProfile();

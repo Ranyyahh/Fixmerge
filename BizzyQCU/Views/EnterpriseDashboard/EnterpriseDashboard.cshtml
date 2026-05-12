@@ -10,7 +10,12 @@
 <div class="dashboard-container">
 
     <div class="enterprise-header">
-        <div class="profile-icon"></div>
+        <div class="profile-icon">
+            @if (!string.IsNullOrWhiteSpace(ViewBag.StoreLogo as string))
+            {
+                <img src="@Url.Content(ViewBag.StoreLogo)" alt="@ViewBag.EnterpriseName" />
+            }
+        </div>
         <h1>@ViewBag.EnterpriseName</h1>
     </div>
 

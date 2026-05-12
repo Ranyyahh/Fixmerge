@@ -72,6 +72,11 @@
         }
 
         sessionStorage.setItem('bizzyCart', JSON.stringify(cart));
+        if (typeof notifyCartUpdated === 'function') {
+            notifyCartUpdated();
+        } else {
+            window.dispatchEvent(new Event('bizzyCartUpdated'));
+        }
 
         // Show brief toast then redirect to checkout
         var toast = document.getElementById('checkoutToast');

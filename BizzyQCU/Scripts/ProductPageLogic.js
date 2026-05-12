@@ -143,6 +143,11 @@
         }
 
         sessionStorage.setItem('bizzyCart', JSON.stringify(cart));
+        if (typeof notifyCartUpdated === 'function') {
+            notifyCartUpdated();
+        } else {
+            window.dispatchEvent(new Event('bizzyCartUpdated'));
+        }
         showMessage(productName + ' added to cart!', false);
     }
 

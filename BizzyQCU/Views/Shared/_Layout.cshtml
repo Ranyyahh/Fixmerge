@@ -170,6 +170,12 @@
 
             // ── Cart badge count ────────────────────────────────────────
             updateCartBadge();
+            window.addEventListener('storage', function (event) {
+                if (event.key === 'bizzyCart') {
+                    updateCartBadge();
+                }
+            });
+            window.addEventListener('bizzyCartUpdated', updateCartBadge);
         });
 
         function getCartCount() {
@@ -195,6 +201,11 @@
             } else {
                 badge.style.display = 'none';
             }
+        }
+
+        function notifyCartUpdated() {
+            updateCartBadge();
+            window.dispatchEvent(new Event('bizzyCartUpdated'));
         }
 
         function handleCartClick() {
