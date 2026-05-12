@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function () {
     loadPendingOrders();
 });
 
+let selectedOrderId = null;
+
 function getStatusMeta(status) {
     const normalized = (status || 'pending').toLowerCase();
     const statuses = {
@@ -68,7 +70,17 @@ async function loadPendingOrders() {
 
         if (data.success && data.orders && data.orders.length > 0) {
             renderOrderCards(data.orders);
+
+            // If the currently opened order is no longer active, clear sidebar/modal.
+            if (selectedOrderId !== null) {
+                const stillActive = data.orders.some(o => Number(o.OrderId || o.orderId) === Number(selectedOrderId));
+                if (!stillActive) {
+                    closeDetails();
+                }
+            }
         } else {
+            // No active orders left, so details panel must be cleared.
+            closeDetails();
             container.innerHTML = `
                 <div class="empty-orders">
                     <p>No active orders!</p>
@@ -152,6 +164,18 @@ async function updateStatus(event, orderId, newStatus) {
 
         if (data.success) {
             showNotification(data.message || 'Status updated!', 'success');
+
+            // If currently opened order is moved to terminal state, remove sidebar content immediately.
+            const normalizedStatus = (newStatus || '').toLowerCase();
+            if (Number(selectedOrderId) === Number(orderId) &&
+                (normalizedStatus === 'completed' || normalizedStatus === 'cancelled')) {
+                closeDetails();
+            }
+            else if (Number(selectedOrderId) === Number(orderId)) {
+                // Keep sidebar in sync when an active order status changes.
+                viewOrder(orderId);
+            }
+
             setTimeout(() => {
                 loadPendingOrders();
             }, 1000);
@@ -193,6 +217,7 @@ async function viewOrder(orderId) {
         const data = await response.json();
 
         if (data.success && data.order) {
+            selectedOrderId = id;
             const order = data.order;
             const statusMeta = getStatusMeta(order.Status);
 
@@ -289,6 +314,8 @@ async function viewOrder(orderId) {
 }
 
 function closeDetails() {
+    selectedOrderId = null;
+
     const detailsPanel = document.getElementById('detailsPanel');
     if (detailsPanel && window.innerWidth > 1100) {
         detailsPanel.innerHTML = `

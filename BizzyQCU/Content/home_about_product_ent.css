@@ -357,6 +357,19 @@ body.home-bg {
     font-size: 15px;
 }
 
+.market-empty-state {
+    grid-column: 1 / -1;
+    min-height: calc(100vh - 310px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0;
+}
+
 
 /* ============================================
    VIEW ENTERPRISE PAGE

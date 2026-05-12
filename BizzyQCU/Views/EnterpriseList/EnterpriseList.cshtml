@@ -1,8 +1,10 @@
 ﻿@model IEnumerable<BizzyQCU.Models.EnterpriseListItem>
+@using System.Linq
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Enterprise List";
     ViewBag.BodyClass = "product-page";
+    var enterprises = (Model ?? Enumerable.Empty<BizzyQCU.Models.EnterpriseListItem>()).ToList();
 }
 
 <div class="product-page-container">
@@ -56,14 +58,12 @@
     <div class="product-list-wrapper">
         <div class="product-grid-container" id="productGrid">
 
-            @if (!Model.GetEnumerator().MoveNext())
+            @if (!enterprises.Any())
             {
-                <p style="text-align:center; color:#999; grid-column:1/-1; padding:40px 0;">
-                    No enterprises available yet.
-                </p>
+                <div class="market-empty-state">No current enterprises</div>
             }
 
-            @foreach (var ent in Model)
+            @foreach (var ent in enterprises)
             {
                 string viewUrl = Url.Action("ViewEnterprise", "Enterprise", new { id = ent.EnterpriseId });
 
@@ -141,7 +141,10 @@
             }
 
         </div>
-        <p class="no-results" id="noResults" style="display:none;">No enterprises found.</p>
+        @if (enterprises.Any())
+        {
+            <p class="no-results" id="noResults" style="display:none;">No enterprises found.</p>
+        }
     </div>
 </div>
 

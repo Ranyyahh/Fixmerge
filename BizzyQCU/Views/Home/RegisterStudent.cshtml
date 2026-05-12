@@ -21,8 +21,6 @@
                    maxlength="11"
                    title="Numbers only (0-9)">
 
-            <input type="text" id="section" placeholder="Section (e.g., BSIT-3A)">
-
             <input type="text" id="studentId" placeholder="Student ID No. (e.g., 24-1574)"
                    maxlength="7"
                    title="Format: 24-1574 or 23-1587">
@@ -97,7 +95,6 @@
             Password: document.getElementById('password').value,
             Birthdate: document.getElementById('birthdate').value,
             ContactNumber: document.getElementById('contact').value,
-            Section: document.getElementById('section').value,
             StudentNumber: document.getElementById('studentId').value
         };
 
@@ -125,7 +122,6 @@
         payload.append('Password', formData.Password);
         payload.append('Birthdate', formData.Birthdate || '');
         payload.append('ContactNumber', formData.ContactNumber || '');
-        payload.append('Section', formData.Section || '');
         payload.append('StudentNumber', formData.StudentNumber || '');
         if (uploadInput && uploadInput.files && uploadInput.files.length > 0) {
             payload.append('qcidFile', uploadInput.files[0]);

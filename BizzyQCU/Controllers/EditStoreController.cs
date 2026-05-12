@@ -43,6 +43,7 @@ namespace BizzyQCU.Controllers
             var adProduct = allProducts.OrderBy(_ => Guid.NewGuid()).FirstOrDefault();
 
             ViewBag.EnterpriseName = enterprise.StoreName;
+            ViewBag.StoreLogo = enterprise.StoreLogo;
             ViewBag.StoreDescription = enterprise.StoreDescription ?? "";
             ViewBag.ContactNumber = enterprise.ContactNumber ?? "";
             ViewBag.GcashNumber = enterprise.GcashNumber ?? "";
