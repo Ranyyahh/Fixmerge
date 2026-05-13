@@ -18,7 +18,26 @@
             </select>
             <input type="text" id="username" placeholder="Username" required>
             <input type="email" id="email" placeholder="Email Address" required>
-            <input type="password" id="password" placeholder="Password" required>
+
+            <div class="password-wrapper">
+                <input type="password" id="password" placeholder="Password" oninput="handlePasswordInput()" onkeyup="handlePasswordInput()" required>
+                <span class="show-password"
+                      id="togglePassword"
+                      onclick="togglePassword('password','togglePassword')"
+                      style="display:none;">
+                    Show
+                </span>
+            </div>
+
+            <div class="password-wrapper">
+                <input type="password" id="confirmPassword" placeholder="Confirm Password" oninput="handleConfirmPasswordInput()" onkeyup="handleConfirmPasswordInput()" required>
+                <span class="show-password"
+                      id="toggleConfirmPassword"
+                      onclick="togglePassword('confirmPassword','toggleConfirmPassword')"
+                      style="display:none;">
+                    Show
+                </span>
+            </div>
 
             <input type="text" id="contact" placeholder="Contact Number"
                    onkeypress="return event.charCode >= 48 && event.charCode <= 57"
@@ -45,6 +64,41 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+    function handlePasswordInput() {
+        var password = document.getElementById("password").value;
+        var toggle = document.getElementById("togglePassword");
+
+        if (password.length > 0) {
+            toggle.style.display = "block";
+        } else {
+            toggle.style.display = "none";
+        }
+    }
+
+    function handleConfirmPasswordInput() {
+        var password = document.getElementById("confirmPassword").value;
+        var toggle = document.getElementById("toggleConfirmPassword");
+
+        if (password.length > 0) {
+            toggle.style.display = "block";
+        } else {
+            toggle.style.display = "none";
+        }
+    }
+
+    function togglePassword(inputId, toggleId) {
+        var input = document.getElementById(inputId);
+        var toggle = document.getElementById(toggleId);
+
+        if (input.type === "password") {
+            input.type = "text";
+            toggle.textContent = "Hide";
+        } else {
+            input.type = "password";
+            toggle.textContent = "Show";
+        }
+    }
+
     function updateFileNames() {
         var input = document.getElementById('documents');
         var display = document.getElementById('fileNames');
@@ -74,12 +128,20 @@
     function registerEnterprise(e) {
         e.preventDefault();
 
+        var password = document.getElementById('password').value;
+        var confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (password !== confirmPassword) {
+            showMessage('Passwords do not match!', 'error');
+            return false;
+        }
+
         var formData = {
             StoreName: document.getElementById('enterpriseName').value,
             EnterpriseType: document.getElementById('enterpriseType').value,
             Username: document.getElementById('username').value,
             Email: document.getElementById('email').value,
-            Password: document.getElementById('password').value,
+            Password: password,
             ContactNumber: document.getElementById('contact').value,
             GcashNumber: document.getElementById('gcashNumber').value
         };
@@ -94,6 +156,19 @@
             return false;
         }
 
+        if (formData.GcashNumber && formData.GcashNumber.trim() !== "") {
+            if (!validateContactNumber(formData.GcashNumber)) {
+                showMessage('GCash Number must be 11 digits (e.g., 09123456789)', 'error');
+                return false;
+            }
+        }
+
+        var fileInput = document.getElementById('documents');
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            showMessage('Please upload your documents!', 'error');
+            return false;
+        }
+
         var payload = new FormData();
         payload.append('StoreName', formData.StoreName);
         payload.append('EnterpriseType', formData.EnterpriseType);
@@ -105,7 +180,9 @@
 
         var fileInput = document.getElementById('documents');
         if (fileInput && fileInput.files && fileInput.files.length > 0) {
-            payload.append('documents', fileInput.files[0]);
+            for (var i = 0; i < fileInput.files.length; i++) {
+                payload.append('documents', fileInput.files[i]);
+            }
         }
 
         $.ajax({

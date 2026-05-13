@@ -200,9 +200,29 @@ function handleRemove(e) {
 // ─── Delivery / Payment UI ─────────────────────────────────────────────────────
 function initDeliveryPayment() {
     updateRoomVisibility();
+    updateQrButtonVisibility();
     document.querySelectorAll('.change-btn').forEach(function (btn) {
         btn.addEventListener('click', changeHandler);
     });
+
+    var viewQrBtn = document.getElementById('viewQrBtn');
+    if (viewQrBtn) {
+        viewQrBtn.addEventListener('click', openQrModal);
+    }
+
+    var closeQrModalBtn = document.getElementById('closeQrModalBtn');
+    if (closeQrModalBtn) {
+        closeQrModalBtn.addEventListener('click', closeQrModal);
+    }
+
+    var qrModal = document.getElementById('qrModal');
+    if (qrModal) {
+        qrModal.addEventListener('click', function (event) {
+            if (event.target === qrModal) {
+                closeQrModal();
+            }
+        });
+    }
 }
 
 function changeHandler(e) {
@@ -217,7 +237,80 @@ function changeHandler(e) {
     } else if (type === 'payment') {
         var pspan = document.getElementById('paymentMethodDisplay');
         pspan.innerText = pspan.innerText.trim() === 'Cash on Delivery' ? 'GCash' : 'Cash on Delivery';
+        updateQrButtonVisibility();
     }
+}
+
+function updateQrButtonVisibility() {
+    var paymentDisplay = document.getElementById('paymentMethodDisplay');
+    var viewQrBtn = document.getElementById('viewQrBtn');
+    if (!paymentDisplay || !viewQrBtn) return;
+
+    var isGcash = paymentDisplay.innerText.trim() === 'GCash';
+    viewQrBtn.style.display = isGcash ? 'inline-block' : 'none';
+}
+
+function closeQrModal() {
+    var modal = document.getElementById('qrModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function openQrModal() {
+    var groups = getEnterpriseGroups();
+    if (!groups.length) {
+        alert('No enterprise found in cart.');
+        return;
+    }
+
+    var modal = document.getElementById('qrModal');
+    var content = document.getElementById('qrModalContent');
+    if (!modal || !content) return;
+
+    content.innerHTML = '<p>Loading QR code...</p>';
+    modal.style.display = 'flex';
+
+    var requests = groups.map(function (group) {
+        return fetch('/Checkout/GetEnterpriseQr?enterpriseId=' + encodeURIComponent(group.enterpriseId))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                return {
+                    enterpriseName: group.enterpriseName || 'Enterprise',
+                    success: data && data.success,
+                    qrUrl: data ? data.qrUrl : null,
+                    message: data && data.message ? data.message : 'QR code not available yet.'
+                };
+            })
+            .catch(function () {
+                return {
+                    enterpriseName: group.enterpriseName || 'Enterprise',
+                    success: false,
+                    qrUrl: null,
+                    message: 'Failed to fetch QR code.'
+                };
+            });
+    });
+
+    Promise.all(requests).then(function (results) {
+        var html = '<div class="qr-enterprise-grid">';
+
+        results.forEach(function (result) {
+            html += '<div class="qr-enterprise-card">';
+            html += '<strong>' + escapeHtml(result.enterpriseName) + '</strong><br>';
+
+            if (result.success && result.qrUrl) {
+                html += '<img src="' + result.qrUrl + '" alt="GCash QR for ' + escapeHtml(result.enterpriseName) + '">';
+            } else {
+                html += '<p style="margin-top:10px;color:#b91c1c;">' + escapeHtml(result.message) + '</p>';
+            }
+
+            html += '</div>';
+        });
+
+        html += '</div>';
+        content.innerHTML = html;
+    });
 }
 
 function updateRoomVisibility() {

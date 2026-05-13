@@ -44,10 +44,15 @@ namespace BizzyQCU.Controllers
                 }
 
                 string name = Request.Form["name"];
-                decimal price = Convert.ToDecimal(Request.Form["price"]);
+                decimal price;
                 string category = Request.Form["category"];
                 string preparationTime = Request.Form["preparationTime"];
                 string description = Request.Form["description"];
+
+                if (!decimal.TryParse(Request.Form["price"], out price))
+                {
+                    return Json(new { success = false, message = "Invalid price format" });
+                }
 
                 if (string.IsNullOrWhiteSpace(name))
                 {
@@ -75,14 +80,15 @@ namespace BizzyQCU.Controllers
                     categoryId = db.GetOrCreateCategory(category);
                 }
 
-                int prepTime = 0;
-                if (!string.IsNullOrWhiteSpace(preparationTime))
+                int prepTime;
+                if (string.IsNullOrWhiteSpace(preparationTime) || !int.TryParse(preparationTime, out prepTime))
                 {
-                    var match = System.Text.RegularExpressions.Regex.Match(preparationTime, @"\d+");
-                    if (match.Success)
-                    {
-                        int.TryParse(match.Value, out prepTime);
-                    }
+                    return Json(new { success = false, message = "Preparation time must be in whole minutes only." });
+                }
+
+                if (prepTime < 1 || prepTime > 60)
+                {
+                    return Json(new { success = false, message = "Preparation time must be between 1 and 60 minutes." });
                 }
 
                 // Add product with pending approval

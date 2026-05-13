@@ -33,6 +33,11 @@ namespace BizzyQCU.Controllers
                     return Json(new { success = false, message = "Invalid username/email or password." });
                 }
 
+                if (!user.IsApproved && (user.Role == "student" || user.Role == "enterprise"))
+                {
+                    return Json(new { success = false, message = "this account is currently disabled" });
+                }
+
                 if (!user.IsApproved)
                 {
                     return Json(new { success = false, message = "Your account is pending approval. Please wait for admin confirmation." });

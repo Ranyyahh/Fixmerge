@@ -1,8 +1,11 @@
 ﻿@model IEnumerable<BizzyQCU.Models.EnterpriseListItem>
+@using System.Linq
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Enterprise List";
     ViewBag.BodyClass = "product-page";
+    var enterprises = (Model ?? Enumerable.Empty<BizzyQCU.Models.EnterpriseListItem>()).ToList();
+    var isLoggedIn = Session["UserId"] != null;
 }
 
 <div class="product-page-container">
@@ -56,14 +59,12 @@
     <div class="product-list-wrapper">
         <div class="product-grid-container" id="productGrid">
 
-            @if (!Model.GetEnumerator().MoveNext())
+            @if (!enterprises.Any())
             {
-                <p style="text-align:center; color:#999; grid-column:1/-1; padding:40px 0;">
-                    No enterprises available yet.
-                </p>
+                <div class="market-empty-state">No current enterprises</div>
             }
 
-            @foreach (var ent in Model)
+            @foreach (var ent in enterprises)
             {
                 string viewUrl = Url.Action("ViewEnterprise", "Enterprise", new { id = ent.EnterpriseId });
 
@@ -119,7 +120,7 @@
                      data-category="@cat"
                      data-popularity="@popularity"
                      data-name="@ent.StoreName.ToLower()"
-                     onclick="window.location.href = '@viewUrl'"
+                     onclick="handleViewEnterpriseClick('@viewUrl')"
                      style="cursor:pointer;">
 
                     <div class="product-img-placeholder">
@@ -131,7 +132,7 @@
                         <span class="@statusClass" style="font-size:0.78rem; font-weight:700; margin-bottom:4px;">@statusLabel</span>
                         <div class="product-footer" style="display:flex; justify-content:center; width:100%;">
                             <button class="enterprise-btn"
-                                    onclick="event.stopPropagation(); window.location.href='@viewUrl'">
+                                    onclick="event.stopPropagation(); handleViewEnterpriseClick('@viewUrl')">
                                 View Enterprise
                             </button>
                         </div>
@@ -152,11 +153,53 @@
         </div>
 
 
-
-        <p class="no-results" id="noResults" style="display:none;">No enterprises found.</p>
+        @if (enterprises.Any())
+        {
+            <p class="no-results" id="noResults" style="display:none;">No enterprises found.</p>
+        }
     </div>
 </div>
 
 @section scripts {
     <script src="@Url.Content("~/Scripts/ProductPageLogic.js")?v=20260512-multi-enterprise"></script>
+    <script>
+        function showEnterpriseLoginAlert() {
+            var existingOverlay = document.getElementById('customMessageOverlay');
+            if (existingOverlay) { existingOverlay.remove(); }
+
+            var overlay = document.createElement('div');
+            overlay.id = 'customMessageOverlay';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
+
+            var msgBox = document.createElement('div');
+            msgBox.style.cssText = 'background:#fff5f5;color:#c62828;padding:24px 32px;border-radius:16px;font-weight:600;font-size:1.1rem;text-align:center;min-width:280px;max-width:380px;box-shadow:0 20px 40px rgba(0,0,0,0.2);border:2px solid #c62828;font-family:DM Sans,sans-serif;';
+
+            var icon = document.createElement('div');
+            icon.style.cssText = 'font-size:2.5rem;margin-bottom:12px;';
+            icon.innerHTML = '⚠️';
+            msgBox.appendChild(icon);
+
+            var text = document.createElement('div');
+            text.textContent = 'Please login first to view enterprise details.';
+            msgBox.appendChild(text);
+
+            var okBtn = document.createElement('button');
+            okBtn.textContent = 'OK';
+            okBtn.style.cssText = 'margin-top:20px;padding:8px 28px;background:#c62828;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;font-size:0.9rem;';
+            okBtn.onclick = function () { overlay.remove(); };
+
+            msgBox.appendChild(okBtn);
+            overlay.appendChild(msgBox);
+            document.body.appendChild(overlay);
+        }
+
+        function handleViewEnterpriseClick(url) {
+            var isLoggedIn = @Html.Raw(isLoggedIn ? "true" : "false");
+            if (!isLoggedIn) {
+                showEnterpriseLoginAlert();
+                return;
+            }
+            window.location.href = url;
+        }
+    </script>
 }

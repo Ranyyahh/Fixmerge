@@ -1,8 +1,10 @@
 ﻿@model IEnumerable<BizzyQCU.Controllers.ProductListItem>
+@using System.Linq
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Product List";
     ViewBag.BodyClass = "product-page";
+    var products = (Model ?? Enumerable.Empty<BizzyQCU.Controllers.ProductListItem>()).ToList();
 }
 
 <div class="product-page-container">
@@ -63,7 +65,12 @@
     <div class="product-list-wrapper">
         <div class="product-grid-container" id="productGrid">
 
-            @foreach (var product in Model)
+            @if (!products.Any())
+            {
+                <div class="market-empty-state">No current products</div>
+            }
+
+            @foreach (var product in products)
             {
                 string categoryLower = (product.CategoryName != null) ? product.CategoryName.ToLower() : "";
                 string cat;
@@ -141,7 +148,10 @@
             </div>
         </div>
 
-        <p class="no-results" id="noResults" style="display:none;">No products found.</p>
+        @if (products.Any())
+        {
+            <p class="no-results" id="noResults" style="display:none;">No products found.</p>
+        }
     </div>
 </div>
 

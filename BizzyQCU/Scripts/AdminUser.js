@@ -79,6 +79,62 @@ function restrictDigitsInput(input, maxLength) {
     });
 }
 
+function isAccountEnabled(request) {
+    return request && request.IsAccountEnabled !== false;
+}
+
+function renderApprovalStatus(request) {
+    const statusText = request.Status || '';
+    const statusLower = statusText.toLowerCase();
+    let statusClass = '';
+
+    if (statusLower === 'pending') {
+        statusClass = 'status-pending';
+    } else if (statusLower === 'approved') {
+        statusClass = isAccountEnabled(request) ? 'status-approved' : 'status-disabled';
+    } else if (statusLower === 'rejected') {
+        statusClass = 'status-rejected';
+    }
+
+    const label = statusLower === 'approved' && !isAccountEnabled(request)
+        ? 'Approved (Disabled)'
+        : statusText;
+    return `<span class="${statusClass}">${escapeHtml(label)}</span>`;
+}
+
+function renderRequestActions(request, type) {
+    const statusLower = (request.Status || '').toLowerCase();
+    const editHandler = type === 'student' ? 'openEditStudentModal' : 'openEditEnterpriseModal';
+    const buttons = [];
+
+    if (statusLower === 'pending') {
+        buttons.push(`<button class="approve-btn" onclick="approveRequest(${request.RequestId})">Approve</button>`);
+        buttons.push(`<button class="reject-btn" onclick="rejectRequest(${request.RequestId})">Reject</button>`);
+        buttons.push(`<button class="edit-btn" onclick="${editHandler}(${request.RequestId})">Edit</button>`);
+    } else if (statusLower === 'approved') {
+        buttons.push(`<button class="edit-btn" onclick="${editHandler}(${request.RequestId})">Edit</button>`);
+    } else if (statusLower === 'rejected') {
+        buttons.push(`<button class="approve-btn" onclick="approveRequest(${request.RequestId})">Approve</button>`);
+        buttons.push(`<button class="edit-btn" onclick="${editHandler}(${request.RequestId})">Edit</button>`);
+    }
+
+    return buttons.length
+        ? `<div class="action-btns">${buttons.join('')}</div>`
+        : '<span>-</span>';
+}
+
+function renderAccountToggleAction(request) {
+    if (!request || (request.Status || '').toLowerCase() !== 'approved') {
+        return '';
+    }
+
+    const enabled = isAccountEnabled(request);
+    const nextEnabled = enabled ? 'false' : 'true';
+    const buttonClass = enabled ? 'disable-account-btn' : 'enable-account-btn';
+    const buttonText = enabled ? 'Disable Account' : 'Enable Account';
+    return `<button type="button" class="${buttonClass}" onclick="updateRequestAccountStatus(${request.RequestId}, ${nextEnabled})">${buttonText}</button>`;
+}
+
 function loadAllStudentRequests() {
     fetch('/AdminPanel/GetAllStudentRequests')
         .then(response => response.json())
@@ -101,35 +157,8 @@ function loadAllStudentRequests() {
                 row.insertCell(3).innerHTML = student.StudentNumber || 'N/A';
                 row.insertCell(4).innerHTML = renderQcuIdCell(student.RequestId, student.QcuId);
 
-                let statusClass = '';
-                const statusText = student.Status || '';
-                const statusLower = statusText.toLowerCase();
-
-                if (statusLower === 'pending') {
-                    statusClass = 'status-pending';
-                } else if (statusLower === 'approved') {
-                    statusClass = 'status-approved';
-                } else if (statusLower === 'rejected') {
-                    statusClass = 'status-rejected';
-                }
-                row.insertCell(5).innerHTML = `<span class="${statusClass}">${statusText}</span>`;
-
-                if (statusLower === 'pending') {
-                    row.insertCell(6).innerHTML = `
-                        <div class="action-btns">
-                            <button class="approve-btn" onclick="approveRequest(${student.RequestId})">Approve</button>
-                            <button class="reject-btn" onclick="rejectRequest(${student.RequestId})">Reject</button>
-                        </div>
-                    `;
-                } else if (statusLower === 'approved') {
-                    row.insertCell(6).innerHTML = `
-                        <div class="action-btns">
-                            <button class="edit-btn" onclick="openEditStudentModal(${student.RequestId})">Edit</button>
-                        </div>
-                    `;
-                } else {
-                    row.insertCell(6).innerHTML = '<span>-</span>';
-                }
+                row.insertCell(5).innerHTML = renderApprovalStatus(student);
+                row.insertCell(6).innerHTML = renderRequestActions(student, 'student');
             });
         })
         .catch(error => {
@@ -396,35 +425,8 @@ function loadAllEnterpriseRequests() {
                 row.insertCell(3).innerHTML = enterprise.ContactNumber || 'N/A';
                 row.insertCell(4).innerHTML = renderEnterpriseDocumentCell(enterprise.RequestId, enterprise.UploadedDocument);
 
-                let statusClass = '';
-                const statusText = enterprise.Status || '';
-                const statusLower = statusText.toLowerCase();
-
-                if (statusLower === 'pending') {
-                    statusClass = 'status-pending';
-                } else if (statusLower === 'approved') {
-                    statusClass = 'status-approved';
-                } else if (statusLower === 'rejected') {
-                    statusClass = 'status-rejected';
-                }
-                row.insertCell(5).innerHTML = `<span class="${statusClass}">${statusText}</span>`;
-
-                if (statusLower === 'pending') {
-                    row.insertCell(6).innerHTML = `
-                        <div class="action-btns">
-                            <button class="approve-btn" onclick="approveRequest(${enterprise.RequestId})">Approve</button>
-                            <button class="reject-btn" onclick="rejectRequest(${enterprise.RequestId})">Reject</button>
-                        </div>
-                    `;
-                } else if (statusLower === 'approved') {
-                    row.insertCell(6).innerHTML = `
-                        <div class="action-btns">
-                            <button class="edit-btn" onclick="openEditEnterpriseModal(${enterprise.RequestId})">Edit</button>
-                        </div>
-                    `;
-                } else {
-                    row.insertCell(6).innerHTML = '<span>-</span>';
-                }
+                row.insertCell(5).innerHTML = renderApprovalStatus(enterprise);
+                row.insertCell(6).innerHTML = renderRequestActions(enterprise, 'enterprise');
             });
         })
         .catch(error => {
@@ -600,6 +602,40 @@ function rejectRequest(requestId) {
     }
 }
 
+function updateRequestAccountStatus(requestId, isEnabled) {
+    const action = isEnabled ? 'enable' : 'disable';
+    if (!confirm(`Are you sure you want to ${action} this account?`)) {
+        return;
+    }
+
+    const formData = new URLSearchParams();
+    formData.append('requestId', requestId);
+    formData.append('isEnabled', isEnabled);
+
+    fetch('/AdminPanel/UpdateRequestAccountStatus', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || `Account ${isEnabled ? 'enabled' : 'disabled'}.`);
+                closeEditModal();
+                loadAllStudentRequests();
+                loadAllEnterpriseRequests();
+            } else {
+                alert(data.message || 'Failed to update account status.');
+            }
+        })
+        .catch(error => {
+            console.error('Account status error:', error);
+            alert('An error occurred: ' + error.message);
+        });
+}
+
 function filterTable(tableId, searchTerm) {
     const table = document.getElementById(tableId);
     const rows = table.getElementsByTagName('tr');
@@ -625,7 +661,7 @@ function openEditStudentModal(requestId) {
     if (!student) return;
 
     currentEditContext = { type: 'student', requestId: requestId };
-    document.getElementById('editModalTitle').textContent = 'Edit Approved Student';
+    document.getElementById('editModalTitle').textContent = 'Edit Student';
     const form = document.getElementById('editRequestForm');
     form.innerHTML = `
         <div class="edit-form-grid">
@@ -638,6 +674,7 @@ function openEditStudentModal(requestId) {
             <div class="edit-form-group full"><label>Contact Number</label><input name="contactNumber" value="${escapeHtml(student.ContactNumber || '')}" /></div>
         </div>
         <div class="edit-form-actions">
+            ${renderAccountToggleAction(student)}
             <button type="button" class="edit-cancel-btn" onclick="closeEditModal()">Cancel</button>
             <button type="submit" class="edit-save-btn">Save Changes</button>
         </div>
@@ -650,7 +687,7 @@ function openEditEnterpriseModal(requestId) {
     if (!enterprise) return;
 
     currentEditContext = { type: 'enterprise', requestId: requestId };
-    document.getElementById('editModalTitle').textContent = 'Edit Approved Enterprise';
+    document.getElementById('editModalTitle').textContent = 'Edit Enterprise';
     const form = document.getElementById('editRequestForm');
     form.innerHTML = `
         <div class="edit-form-grid">
@@ -662,6 +699,7 @@ function openEditEnterpriseModal(requestId) {
             <div class="edit-form-group"><label>GCash Number</label><input name="gcashNumber" value="${escapeHtml(enterprise.GcashNumber || '')}" inputmode="numeric" maxlength="11" pattern="09[0-9]{9}" title="Enter an 11-digit GCash number starting with 09." /></div>
         </div>
         <div class="edit-form-actions">
+            ${renderAccountToggleAction(enterprise)}
             <button type="button" class="edit-cancel-btn" onclick="closeEditModal()">Cancel</button>
             <button type="submit" class="edit-save-btn">Save Changes</button>
         </div>

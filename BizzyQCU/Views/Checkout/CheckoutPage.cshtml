@@ -55,6 +55,9 @@
                     <span id="paymentMethodDisplay" class="me-2">Cash on Delivery</span>
                     <button type="button" class="btn btn-sm btn-outline-primary change-btn" data-type="payment">CHANGE</button>
                 </div>
+                <div class="mt-2">
+                    <button type="button" id="viewQrBtn" class="btn btn-sm btn-outline-success" style="display:none;">View QR</button>
+                </div>
             </div>
         </div>
         <div class="mt-3">
@@ -81,6 +84,14 @@
     </div>
 </div>
 
+<div id="qrModal" class="qr-modal-overlay" style="display:none;">
+    <div class="qr-modal-card">
+        <button type="button" id="closeQrModalBtn" class="qr-modal-close" aria-label="Close">✕</button>
+        <h4>Enterprise GCash QR</h4>
+        <div id="qrModalContent" class="qr-modal-content"></div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="@Url.Content("~/Scripts/Checkout.js")?v=20260512-multi-enterprise"></script>
     <script>
@@ -101,5 +112,4 @@
         })();
     </script>
     <script src="~/Scripts/Checkout.js"></script>
-}
 }

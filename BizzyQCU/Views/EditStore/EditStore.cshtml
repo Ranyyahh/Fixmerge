@@ -11,7 +11,12 @@
 
 <div class="edit-store-page">
     <section class="edit-store-header">
-        <div class="profile-icon"></div>
+        <div class="profile-icon">
+            @if (!string.IsNullOrWhiteSpace(ViewBag.StoreLogo as string))
+            {
+                <img src="@Url.Content(ViewBag.StoreLogo)" alt="@ViewBag.EnterpriseName" />
+            }
+        </div>
         <h1 id="enterpriseName">@ViewBag.EnterpriseName</h1>
     </section>
 
