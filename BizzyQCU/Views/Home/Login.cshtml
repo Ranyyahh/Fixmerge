@@ -12,8 +12,20 @@
         <div id="messageBox" class="message"></div>
         <form id="loginForm" onsubmit="return loginUser(event)">
             <input type="text" id="username" placeholder="Username" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <button type="submit" class="auth-btn">LOGIN</button>
+            <div class="password-wrapper">
+                <input type="password"
+                       id="password"
+                       placeholder="Password"
+                       oninput="handlePasswordInput()">
+
+                <span id="togglePassword"
+                      class="show-password"
+                      onclick="togglePassword()"
+                      style="display:none;">
+                    Show
+                </span>
+            </div>
+            <button type="submit" class="auth-btn login-btn">LOGIN</button>
         </form>
         <div class="auth-links">
             New to BizzyQCU? <a href="@Url.Action("RegisterStudent", "Home")">Sign up</a>
@@ -23,6 +35,32 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+    function togglePassword() {
+
+        var password = document.getElementById("password");
+
+        if (password.type === "password") {
+            password.type = "text";
+        } else {
+            password.type = "password";
+        }
+    }
+
+    function handlePasswordInput() {
+
+        var password =
+            document.getElementById("password").value;
+
+        var toggle =
+            document.getElementById("togglePassword");
+
+        if (password.length > 0) {
+            toggle.style.display = "block";
+        } else {
+            toggle.style.display = "none";
+        }
+    }
+
     function showMessage(message, type) {
         var msgBox = document.getElementById('messageBox');
         msgBox.textContent = message;
