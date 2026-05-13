@@ -74,6 +74,8 @@ namespace BizzyQCU.Models.Admin
         [Column("submitted_at")]
         public DateTime SubmittedAt { get; set; }
 
+        public bool? IsAccountEnabled { get; set; }
+
         // Computed property for display
         public string FullName
         {

@@ -43,7 +43,7 @@ namespace BizzyQCU.Controllers
                 string sql = @"
                     SELECT o.order_id, o.status, o.total_amount, o.delivery_fee,
                            o.delivery_option, o.customer_location, o.order_note,
-                           o.order_date, o.estimated_time, e.store_name
+                           o.order_date, TIME_FORMAT(o.estimated_time, '%h:%i %p') AS estimated_time_formatted, e.store_name
                     FROM orders o
                     INNER JOIN enterprises e ON o.enterprise_id = e.enterprise_id
                     INNER JOIN students s ON s.student_id = o.student_id
@@ -68,7 +68,7 @@ namespace BizzyQCU.Controllers
                                 CustomerLocation = reader.IsDBNull(reader.GetOrdinal("customer_location")) ? "" : reader.GetString("customer_location"),
                                 OrderNote = reader.IsDBNull(reader.GetOrdinal("order_note")) ? "" : reader.GetString("order_note"),
                                 OrderDate = reader.GetDateTime("order_date"),
-                                EstimatedTime = reader.IsDBNull(reader.GetOrdinal("estimated_time")) ? "TBD" : reader.GetValue(reader.GetOrdinal("estimated_time")).ToString(),
+                                EstimatedTime = reader.IsDBNull(reader.GetOrdinal("estimated_time_formatted")) ? "TBD" : reader.GetString("estimated_time_formatted"),
                                 StoreName = reader.GetString("store_name"),
                                 Items = new List<OrderTrackingItem>()
                             };

@@ -292,3 +292,58 @@
         align-items: stretch;
     }
 }
+
+.qr-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.qr-modal-card {
+    width: min(680px, 95vw);
+    max-height: 88vh;
+    overflow: auto;
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px;
+    position: relative;
+}
+
+.qr-modal-close {
+    border: none;
+    background: transparent;
+    font-size: 1.2rem;
+    position: absolute;
+    right: 12px;
+    top: 8px;
+    cursor: pointer;
+}
+
+.qr-modal-content {
+    margin-top: 10px;
+}
+
+.qr-enterprise-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+}
+
+.qr-enterprise-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
+    background: #f8fbff;
+}
+
+.qr-enterprise-card img {
+    width: 100%;
+    max-width: 220px;
+    border-radius: 8px;
+}

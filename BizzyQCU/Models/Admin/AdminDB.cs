@@ -54,7 +54,8 @@ namespace BizzyQCU.Models.Admin
                 {
                     conn.Open();
                     string sql = @"SELECT ar.request_id, ar.username, ar.email, ar.role, ar.firstname, ar.lastname, 
-                                  ar.student_number, ar.section, ar.contact_number, COALESCE(s.qcu_id, ar.qcu_id) AS qcu_id, ar.status, ar.submitted_at
+                                  ar.student_number, ar.section, ar.contact_number, COALESCE(s.qcu_id, ar.qcu_id) AS qcu_id, ar.status, ar.submitted_at,
+                                  u.is_approved
                            FROM approval_requests ar
                            LEFT JOIN users u ON u.username = ar.username
                            LEFT JOIN students s ON s.user_id = u.user_id
@@ -85,7 +86,8 @@ namespace BizzyQCU.Models.Admin
                                 ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
                                 QcuId = reader.IsDBNull(reader.GetOrdinal("qcu_id")) ? null : (byte[])reader["qcu_id"],
                                 Status = reader.GetString("status"),
-                                SubmittedAt = reader.GetDateTime("submitted_at")
+                                SubmittedAt = reader.GetDateTime("submitted_at"),
+                                IsAccountEnabled = reader.IsDBNull(reader.GetOrdinal("is_approved")) ? (bool?)null : reader.GetBoolean("is_approved")
                             });
                         }
                     }
@@ -108,7 +110,8 @@ namespace BizzyQCU.Models.Admin
                 {
                     conn.Open();
                     string sql = @"SELECT ar.request_id, ar.username, ar.email, ar.role, ar.store_name, ar.store_description, 
-                                  ar.contact_number, ar.gcash_number, COALESCE(ar.uploaded_document, e.uploaded_document) AS uploaded_document, ar.status, ar.submitted_at
+                                  ar.contact_number, ar.gcash_number, COALESCE(ar.uploaded_document, e.uploaded_document) AS uploaded_document, ar.status, ar.submitted_at,
+                                  u.is_approved
                            FROM approval_requests ar
                            LEFT JOIN users u ON u.username = ar.username
                            LEFT JOIN enterprises e ON e.user_id = u.user_id
@@ -138,7 +141,8 @@ namespace BizzyQCU.Models.Admin
                                 GcashNumber = reader.IsDBNull(reader.GetOrdinal("gcash_number")) ? "" : reader.GetString("gcash_number"),
                                 UploadedDocument = reader.IsDBNull(reader.GetOrdinal("uploaded_document")) ? null : (byte[])reader["uploaded_document"],
                                 Status = reader.GetString("status"),
-                                SubmittedAt = reader.GetDateTime("submitted_at")
+                                SubmittedAt = reader.GetDateTime("submitted_at"),
+                                IsAccountEnabled = reader.IsDBNull(reader.GetOrdinal("is_approved")) ? (bool?)null : reader.GetBoolean("is_approved")
                             });
                         }
                     }
@@ -263,6 +267,33 @@ namespace BizzyQCU.Models.Admin
             }
         }
 
+        public bool UpdateRequestAccountStatus(int requestId, bool isEnabled)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"UPDATE users u
+                                   INNER JOIN approval_requests ar ON ar.username = u.username
+                                   SET u.is_approved = @isApproved
+                                   WHERE ar.request_id = @requestId
+                                     AND LOWER(ar.status) = 'approved'";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@isApproved", isEnabled ? 1 : 0);
+                        cmd.Parameters.AddWithValue("@requestId", requestId);
+                        return cmd.ExecuteNonQuery() > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("UpdateRequestAccountStatus error: " + ex.Message);
+                return false;
+            }
+        }
+
         //DELETE USER 
         public bool DeleteUser(int userId)
         {
@@ -302,7 +333,7 @@ namespace BizzyQCU.Models.Admin
                     {
                         try
                         {
-                            // Step 1: Check if request exists and is pending
+                            // Step 1: Check if request exists and can be approved
                             string checkSql = "SELECT status FROM approval_requests WHERE request_id = @requestId FOR UPDATE";
                             string currentStatus = null;
                             using (var cmd = new MySqlCommand(checkSql, conn, transaction))
@@ -315,9 +346,10 @@ namespace BizzyQCU.Models.Admin
                                     return false;
                                 }
                                 currentStatus = result.ToString();
-                                if (currentStatus != "Pending")
+                                if (!string.Equals(currentStatus, "Pending", StringComparison.OrdinalIgnoreCase) &&
+                                    !string.Equals(currentStatus, "Rejected", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    System.Diagnostics.Debug.WriteLine($"Request {requestId} is not pending. Current status: {currentStatus}");
+                                    System.Diagnostics.Debug.WriteLine($"Request {requestId} cannot be approved. Current status: {currentStatus}");
                                     return false;
                                 }
                             }

@@ -98,6 +98,21 @@ namespace BizzyQCU.Controllers
             return Json(new { success = result });
         }
 
+        [HttpPost]
+        public JsonResult UpdateRequestAccountStatus(int requestId, bool isEnabled)
+        {
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
+
+            bool result = adminDb.UpdateRequestAccountStatus(requestId, isEnabled);
+            return Json(new
+            {
+                success = result,
+                message = result
+                    ? (isEnabled ? "Account enabled." : "Account disabled.")
+                    : "Failed to update account status."
+            });
+        }
+
 
         [HttpPost]
         public JsonResult DeleteUser(int userId)
