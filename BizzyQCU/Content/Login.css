@@ -516,12 +516,12 @@ html, body {
 
 .nav-links {
     display: flex;
-    gap: 40px;
+    gap: 25px;
 }
 
     .nav-links a {
         text-decoration: none;
-        color: #1a2a6f;
+        color: #111fa2;
         font-weight: 700;
         font-size: 16px;
         transition: color 0.2s;

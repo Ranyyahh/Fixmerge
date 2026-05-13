@@ -376,6 +376,7 @@ footer {
 
     footer {
         margin-top: 0 !important;
+        display: none;
     }
 
     .new-orders-wide {
@@ -497,6 +498,7 @@ footer {
     padding: 28px;
     max-width: 1240px;
     margin: 0 auto;
+    height: 70vh;
 }
 
 .add-product-grid {
@@ -507,7 +509,7 @@ footer {
 }
 
 .add-product-image-box {
-    height: 270px;
+    height: 360px;
     border-radius: 4px;
     background: #ababab;
     display: flex;
@@ -520,7 +522,7 @@ footer {
 }
 
 .add-product-image-icon {
-    font-size: 10.5rem;
+    font-size: 25px;
     color: #141414;
     line-height: 1;
 }
@@ -545,14 +547,15 @@ footer {
 }
 
 .add-product-btn {
-    width: 145px;
+    width: 160px;
     height: 58px;
     border: 0;
     border-radius: 8px;
-    font-size: 2.05rem;
+    font-size: 20px;
     font-weight: 700;
     color: #1128b7;
     transition: transform 0.2s ease, filter 0.2s ease;
+    text-wrap: nowrap;
 }
 
     .add-product-btn:hover {
@@ -621,6 +624,7 @@ footer {
     .add-product-form textarea {
         min-height: 150px;
         resize: vertical;
+        max-height: 400px;
     }
 
         .add-product-form input::placeholder,
@@ -637,6 +641,7 @@ footer {
     .add-product-shell {
         padding: 18px;
         border-radius: 18px;
+        height: 90vh;
     }
 
     .add-product-grid {
@@ -649,7 +654,7 @@ footer {
     }
 
     .add-product-image-icon {
-        font-size: 7.4rem;
+        font-size: 2rem;
     }
 
     .add-product-actions {
@@ -661,6 +666,7 @@ footer {
         width: auto;
         height: 54px;
         font-size: 1.7rem;
+        padding: 5px 10px;
     }
 
     .add-product-form input,
@@ -669,6 +675,7 @@ footer {
         font-size: 1.5rem;
         border-radius: 12px;
         padding: 8px 12px;
+        max-height: 180px;
     }
 
     .add-product-form select {
@@ -679,7 +686,7 @@ footer {
 
 /* ---------- EDIT STORE PAGE ---------- */
 .edit-store-ad-panel {
-    margin-top: 112px;
+    margin-top: 60px;
 }
 
 .edit-store-page {
@@ -1094,7 +1101,7 @@ footer {
     .no-products .add-product-btn {
         background: #f4c430;
         border: none;
-        padding: 12px 24px;
+        
         border-radius: 12px;
         font-weight: 600;
         cursor: pointer;
