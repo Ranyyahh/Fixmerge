@@ -130,7 +130,7 @@
                     <div class="product-card-info">
                         <span class="product-store">@ent.StoreName</span>
                         <span class="@statusClass" style="font-size:0.78rem; font-weight:700; margin-bottom:4px;">@statusLabel</span>
-                        <div class="product-footer">
+                        <div class="product-footer" style="display:flex; justify-content:center; width:100%;">
                             <button class="enterprise-btn"
                                     onclick="event.stopPropagation(); handleViewEnterpriseClick('@viewUrl')">
                                 View Enterprise
@@ -142,6 +142,17 @@
             }
 
         </div>
+
+
+        <div style="display: flex; justify-content: center; width: 100%;">
+            <div class="pagination-container" id="paginationContainer">
+                <button class="pagination-btn" id="prevPageBtn">◀</button>
+                <span class="page-info" id="pageInfo">Page 1</span>
+                <button class="pagination-btn" id="nextPageBtn">▶</button>
+            </div>
+        </div>
+
+
         @if (enterprises.Any())
         {
             <p class="no-results" id="noResults" style="display:none;">No enterprises found.</p>
