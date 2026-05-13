@@ -1,4 +1,4 @@
-﻿document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function () {
 
     var searchInput = document.getElementById('productSearch');
     var categoryFilter = document.getElementById('categoryFilter');
@@ -8,15 +8,9 @@
     var filterToggleBtn = document.getElementById('filterToggleBtn');
     var filterSection = document.getElementById('filterSection');
 
-    // Check if mobile screen
-    function isMobile() {
-        return window.innerWidth <= 768;
-    }
-
-    // Pagination variables - ONLY for desktop
+    // Pagination variables
     var currentPage = 1;
     var itemsPerPage = 4;
-    var paginationEnabled = !isMobile();
 
     // Mobile filter toggle
     if (filterToggleBtn && filterSection) {
@@ -54,28 +48,8 @@
         return filteredCards;
     }
 
-    // Function to update pagination display (DESKTOP ONLY)
+    // Function to update pagination display
     function updatePagination() {
-        // If on mobile, show all products and exit
-        if (isMobile()) {
-            var allCards = document.querySelectorAll('.product-card');
-            allCards.forEach(function (card) {
-                card.style.display = '';
-            });
-
-            var paginationSection = document.querySelector('.simple-pagination');
-            if (paginationSection) {
-                paginationSection.style.display = 'none';
-            }
-
-            if (noResults) {
-                var filteredCards = getFilteredCards();
-                noResults.style.display = filteredCards.length === 0 ? 'block' : 'none';
-            }
-            return;
-        }
-
-        // Desktop pagination logic
         var filteredCards = getFilteredCards();
         var totalPages = Math.ceil(filteredCards.length / itemsPerPage);
 
@@ -106,7 +80,6 @@
 
         var prevBtn = document.getElementById('prevPageBtn');
         var nextBtn = document.getElementById('nextPageBtn');
-
         if (prevBtn) {
             prevBtn.disabled = currentPage <= 1 || totalPages === 0;
         }
@@ -118,15 +91,15 @@
             noResults.style.display = filteredCards.length === 0 ? 'block' : 'none';
         }
 
-        var paginationSection = document.querySelector('.simple-pagination');
-        if (paginationSection) {
-            paginationSection.style.display = filteredCards.length === 0 ? 'none' : 'block';
+        var paginationContainer = document.getElementById('paginationContainer');
+        if (paginationContainer) {
+            paginationContainer.style.display = filteredCards.length === 0 ? 'none' : 'flex';
         }
     }
 
     // Go to previous page
     function goToPrevPage() {
-        if (!isMobile() && currentPage > 1) {
+        if (currentPage > 1) {
             currentPage--;
             updatePagination();
         }
@@ -134,13 +107,11 @@
 
     // Go to next page
     function goToNextPage() {
-        if (!isMobile()) {
-            var filteredCards = getFilteredCards();
-            var totalPages = Math.ceil(filteredCards.length / itemsPerPage);
-            if (currentPage < totalPages) {
-                currentPage++;
-                updatePagination();
-            }
+        var filteredCards = getFilteredCards();
+        var totalPages = Math.ceil(filteredCards.length / itemsPerPage);
+        if (currentPage < totalPages) {
+            currentPage++;
+            updatePagination();
         }
     }
 
@@ -159,7 +130,6 @@
     // Pagination button event listeners
     var prevBtn = document.getElementById('prevPageBtn');
     var nextBtn = document.getElementById('nextPageBtn');
-
     if (prevBtn) {
         prevBtn.addEventListener('click', goToPrevPage);
     }
@@ -167,51 +137,11 @@
         nextBtn.addEventListener('click', goToNextPage);
     }
 
-    // Handle window resize - reapply pagination or show all
+    // Handle window resize
     window.addEventListener('resize', function () {
-        paginationEnabled = !isMobile();
-        if (isMobile()) {
-            // On mobile: show all products
-            var allCards = document.querySelectorAll('.product-card');
-            allCards.forEach(function (card) {
-                card.style.display = '';
-            });
-            var paginationSection = document.querySelector('.simple-pagination');
-            if (paginationSection) {
-                paginationSection.style.display = 'none';
-            }
-        } else {
-            // On desktop: reapply pagination
-            currentPage = 1;
-            updatePagination();
-        }
+        currentPage = 1;
+        updatePagination();
     });
-
-    // ===== HANDLE PAGINATION VISIBILITY ON MOBILE =====
-    function handleMobilePagination() {
-        var paginationWrapper = document.querySelector('.pagination-wrapper');
-        var paginationDiv = document.querySelector('.pagination-container');
-
-        if (window.innerWidth <= 768) {
-            // Hide pagination on mobile
-            if (paginationWrapper) paginationWrapper.style.display = 'none';
-            if (paginationDiv) paginationDiv.style.display = 'none';
-
-            // Show all products
-            var allCards = document.querySelectorAll('.product-card');
-            allCards.forEach(function (card) {
-                card.style.display = '';
-            });
-        } else {
-            // Show pagination on desktop
-            if (paginationWrapper) paginationWrapper.style.display = 'flex';
-            if (paginationDiv) paginationDiv.style.display = 'flex';
-        }
-    }
-
-    // Run on load and resize
-    window.addEventListener('load', handleMobilePagination);
-    window.addEventListener('resize', handleMobilePagination);
 
     // Popup message helper
     function showMessage(message, isError) {
@@ -227,7 +157,7 @@
 
         var icon = document.createElement('div');
         icon.style.cssText = 'font-size:2.5rem;margin-bottom:12px;';
-        icon.innerHTML = isError ? '⚠️' : '✅';
+        icon.innerHTML = isError ? '??' : '?';
         msgBox.appendChild(icon);
 
         var text = document.createElement('div');
